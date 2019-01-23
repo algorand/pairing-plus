@@ -10,9 +10,8 @@
 #![cfg_attr(feature = "cargo-clippy", allow(write_literal))]
 // Force public structures to implement Debug
 #![deny(missing_debug_implementations)]
-
 extern crate byteorder;
-#[macro_use]
+//#[macro_use]
 extern crate ff;
 extern crate rand;
 
@@ -20,7 +19,6 @@ extern crate rand;
 pub mod tests;
 
 pub mod bls12_381;
-
 mod wnaf;
 pub use self::wnaf::Wnaf;
 
@@ -38,8 +36,7 @@ pub trait Engine: ScalarEngine {
             Base = Self::Fq,
             Scalar = Self::Fr,
             Affine = Self::G1Affine,
-        >
-        + From<Self::G1Affine>;
+        > + From<Self::G1Affine>;
 
     /// The affine representation of an element in G1.
     type G1Affine: CurveAffine<
@@ -49,8 +46,7 @@ pub trait Engine: ScalarEngine {
             Projective = Self::G1,
             Pair = Self::G2Affine,
             PairingResult = Self::Fqk,
-        >
-        + From<Self::G1>;
+        > + From<Self::G1>;
 
     /// The projective representation of an element in G2.
     type G2: CurveProjective<
@@ -58,8 +54,7 @@ pub trait Engine: ScalarEngine {
             Base = Self::Fqe,
             Scalar = Self::Fr,
             Affine = Self::G2Affine,
-        >
-        + From<Self::G2Affine>;
+        > + From<Self::G2Affine>;
 
     /// The affine representation of an element in G2.
     type G2Affine: CurveAffine<
@@ -69,8 +64,7 @@ pub trait Engine: ScalarEngine {
             Projective = Self::G2,
             Pair = Self::G1Affine,
             PairingResult = Self::Fqk,
-        >
-        + From<Self::G2>;
+        > + From<Self::G2>;
 
     /// The base field that hosts G1.
     type Fq: PrimeField + SqrtField;
@@ -102,7 +96,8 @@ pub trait Engine: ScalarEngine {
     {
         Self::final_exponentiation(&Self::miller_loop(
             [(&(p.into().prepare()), &(q.into().prepare()))].into_iter(),
-        )).unwrap()
+        ))
+        .unwrap()
     }
 }
 
@@ -165,6 +160,9 @@ pub trait CurveProjective:
     /// Performs scalar multiplication of this element.
     fn mul_assign<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S);
 
+    /// Performs scalar multiplication of this element in constant time.
+    fn mul_assign_sec<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S);
+
     /// Converts this element into its affine representation.
     fn into_affine(&self) -> Self::Affine;
 
@@ -207,6 +205,10 @@ pub trait CurveAffine:
 
     /// Performs scalar multiplication of this element with mixed addition.
     fn mul<S: Into<<Self::Scalar as PrimeField>::Repr>>(&self, other: S) -> Self::Projective;
+
+    /// Performs scalar multiplication of this element with mixed addition.
+    /// use Montgomery method to achieve constant time
+    fn mul_sec<S: Into<<Self::Scalar as PrimeField>::Repr>>(&self, other: S) -> Self::Projective;
 
     /// Prepares this element for pairing purposes.
     fn prepare(&self) -> Self::Prepared;
@@ -258,6 +260,8 @@ pub trait EncodedPoint:
     /// Creates an `EncodedPoint` from an affine point, as long as the
     /// point is not the point at infinity.
     fn from_affine(affine: Self::Affine) -> Self;
+
+    //    fn into_e1(&self) -> Self::Uncompressed;
 }
 
 /// An error that may occur when trying to decode an `EncodedPoint`.

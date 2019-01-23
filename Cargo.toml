@@ -2,7 +2,7 @@
 name = "pairing"
 
 # Remember to change version string in README.md.
-version = "0.14.2"
+version = "0.14.3"
 authors = [
     "Sean Bowe <ewillbefull@gmail.com>",
     "Jack Grigg <jack@z.cash>",
@@ -14,10 +14,19 @@ documentation = "https://docs.rs/pairing/"
 homepage = "https://github.com/ebfull/pairing"
 repository = "https://github.com/ebfull/pairing"
 
+[lib]
+# crate-type = ["staticlib"]
+
+
+
 [dependencies]
 rand = "0.4"
 byteorder = "1"
 ff = { version = "0.4", features = ["derive"] }
+sha2 = "0.8"
+
+
+
 
 [features]
 unstable-features = ["expose-arith"]

@@ -59,6 +59,7 @@ pub fn curve_tests<G: CurveProjective>() {
 
     random_addition_tests::<G>();
     random_multiplication_tests::<G>();
+    random_const_multiplication_tests::<G>();
     random_doubling_tests::<G>();
     random_negation_tests::<G>();
     random_transformation_tests::<G>();
@@ -254,6 +255,38 @@ fn random_multiplication_tests<G: CurveProjective>() {
         // sa + sb
         a.mul_assign(s);
         b.mul_assign(s);
+
+        let mut tmp2 = a;
+        tmp2.add_assign(&b);
+
+        // Affine multiplication
+        let mut tmp3 = a_affine.mul(s);
+        tmp3.add_assign(&b_affine.mul(s));
+
+        assert_eq!(tmp1, tmp2);
+        assert_eq!(tmp1, tmp3);
+    }
+}
+
+fn random_const_multiplication_tests<G: CurveProjective>() {
+    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+    for _ in 0..1000 {
+        let mut a = G::rand(&mut rng);
+        let mut b = G::rand(&mut rng);
+        let a_affine = a.into_affine();
+        let b_affine = b.into_affine();
+
+        let s = G::Scalar::rand(&mut rng);
+
+        // s ( a + b )
+        let mut tmp1 = a;
+        tmp1.add_assign(&b);
+        tmp1.mul_assign_sec(s);
+
+        // sa + sb
+        a.mul_assign_sec(s);
+        b.mul_assign_sec(s);
 
         let mut tmp2 = a;
         tmp2.add_assign(&b);
