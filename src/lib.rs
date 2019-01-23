@@ -14,6 +14,8 @@ extern crate byteorder;
 //#[macro_use]
 extern crate ff;
 extern crate rand;
+extern crate sha2;
+
 
 #[cfg(test)]
 pub mod tests;
@@ -25,7 +27,7 @@ pub use self::wnaf::Wnaf;
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr, ScalarEngine, SqrtField};
 use std::error::Error;
 use std::fmt;
-
+use sha2::{Digest, Sha512};
 /// An "engine" is a collection of types (fields, elliptic curve groups, etc.)
 /// with well-defined relationships. In particular, the G1/G2 curve groups are
 /// of prime order `r`, and are equipped with a bilinear pairing function.
@@ -230,6 +232,10 @@ pub trait CurveAffine:
     fn into_uncompressed(&self) -> Self::Uncompressed {
         <Self::Uncompressed as EncodedPoint>::from_affine(*self)
     }
+
+    fn cast_string_to_e1(s: [u8; 48]) -> Option<bls12_381::G1Affine>;
+    fn hash_to_e1(s: String) -> bls12_381::G1Affine;
+    fn cast_string_to_e2(s: [u8; 96]) -> Option<bls12_381::G2Affine>;
 }
 
 /// An encoded elliptic curve point, which should essentially wrap a `[u8; N]`.
@@ -261,7 +267,7 @@ pub trait EncodedPoint:
     /// point is not the point at infinity.
     fn from_affine(affine: Self::Affine) -> Self;
 
-    //    fn into_e1(&self) -> Self::Uncompressed;
+    //    fn cast_string_to_curve(&self) -> Result<Self::Affine, GroupDecodingError>;
 }
 
 /// An error that may occur when trying to decode an `EncodedPoint`.

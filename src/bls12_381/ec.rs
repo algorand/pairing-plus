@@ -113,7 +113,8 @@ macro_rules! curve_impl {
             ///
             /// If and only if `greatest` is set will the lexicographically
             /// largest y-coordinate be selected.
-            fn get_point_from_x(x: $basefield, greatest: bool) -> Option<$affine> {
+
+            pub fn get_point_from_x(x: $basefield, greatest: bool) -> Option<$affine> {
                 // Compute x^3 + b
                 let mut x3b = x;
                 x3b.square();
@@ -207,6 +208,96 @@ macro_rules! curve_impl {
 
             fn into_projective(&self) -> $projective {
                 (*self).into()
+            }
+
+            fn cast_string_to_e1(s: [u8; 48]) -> Option<super::G1Affine> {
+                let s: &mut [u8; 48] = &mut s.clone();
+
+                let greatest = s[0] & (1 << 5) != 0;
+
+                // Unset the four most significant bits.
+                s[0] &= 0x0f;
+
+                let mut x = FqRepr([0; 6]);
+
+                {
+                    let mut reader = &s[..];
+
+                    x.read_be(&mut reader).unwrap();
+                }
+
+                // Interpret as Fq element.
+                let x = Fq::from_repr(x).unwrap();
+
+                G1Affine::get_point_from_x(x, greatest)
+            }
+
+            fn hash_to_e1(s: String) -> super::G1Affine {
+                use sha2::{Digest, Sha512};
+
+                let mut t: String = " ".to_string();
+                t.push_str(&s);
+
+                let mut i = 0;
+                let mut s: [u8; 48] = [0; 48];
+                let mut p = super::G1Affine::zero();
+                unsafe {
+                    let v = t.as_mut_vec();
+                    loop {
+                        let mut hasher = sha2::Sha512::new();
+                        v[0] = i.clone();
+                        i = i + 1;
+                        hasher.input(v.clone());
+
+                        let result = hasher.result();
+
+                        s.clone_from_slice(&result[0..48]);
+
+                        let t = Self::cast_string_to_e1(s);
+                        match t {
+                            Some(t) => {
+                                p = t;
+                                break;
+                            }
+                            None => {
+                                if i > 10 {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                p
+            }
+
+            fn cast_string_to_e2(s: [u8; 96]) -> Option<super::G2Affine> {
+                let s: &mut [u8; 96] = &mut s.clone();
+                let greatest = s[0] & (1 << 5) != 0;
+
+                // Unset the four most significant bits.
+                s[0] &= 0x0f;
+                s[48] &= 0x0f;
+                let mut x_c1 = FqRepr([0; 6]);
+                let mut x_c0 = FqRepr([0; 6]);
+
+                {
+                    let mut reader = &s[..];
+
+                    x_c1.read_be(&mut reader).unwrap();
+                    x_c0.read_be(&mut reader).unwrap();
+                }
+
+                println!("{}", Fq::from_repr(x_c0).unwrap());
+                println!("{}", Fq::from_repr(x_c1).unwrap());
+
+                // Interpret as Fq element.
+                let x = super::super::fq2::Fq2 {
+                    c0: Fq::from_repr(x_c0).unwrap(),
+                    c1: Fq::from_repr(x_c1).unwrap(),
+                };
+                println!("{}", x);
+                G2Affine::get_point_from_x(x, greatest)
             }
         }
 
@@ -870,7 +961,10 @@ pub mod g1 {
                 let x = Fq::from_repr(x)
                     .map_err(|e| GroupDecodingError::CoordinateDecodingError("x coordinate", e))?;
 
-                G1Affine::get_point_from_x(x, greatest).ok_or(GroupDecodingError::NotOnCurve)
+                let t = G1Affine::get_point_from_x(x, greatest); //.ok_or(GroupDecodingError::NotOnCurve)
+                println!("{:?}", t);
+
+                t.ok_or(GroupDecodingError::NotOnCurve)
             }
         }
         fn from_affine(affine: G1Affine) -> Self {
