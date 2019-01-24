@@ -16,7 +16,6 @@ extern crate ff;
 extern crate rand;
 extern crate sha2;
 
-
 #[cfg(test)]
 pub mod tests;
 
@@ -27,7 +26,6 @@ pub use self::wnaf::Wnaf;
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr, ScalarEngine, SqrtField};
 use std::error::Error;
 use std::fmt;
-use sha2::{Digest, Sha512};
 /// An "engine" is a collection of types (fields, elliptic curve groups, etc.)
 /// with well-defined relationships. In particular, the G1/G2 curve groups are
 /// of prime order `r`, and are equipped with a bilinear pairing function.
@@ -234,8 +232,9 @@ pub trait CurveAffine:
     }
 
     fn cast_string_to_e1(s: [u8; 48]) -> Option<bls12_381::G1Affine>;
-    fn hash_to_e1(s: String) -> bls12_381::G1Affine;
+    fn hash_to_e1(input: String) -> bls12_381::G1Affine;
     fn cast_string_to_e2(s: [u8; 96]) -> Option<bls12_381::G2Affine>;
+    fn hash_to_e2(input: String) -> bls12_381::G2Affine;
 }
 
 /// An encoded elliptic curve point, which should essentially wrap a `[u8; N]`.

@@ -232,43 +232,88 @@ macro_rules! curve_impl {
                 G1Affine::get_point_from_x(x, greatest)
             }
 
-            fn hash_to_e1(s: String) -> super::G1Affine {
-                use sha2::{Digest, Sha512};
+            fn hash_to_e1(input: String) -> super::G1Affine {
+                use sha2::Digest;
 
+                // build the hash input: [ index | s ]
+                // where index starts from 0 and is incremetal
                 let mut t: String = " ".to_string();
-                t.push_str(&s);
+                t.push_str(&input);
 
                 let mut i = 0;
-                let mut s: [u8; 48] = [0; 48];
-                let mut p = super::G1Affine::zero();
+                let mut estr: [u8; 48] = [0; 48];
+
                 unsafe {
-                    let v = t.as_mut_vec();
-                    loop {
+                    let hashinput = t.as_mut_vec();
+                    let point = loop {
+                        // format the input to the hash
                         let mut hasher = sha2::Sha512::new();
-                        v[0] = i.clone();
+                        hashinput[0] = i.clone();
                         i = i + 1;
-                        hasher.input(v.clone());
+                        hasher.input(hashinput.clone());
 
-                        let result = hasher.result();
+                        // obtain the output
+                        let hashresult = hasher.result();
+                        estr.clone_from_slice(&hashresult[0..48]);
 
-                        s.clone_from_slice(&result[0..48]);
+                        // convert the first 48 bytes to a potential curve point
+                        let e1point = Self::cast_string_to_e1(estr).unwrap();
 
-                        let t = Self::cast_string_to_e1(s);
-                        match t {
-                            Some(t) => {
-                                p = t;
-                                break;
+                        if e1point.is_zero() {
+                            // return a 0 point after 128 unsuccessful tries
+                            // this should never happen in practise
+                            if i > 128 {
+                                break super::G1Affine::zero();
                             }
-                            None => {
-                                if i > 10 {
-                                    break;
-                                }
-                            }
+                        } else {
+                            break e1point;
                         }
-                    }
+                    };
+                    point
                 }
+            }
 
-                p
+            fn hash_to_e2(input: String) -> super::G2Affine {
+                use sha2::Digest;
+
+                // build the hash input: [ index | s ]
+                // where index starts from 0 and is incremetal
+                let mut t: String = " ".to_string();
+                t.push_str(&input);
+
+                let mut i = 0;
+                let mut estr: [u8; 96] = [0; 96];
+
+                unsafe {
+                    let hashinput = t.as_mut_vec();
+                    let point = loop {
+                        // format the input to the hash
+                        let mut hasher = sha2::Sha512::new();
+                        hashinput[0] = i.clone();
+                        i = i + 1;
+                        hasher.input(hashinput.clone());
+
+                        // obtain the output
+                        let hashresult = hasher.result();
+
+                        estr.clone_from_slice(&hashresult[0..64]);
+                        //                        let hashresult = hasher.reset();
+
+                        // convert the first 48 bytes to a potential curve point
+                        let e2point = Self::cast_string_to_e2(estr).unwrap();
+
+                        if e2point.is_zero() {
+                            // return a 0 point after 128 unsuccessful tries
+                            // this should never happen in practise
+                            if i > 128 {
+                                break super::G2Affine::zero();
+                            }
+                        } else {
+                            break e2point;
+                        }
+                    };
+                    point
+                }
             }
 
             fn cast_string_to_e2(s: [u8; 96]) -> Option<super::G2Affine> {
