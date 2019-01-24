@@ -15,7 +15,6 @@ extern crate byteorder;
 extern crate ff;
 extern crate rand;
 extern crate sha2;
-
 #[cfg(test)]
 pub mod tests;
 
@@ -233,8 +232,11 @@ pub trait CurveAffine:
 
     fn cast_string_to_e1(s: [u8; 48]) -> Option<bls12_381::G1Affine>;
     fn hash_to_e1(input: String) -> bls12_381::G1Affine;
+    fn hash_to_g1(input: String) -> bls12_381::G1;
+
     fn cast_string_to_e2(s: [u8; 96]) -> Option<bls12_381::G2Affine>;
     fn hash_to_e2(input: String) -> bls12_381::G2Affine;
+    fn hash_to_g2(input: String) -> bls12_381::G2;
 }
 
 /// An encoded elliptic curve point, which should essentially wrap a `[u8; N]`.

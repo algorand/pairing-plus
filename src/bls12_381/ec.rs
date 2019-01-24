@@ -222,7 +222,6 @@ macro_rules! curve_impl {
 
                 {
                     let mut reader = &s[..];
-
                     x.read_be(&mut reader).unwrap();
                 }
 
@@ -273,47 +272,9 @@ macro_rules! curve_impl {
                 }
             }
 
-            fn hash_to_e2(input: String) -> super::G2Affine {
-                use sha2::Digest;
-
-                // build the hash input: [ index | s ]
-                // where index starts from 0 and is incremetal
-                let mut t: String = " ".to_string();
-                t.push_str(&input);
-
-                let mut i = 0;
-                let mut estr: [u8; 96] = [0; 96];
-
-                unsafe {
-                    let hashinput = t.as_mut_vec();
-                    let point = loop {
-                        // format the input to the hash
-                        let mut hasher = sha2::Sha512::new();
-                        hashinput[0] = i.clone();
-                        i = i + 1;
-                        hasher.input(hashinput.clone());
-
-                        // obtain the output
-                        let hashresult = hasher.result();
-
-                        estr.clone_from_slice(&hashresult[0..64]);
-                        //                        let hashresult = hasher.reset();
-
-                        // convert the first 48 bytes to a potential curve point
-                        let e2point = Self::cast_string_to_e2(estr).unwrap();
-
-                        if e2point.is_zero() {
-                            // return a 0 point after 128 unsuccessful tries
-                            // this should never happen in practise
-                            if i > 128 {
-                                break super::G2Affine::zero();
-                            }
-                        } else {
-                            break e2point;
-                        }
-                    };
-                    point
-                }
+            fn hash_to_g1(input: String) -> super::G1 {
+                let point = Self::hash_to_e1(input);
+                point.scale_by_cofactor()
             }
 
             fn cast_string_to_e2(s: [u8; 96]) -> Option<super::G2Affine> {
@@ -333,16 +294,71 @@ macro_rules! curve_impl {
                     x_c0.read_be(&mut reader).unwrap();
                 }
 
-                println!("{}", Fq::from_repr(x_c0).unwrap());
-                println!("{}", Fq::from_repr(x_c1).unwrap());
-
                 // Interpret as Fq element.
                 let x = super::super::fq2::Fq2 {
                     c0: Fq::from_repr(x_c0).unwrap(),
                     c1: Fq::from_repr(x_c1).unwrap(),
                 };
-                println!("{}", x);
+
                 G2Affine::get_point_from_x(x, greatest)
+            }
+
+            fn hash_to_e2(input: String) -> super::G2Affine {
+                use sha2::Digest;
+
+                // build the hash input: [ index | s ]
+                // where index starts from 0 and is incremetal
+                let mut t: String = " ".to_string();
+                t.push_str(&input);
+
+                let mut i = 0;
+                let mut x: [u8; 96] = [0; 96];
+
+                unsafe {
+                    let hashinput = t.as_mut_vec();
+                    let point = loop {
+                        // hash to the real part of x-coord
+                        // format the input to the hash
+                        let mut hasher = sha2::Sha512::new();
+                        hashinput[0] = i.clone();
+                        i = i + 1;
+                        hasher.input(hashinput.clone());
+
+                        // obtain the output
+                        let hashresult = hasher.result();
+                        x[..48].clone_from_slice(&hashresult[0..48]);
+
+                        // hash to the imaginary part of x-coord
+                        // format the input to the hash
+                        let mut hasher = sha2::Sha512::new();
+                        hashinput[0] = i.clone();
+                        i = i + 1;
+                        hasher.input(hashinput.clone());
+
+                        // obtain the output
+                        let hashresult = hasher.result();
+                        x[48..].clone_from_slice(&hashresult[0..48]);
+
+                        // convert the whole 96 bytes to a potential curve point
+                        let e2point = Self::cast_string_to_e2(x).unwrap();
+
+                        if e2point.is_zero() {
+                            // return a 0 point after 128 unsuccessful tries
+                            // this should never happen in practise
+                            if i >= 254 {
+                                break super::G2Affine::zero();
+                            }
+                        } else {
+                            break e2point;
+                        }
+                    };
+                    point
+                }
+            }
+
+            fn hash_to_g2(input: String) -> super::G2 {
+                let point = Self::hash_to_e2(input);
+                point.scale_by_cofactor()
             }
         }
 
@@ -1006,10 +1022,7 @@ pub mod g1 {
                 let x = Fq::from_repr(x)
                     .map_err(|e| GroupDecodingError::CoordinateDecodingError("x coordinate", e))?;
 
-                let t = G1Affine::get_point_from_x(x, greatest); //.ok_or(GroupDecodingError::NotOnCurve)
-                println!("{:?}", t);
-
-                t.ok_or(GroupDecodingError::NotOnCurve)
+                G1Affine::get_point_from_x(x, greatest).ok_or(GroupDecodingError::NotOnCurve)
             }
         }
         fn from_affine(affine: G1Affine) -> Self {
@@ -1044,7 +1057,7 @@ pub mod g1 {
     }
 
     impl G1Affine {
-        fn scale_by_cofactor(&self) -> G1 {
+        pub fn scale_by_cofactor(&self) -> G1 {
             // G1 cofactor = (x - 1)^2 / 3  = 76329603384216526031706109802092473003
             let cofactor = BitIterator::new([0x8c00aaab0000aaab, 0x396c8c005555e156]);
             self.mul_bits(cofactor)
@@ -1757,7 +1770,7 @@ pub mod g2 {
             }
         }
 
-        fn scale_by_cofactor(&self) -> G2 {
+        pub fn scale_by_cofactor(&self) -> G2 {
             // G2 cofactor = (x^8 - 4 x^7 + 5 x^6) - (4 x^4 + 6 x^3 - 4 x^2 - 4 x + 13) // 9
             // 0x5d543a95414e7f1091d50792876a202cd91de4547085abaa68a205b2e5a7ddfa628f1cb4d9e82ef21537e293a6691ae1616ec6e786f0c70cf1c38e31c7238e5
             let cofactor = BitIterator::new([
