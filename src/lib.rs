@@ -230,12 +230,36 @@ pub trait CurveAffine:
         <Self::Uncompressed as EncodedPoint>::from_affine(*self)
     }
 
+    // this function casts a compressed string into an element on E1
+    // it may fail if the compressed string does not correspond to
+    // an E1 element
     fn cast_string_to_e1(s: [u8; 48]) -> Option<bls12_381::G1Affine>;
+
+    // this function hashes a string into an E1 element (not gauranteed on G1)
+    // the current implementation uses try_and_increment method with
+    // cast_string_to_e1 subroutine
+    // not a constant time implementation
     fn hash_to_e1(input: String) -> bls12_381::G1Affine;
+
+    // this function hashes a string into a G1 element (gauranteed)
+    // uses hash_to_e1 subroutine
+    // not a constant time implementation
     fn hash_to_g1(input: String) -> bls12_381::G1;
 
+    // this function casts a compressed string into an element on E2
+    // it may fail if the compressed string does not correspond to
+    // an E2 element
     fn cast_string_to_e2(s: [u8; 96]) -> Option<bls12_381::G2Affine>;
+
+    // this function hashes a string into an E2 element (not gauranteed on G2)
+    // the current implementation uses try_and_increment method with
+    // cast_string_to_e2 subroutine
+    // not a constant time implementation
     fn hash_to_e2(input: String) -> bls12_381::G2Affine;
+
+    // this function hashes a string into a G2 element (gauranteed)
+    // uses hash_to_e2 subroutine
+    // not a constant time implementation
     fn hash_to_g2(input: String) -> bls12_381::G2;
 }
 
@@ -267,8 +291,6 @@ pub trait EncodedPoint:
     /// Creates an `EncodedPoint` from an affine point, as long as the
     /// point is not the point at infinity.
     fn from_affine(affine: Self::Affine) -> Self;
-
-    //    fn cast_string_to_curve(&self) -> Result<Self::Affine, GroupDecodingError>;
 }
 
 /// An error that may occur when trying to decode an `EncodedPoint`.

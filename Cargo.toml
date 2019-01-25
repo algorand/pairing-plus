@@ -14,8 +14,6 @@ documentation = "https://docs.rs/pairing/"
 homepage = "https://github.com/ebfull/pairing"
 repository = "https://github.com/ebfull/pairing"
 
-[lib]
-# crate-type = ["staticlib"]
 
 
 
