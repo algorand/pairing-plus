@@ -94,17 +94,27 @@ macro_rules! curve_impl {
                 res
             }
 
+            // This function uses constant number (256) of
+            // doublings and additions
             fn mul_bits_sec<S: AsRef<[u64]>>(&self, bits: BitIterator<S>) -> $projective {
                 let mut res = $projective::zero();
-                let mut discard = $projective::zero();
+                let mut _discard = $projective::zero();
+                let mut total = 0;
                 for i in bits {
                     res.double();
+                    total = total + 1;
                     if i {
                         res.add_assign_mixed(self)
                     } else {
-                        discard.add_assign_mixed(self)
+                        _discard.add_assign_mixed(self)
                     }
                 }
+                while total < 255 {
+                    _discard.double();
+                    _discard.add_assign_mixed(self);
+                    total = total + 1;
+                }
+
                 res
             }
 
@@ -719,13 +729,15 @@ macro_rules! curve_impl {
                 *self = res;
             }
 
+            // this multiplication function always use 255 doubling and additions
             fn mul_assign_sec<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S) {
                 let mut res = Self::zero();
                 let mut _discard = Self::zero();
                 let mut found_one = false;
                 let mut _discard_one = false;
-
+                let mut total = 0;
                 for i in BitIterator::new(other.into()) {
+                    total = total + 1;
                     if found_one {
                         res.double();
                         _discard_one = i;
@@ -738,6 +750,12 @@ macro_rules! curve_impl {
                     } else {
                         _discard.add_assign(self);
                     }
+                }
+                while total < 255 {
+                    total = total + 1;
+                    _discard_one = false;
+                    _discard.double();
+                    _discard.add_assign(self);
                 }
 
                 *self = res;
