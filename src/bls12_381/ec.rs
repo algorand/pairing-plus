@@ -256,7 +256,7 @@ macro_rules! curve_impl {
                     let hashinput = t.as_mut_vec();
                     let point = loop {
                         // format the input to the hash
-                        let mut hasher = sha2::Sha512::new();
+                        let mut hasher = sha2::Sha384::new();
                         hashinput[0] = i.clone();
                         i = i + 1;
                         hasher.input(hashinput.clone());
@@ -329,7 +329,7 @@ macro_rules! curve_impl {
                     let point = loop {
                         // hash to the real part of x-coord
                         // format the input to the hash
-                        let mut hasher = sha2::Sha512::new();
+                        let mut hasher = sha2::Sha384::new();
                         hashinput[0] = i.clone();
                         i = i + 1;
                         hasher.input(hashinput.clone());
@@ -340,7 +340,7 @@ macro_rules! curve_impl {
 
                         // hash to the imaginary part of x-coord
                         // format the input to the hash
-                        let mut hasher = sha2::Sha512::new();
+                        let mut hasher = sha2::Sha384::new();
                         hashinput[0] = i.clone();
                         i = i + 1;
                         hasher.input(hashinput.clone());
