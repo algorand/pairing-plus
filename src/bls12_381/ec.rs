@@ -830,12 +830,14 @@ macro_rules! curve_impl {
 }
 
 pub mod g1 {
+    use super::super::super::{
+        CurveAffine, CurveProjective, EncodedPoint, Engine, GroupDecodingError,
+    };
     use super::super::{Bls12, Fq, Fq12, FqRepr, Fr, FrRepr};
     use super::g2::G2Affine;
     use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
     use rand::{Rand, Rng};
     use std::fmt;
-    use {CurveAffine, CurveProjective, EncodedPoint, Engine, GroupDecodingError};
 
     curve_impl!(
         "G1",
@@ -1497,12 +1499,14 @@ pub mod g1 {
 }
 
 pub mod g2 {
+    use super::super::super::{
+        CurveAffine, CurveProjective, EncodedPoint, Engine, GroupDecodingError,
+    };
     use super::super::{Bls12, Fq, Fq12, Fq2, FqRepr, Fr, FrRepr};
     use super::g1::G1Affine;
     use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
     use rand::{Rand, Rng};
     use std::fmt;
-    use {CurveAffine, CurveProjective, EncodedPoint, Engine, GroupDecodingError};
 
     curve_impl!(
         "G2",

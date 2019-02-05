@@ -16,6 +16,7 @@ repository = "https://github.com/ebfull/pairing"
 
 
 
+#edition = "2018"
 
 [dependencies]
 rand = "0.4"
