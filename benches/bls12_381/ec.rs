@@ -149,7 +149,6 @@ mod g1 {
 
         let mut count = 0;
         b.iter(|| {
-            //let ref input_str = &v[count];
             let tmp = G1Affine::hash_to_e1(v[count].as_str().to_string());
             count = (count + 1) % SAMPLES;
             tmp
@@ -170,7 +169,6 @@ mod g1 {
 
         let mut count = 0;
         b.iter(|| {
-            //let ref input_str = &v[count];
             let tmp = G1Affine::hash_to_g1(v[count].as_str().to_string());
             count = (count + 1) % SAMPLES;
             tmp

@@ -160,6 +160,11 @@ macro_rules! curve_impl {
                 }
             }
 
+            // this function assumes the point is already on the curve
+            // it checks if the point is in the correct group
+            pub fn membership_check(&self)-> bool{
+                self.is_in_correct_subgroup_assuming_on_curve()
+            }
             fn is_in_correct_subgroup_assuming_on_curve(&self) -> bool {
                 self.mul($scalarfield::char()).is_zero()
             }
