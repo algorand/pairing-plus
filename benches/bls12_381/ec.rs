@@ -23,7 +23,6 @@ mod g1 {
         });
     }
 
-
     #[bench]
     fn bench_g1_mul_assign_sec(b: &mut ::test::Bencher) {
         const SAMPLES: usize = 1000;
@@ -38,6 +37,25 @@ mod g1 {
         b.iter(|| {
             let mut tmp = v[count].0;
             tmp.mul_assign_sec(v[count].1);
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
+
+    #[bench]
+    fn bench_g1_mul_cofactor(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let v: Vec<G1Affine> = (0..SAMPLES)
+            .map(|_| (G1::rand(&mut rng)).into_affine())
+            .collect();
+
+        let mut count = 0;
+        b.iter(|| {
+            let tmp = v[count];
+            tmp.scale_by_cofactor();
             count = (count + 1) % SAMPLES;
             tmp
         });
@@ -116,6 +134,48 @@ mod g1 {
             tmp
         });
     }
+    #[bench]
+    fn hash_to_e1(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
+
+        let mut v: Vec<String> = Vec::new();
+        for _i in 0..SAMPLES {
+            let s = rand::thread_rng()
+                .gen_ascii_chars()
+                .take(10)
+                .collect::<String>();
+            v.push(s);
+        }
+
+        let mut count = 0;
+        b.iter(|| {
+            //let ref input_str = &v[count];
+            let tmp = G1Affine::hash_to_e1(v[count].as_str().to_string());
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
+    #[bench]
+    fn hash_to_g1(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
+
+        let mut v: Vec<String> = Vec::new();
+        for _i in 0..SAMPLES {
+            let s = rand::thread_rng()
+                .gen_ascii_chars()
+                .take(10)
+                .collect::<String>();
+            v.push(s);
+        }
+
+        let mut count = 0;
+        b.iter(|| {
+            //let ref input_str = &v[count];
+            let tmp = G1Affine::hash_to_g1(v[count].as_str().to_string());
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
 
 }
 
@@ -144,7 +204,6 @@ mod g2 {
         });
     }
 
-
     #[bench]
     fn bench_g2_mul_assign_sec(b: &mut ::test::Bencher) {
         const SAMPLES: usize = 1000;
@@ -159,6 +218,25 @@ mod g2 {
         b.iter(|| {
             let mut tmp = v[count].0;
             tmp.mul_assign_sec(v[count].1);
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
+
+    #[bench]
+    fn bench_g2_mul_cofactor(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let v: Vec<G2Affine> = (0..SAMPLES)
+            .map(|_| (G2::rand(&mut rng)).into_affine())
+            .collect();
+
+        let mut count = 0;
+        b.iter(|| {
+            let tmp = v[count];
+            tmp.scale_by_cofactor();
             count = (count + 1) % SAMPLES;
             tmp
         });
@@ -239,4 +317,48 @@ mod g2 {
         });
     }
 
+    #[bench]
+    fn hash_to_e2(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
+
+        let mut v: Vec<String> = Vec::new();
+        for _i in 0..SAMPLES {
+            let s = rand::thread_rng()
+                .gen_ascii_chars()
+                .take(10)
+                .collect::<String>();
+            v.push(s);
+        }
+
+        let mut count = 0;
+        b.iter(|| {
+            //let ref input_str = &v[count];
+            let tmp = G2Affine::hash_to_e2(v[count].as_str().to_string());
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
+
+
+    #[bench]
+    fn hash_to_g2(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
+
+        let mut v: Vec<String> = Vec::new();
+        for _i in 0..SAMPLES {
+            let s = rand::thread_rng()
+                .gen_ascii_chars()
+                .take(10)
+                .collect::<String>();
+            v.push(s);
+        }
+
+        let mut count = 0;
+        b.iter(|| {
+            //let ref input_str = &v[count];
+            let tmp = G2Affine::hash_to_g2(v[count].as_str().to_string());
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
 }

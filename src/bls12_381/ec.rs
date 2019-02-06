@@ -237,7 +237,6 @@ macro_rules! curve_impl {
 
                 // Interpret as Fq element.
                 let x = Fq::from_repr(x).unwrap();
-
                 G1Affine::get_point_from_x(x, greatest)
             }
 
@@ -266,8 +265,12 @@ macro_rules! curve_impl {
                         estr.clone_from_slice(&hashresult[0..48]);
 
                         // convert the first 48 bytes to a potential curve point
-                        let e1point = Self::cast_string_to_e1(estr).unwrap();
+                        let res = Self::cast_string_to_e1(estr);
+                        if res == None {
+                            continue;
+                        };
 
+                        let e1point = res.unwrap();
                         if e1point.is_zero() {
                             // return a 0 point after 128 unsuccessful tries
                             // this should never happen in practise
@@ -350,8 +353,12 @@ macro_rules! curve_impl {
                         x[48..].clone_from_slice(&hashresult[0..48]);
 
                         // convert the whole 96 bytes to a potential curve point
-                        let e2point = Self::cast_string_to_e2(x).unwrap();
+                        let res = Self::cast_string_to_e2(x);
+                        if res == None {
+                            continue;
+                        };
 
+                        let e2point = res.unwrap();
                         if e2point.is_zero() {
                             // return a 0 point after 128 unsuccessful tries
                             // this should never happen in practise
