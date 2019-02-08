@@ -29,9 +29,7 @@ mod g1 {
 
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
-        let v: Vec<G1> = (0..SAMPLES)
-            .map(|_| G1::rand(&mut rng))
-            .collect();
+        let v: Vec<G1> = (0..SAMPLES).map(|_| G1::rand(&mut rng)).collect();
 
         let mut count = 0;
         b.iter(|| {
@@ -47,14 +45,15 @@ mod g1 {
 
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
-        let v: Vec<(G1, Fr)> = (0..SAMPLES)
-            .map(|_| (G1::rand(&mut rng), Fr::rand(&mut rng)))
-            .collect();
+        // mul_assign_sec ensures constant time for a same base point
+        // and various scalars
+        let p = G1::rand(&mut rng);
+        let v: Vec<Fr> = (0..SAMPLES).map(|_| Fr::rand(&mut rng)).collect();
 
         let mut count = 0;
         b.iter(|| {
-            let mut tmp = v[count].0;
-            tmp.mul_assign_sec(v[count].1);
+            let mut tmp = p.clone();
+            tmp.mul_assign_sec(v[count]);
             count = (count + 1) % SAMPLES;
             tmp
         });
@@ -226,9 +225,7 @@ mod g2 {
 
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
-        let v: Vec<G2> = (0..SAMPLES)
-            .map(|_| G2::rand(&mut rng))
-            .collect();
+        let v: Vec<G2> = (0..SAMPLES).map(|_| G2::rand(&mut rng)).collect();
 
         let mut count = 0;
         b.iter(|| {
@@ -243,15 +240,13 @@ mod g2 {
         const SAMPLES: usize = 1000;
 
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
-
-        let v: Vec<(G2, Fr)> = (0..SAMPLES)
-            .map(|_| (G2::rand(&mut rng), Fr::rand(&mut rng)))
-            .collect();
+        let p: G2 = G2::rand(&mut rng);
+        let v: Vec<Fr> = (0..SAMPLES).map(|_| Fr::rand(&mut rng)).collect();
 
         let mut count = 0;
         b.iter(|| {
-            let mut tmp = v[count].0;
-            tmp.mul_assign_sec(v[count].1);
+            let mut tmp = p.clone();
+            tmp.mul_assign_sec(v[count]);
             count = (count + 1) % SAMPLES;
             tmp
         });
@@ -372,7 +367,6 @@ mod g2 {
             tmp
         });
     }
-
 
     #[bench]
     fn hash_to_g2(b: &mut ::test::Bencher) {
