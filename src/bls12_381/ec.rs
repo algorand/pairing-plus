@@ -1557,6 +1557,32 @@ pub mod g1 {
         ::tests::curve::curve_tests::<G1>();
     }
     #[test]
+    fn test_g1_mul_sec() {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        const SAMPLES: usize = 100;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        // mul_assign_sec ensures constant time for a same base point
+        // and various scalars
+        let v: Vec<(G1, Fr)> = (0..SAMPLES)
+            .map(|_| ((G1::rand(&mut rng)), Fr::rand(&mut rng)))
+            .collect();
+
+        for i in 0..SAMPLES {
+            let mut tmp = v[i].0.clone();
+            tmp.mul_assign(v[i].1.clone());
+            let mut t1 = v[i].0.clone();
+            t1.mul_assign_sec(v[i].1.clone());
+
+            assert_eq!(
+                t1.into_affine(),
+                tmp.into_affine(),
+                "mul_sec is not correct"
+            );
+        }
+    }
+    #[test]
     fn test_g1_mul_shamir() {
         use rand::{Rand, SeedableRng, XorShiftRng};
         const SAMPLES: usize = 100;
@@ -1981,6 +2007,32 @@ pub mod g2 {
 
             i += 1;
             x.add_assign(&Fq2::one());
+        }
+    }
+    #[test]
+    fn test_g2_mul_sec() {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        const SAMPLES: usize = 100;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        // mul_assign_sec ensures constant time for a same base point
+        // and various scalars
+        let v: Vec<(G2, Fr)> = (0..SAMPLES)
+            .map(|_| ((G2::rand(&mut rng)), Fr::rand(&mut rng)))
+            .collect();
+
+        for i in 0..SAMPLES {
+            let mut tmp = v[i].0.clone();
+            tmp.mul_assign(v[i].1.clone());
+            let mut t1 = v[i].0.clone();
+            t1.mul_assign_sec(v[i].1.clone());
+
+            assert_eq!(
+                t1.into_affine(),
+                tmp.into_affine(),
+                "mul_sec is not correct"
+            );
         }
     }
     #[test]
