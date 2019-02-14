@@ -122,7 +122,7 @@ fn bench_pairing_product(b: &mut ::test::Bencher) {
         .collect();
     let mut count = 0;
     b.iter(|| {
-        let tmp = Bls12::pairing_prodcut(v[count].0, v[count].2, v[count].1, v[count].3);
+        let tmp = Bls12::pairing_product(v[count].0, v[count].2, v[count].1, v[count].3);
         count = (count + 1) % SAMPLES;
         tmp
     });

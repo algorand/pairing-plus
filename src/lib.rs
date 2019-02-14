@@ -99,7 +99,7 @@ pub trait Engine: ScalarEngine {
         .unwrap()
     }
 
-    fn pairing_prodcut<G1, G2>(p1: G1, q1: G2, p2: G1, q2: G2) -> Self::Fqk
+    fn pairing_product<G1, G2>(p1: G1, q1: G2, p2: G1, q2: G2) -> Self::Fqk
     where
         G1: Into<Self::G1Affine>,
         G2: Into<Self::G2Affine>,

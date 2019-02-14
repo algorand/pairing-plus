@@ -14,7 +14,7 @@ fn test_pairing_product() {
         let t2 = Bls12::pairing(p2, q2);
         t1.mul_assign(&t2);
 
-        let t = Bls12::pairing_prodcut(p1, q1, p2, q2);
+        let t = Bls12::pairing_product(p1, q1, p2, q2);
         assert_eq!(t1, t, "pairing product incorrect");
     }
 }
