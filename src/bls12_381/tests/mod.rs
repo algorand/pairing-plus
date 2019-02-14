@@ -2,6 +2,24 @@ use super::*;
 use *;
 
 #[test]
+fn test_pairing_product() {
+    use rand::{Rand, SeedableRng, XorShiftRng};
+    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    for _ in 0..100 {
+        let p1 = G1::rand(&mut rng);
+        let p2 = G1::rand(&mut rng);
+        let q1 = G2::rand(&mut rng);
+        let q2 = G2::rand(&mut rng);
+        let mut t1 = Bls12::pairing(p1, q1);
+        let t2 = Bls12::pairing(p2, q2);
+        t1.mul_assign(&t2);
+
+        let t = Bls12::pairing_prodcut(p1, q1, p2, q2);
+        assert_eq!(t1, t, "pairing product incorrect");
+    }
+}
+
+#[test]
 fn test_pairing_result_against_relic() {
     /*
     Sent to me from Diego Aranha (author of RELIC library):

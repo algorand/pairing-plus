@@ -98,6 +98,21 @@ pub trait Engine: ScalarEngine {
         ))
         .unwrap()
     }
+
+    fn pairing_prodcut<G1, G2>(p1: G1, q1: G2, p2: G1, q2: G2) -> Self::Fqk
+    where
+        G1: Into<Self::G1Affine>,
+        G2: Into<Self::G2Affine>,
+    {
+        Self::final_exponentiation(&Self::miller_loop(
+            [
+                (&(p1.into().prepare()), &(q1.into().prepare())),
+                (&(p2.into().prepare()), &(q2.into().prepare())),
+            ]
+            .into_iter(),
+        ))
+        .unwrap()
+    }
 }
 
 /// Projective representation of an elliptic curve point guaranteed to be
