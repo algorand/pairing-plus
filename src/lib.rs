@@ -172,6 +172,15 @@ pub trait CurveProjective:
     /// Recommends a wNAF window size given the number of scalars you intend to multiply
     /// a base by. Always returns a number between 2 and 22, inclusive.
     fn recommended_wnaf_for_num_scalars(num_scalars: usize) -> usize;
+
+    // multiplication with shamir's Trick
+    // computer s1 * p1 + s2 * p2 simultaneously
+    fn mul_shamir<S: Into<<Self::Scalar as PrimeField>::Repr>>(
+        p1: Self,
+        p2: Self,
+        s1: S,
+        s2: S,
+    ) -> Self;
 }
 
 /// Affine representation of an elliptic curve point guaranteed to be

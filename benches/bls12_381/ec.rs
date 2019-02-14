@@ -5,6 +5,32 @@ mod g1 {
     use rand::{Rand, Rng, SeedableRng, XorShiftRng};
 
     #[bench]
+    fn bench_g1_mul_shamir(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        // mul_assign_sec ensures constant time for a same base point
+        // and various scalars
+        let v: Vec<(G1, G1, Fr, Fr)> = (0..SAMPLES)
+            .map(|_| {
+                (
+                    (G1::rand(&mut rng)),
+                    (G1::rand(&mut rng)),
+                    Fr::rand(&mut rng),
+                    Fr::rand(&mut rng),
+                )
+            })
+            .collect();
+        let mut count = 0;
+        b.iter(|| {
+            let tmp = CurveProjective::mul_shamir(v[count].0, v[count].1, v[count].2, v[count].3);
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
+
+    #[bench]
     fn bench_g1_mul_assign(b: &mut ::test::Bencher) {
         const SAMPLES: usize = 1000;
 
@@ -199,6 +225,32 @@ mod g2 {
     use pairing::CurveAffine;
     use pairing::CurveProjective;
     use rand::{Rand, Rng, SeedableRng, XorShiftRng};
+
+    #[bench]
+    fn bench_g2_mul_shamir(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        // mul_assign_sec ensures constant time for a same base point
+        // and various scalars
+        let v: Vec<(G2, G2, Fr, Fr)> = (0..SAMPLES)
+            .map(|_| {
+                (
+                    (G2::rand(&mut rng)),
+                    (G2::rand(&mut rng)),
+                    Fr::rand(&mut rng),
+                    Fr::rand(&mut rng),
+                )
+            })
+            .collect();
+        let mut count = 0;
+        b.iter(|| {
+            let tmp = CurveProjective::mul_shamir(v[count].0, v[count].1, v[count].2, v[count].3);
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
 
     #[bench]
     fn bench_g2_mul_assign(b: &mut ::test::Bencher) {

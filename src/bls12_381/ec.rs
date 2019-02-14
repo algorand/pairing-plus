@@ -784,6 +784,54 @@ macro_rules! curve_impl {
             fn recommended_wnaf_for_num_scalars(num_scalars: usize) -> usize {
                 Self::empirical_recommended_wnaf_for_num_scalars(num_scalars)
             }
+
+            // multiplication with shamir's Trick
+            // computer s1 * p1 + s2 * p2 simultaneously
+            fn mul_shamir<S: Into<<Self::Scalar as PrimeField>::Repr>>(
+                p1: Self,
+                p2: Self,
+                s1: S,
+                s2: S,
+            ) -> Self {
+                let mut tmp = p1.clone();
+                tmp.add_assign(&p2.clone());
+                let mut res = Self::zero();
+                let mut itera = BitIterator::new(s1.into());
+                let mut iterb = BitIterator::new(s2.into());
+
+                loop {
+                    let a = itera.next();
+                    let b = iterb.next();
+                    if a == None && b == None {
+                        break;
+                    } else {
+                        res.double();
+                        let a = {
+                            if a == None {
+                                false
+                            } else {
+                                a.unwrap()
+                            }
+                        };
+                        let b = {
+                            if b == None {
+                                false
+                            } else {
+                                b.unwrap()
+                            }
+                        };
+                        if a && b {
+                            res.add_assign(&tmp);
+                        } else if a && !b {
+                            res.add_assign(&p1);
+                        } else if !a && b {
+                            res.add_assign(&p2);
+                        }
+                    }
+                }
+
+                res
+            }
         }
 
         // The affine point X, Y is represented in the jacobian
@@ -1508,6 +1556,40 @@ pub mod g1 {
     fn g1_curve_tests() {
         ::tests::curve::curve_tests::<G1>();
     }
+    #[test]
+    fn test_g1_mul_shamir() {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        const SAMPLES: usize = 100;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        // mul_assign_sec ensures constant time for a same base point
+        // and various scalars
+        let v: Vec<(G1, G1, Fr, Fr)> = (0..SAMPLES)
+            .map(|_| {
+                (
+                    (G1::rand(&mut rng)),
+                    (G1::rand(&mut rng)),
+                    Fr::rand(&mut rng),
+                    Fr::rand(&mut rng),
+                )
+            })
+            .collect();
+
+        for i in 0..SAMPLES {
+            let tmp = CurveProjective::mul_shamir(v[i].0, v[i].1, v[i].2, v[i].3);
+            let mut t1 = v[i].0;
+            let mut t2 = v[i].1;
+            t1.mul_assign(v[i].2);
+            t2.mul_assign(v[i].3);
+            t1.add_assign(&t2);
+            assert_eq!(
+                t1.into_affine(),
+                tmp.into_affine(),
+                "mul_shamir is not correct"
+            );
+        }
+    }
 }
 
 pub mod g2 {
@@ -1901,7 +1983,41 @@ pub mod g2 {
             x.add_assign(&Fq2::one());
         }
     }
+    #[test]
+    fn test_g2_mul_shamir() {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        const SAMPLES: usize = 100;
 
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        // mul_assign_sec ensures constant time for a same base point
+        // and various scalars
+        let v: Vec<(G2, G2, Fr, Fr)> = (0..SAMPLES)
+            .map(|_| {
+                (
+                    (G2::rand(&mut rng)),
+                    (G2::rand(&mut rng)),
+                    Fr::rand(&mut rng),
+                    Fr::rand(&mut rng),
+                )
+            })
+            .collect();
+
+        for i in 0..SAMPLES {
+            let tmp = CurveProjective::mul_shamir(v[i].0, v[i].1, v[i].2, v[i].3);
+            let mut t1 = v[i].0;
+            let mut t2 = v[i].1;
+            t1.mul_assign(v[i].2);
+            t2.mul_assign(v[i].3);
+            t1.add_assign(&t2);
+            //    t1.double();
+            assert_eq!(
+                t1.into_affine(),
+                tmp.into_affine(),
+                "mul_shamir is not correct"
+            );
+        }
+    }
     #[test]
     fn g2_test_is_valid() {
         // Reject point on isomorphic twist (b = 3 * (u + 1))
