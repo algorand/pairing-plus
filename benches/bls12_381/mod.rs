@@ -106,19 +106,20 @@ fn bench_pairing_full(b: &mut ::test::Bencher) {
     });
 }
 
-
 #[bench]
 fn bench_pairing_product(b: &mut ::test::Bencher) {
     use rand::{Rand, SeedableRng, XorShiftRng};
     let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
     const SAMPLES: usize = 1000;
     let v: Vec<(G1, G1, G2, G2)> = (0..SAMPLES)
-        .map(
-            |_| ((G1::rand(&mut rng)),
-            (G1::rand(&mut rng)),
-            (G2::rand(&mut rng)),
-            (G2::rand(&mut rng)))
-        )
+        .map(|_| {
+            (
+                (G1::rand(&mut rng)),
+                (G1::rand(&mut rng)),
+                (G2::rand(&mut rng)),
+                (G2::rand(&mut rng)),
+            )
+        })
         .collect();
     let mut count = 0;
     b.iter(|| {

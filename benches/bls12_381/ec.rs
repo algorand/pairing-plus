@@ -10,8 +10,6 @@ mod g1 {
 
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
-        // mul_assign_sec ensures constant time for a same base point
-        // and various scalars
         let v: Vec<(G1, G1, Fr, Fr)> = (0..SAMPLES)
             .map(|_| {
                 (
@@ -232,8 +230,6 @@ mod g2 {
 
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
-        // mul_assign_sec ensures constant time for a same base point
-        // and various scalars
         let v: Vec<(G2, G2, Fr, Fr)> = (0..SAMPLES)
             .map(|_| {
                 (

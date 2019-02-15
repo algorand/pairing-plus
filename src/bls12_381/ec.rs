@@ -248,45 +248,43 @@ macro_rules! curve_impl {
             fn hash_to_e1(input: String) -> super::G1Affine {
                 use sha2::Digest;
 
-                // build the hash input: [ index | s ]
-                // where index starts from 0 and is incremetal
-                let mut t: String = " ".to_string();
-                t.push_str(&input);
+                let mut hashinput: Vec<u8> = input.into_bytes();
 
-                let mut i = 0;
+                // build the hash input: [ s | index ]
+                // where index starts from 0 and is incremetal
+                let mut index = 0;
                 let mut estr: [u8; 48] = [0; 48];
 
-                unsafe {
-                    let hashinput = t.as_mut_vec();
-                    let point = loop {
-                        // format the input to the hash
-                        let mut hasher = sha2::Sha384::new();
-                        hashinput[0] = i.clone();
-                        i = i + 1;
-                        hasher.input(hashinput.clone());
+                loop {
+                    // format the input to the hash
+                    // use Sha384 since the bit length of x is approx 384
+                    let mut hasher = sha2::Sha384::new();
+                    // increase the first byte of the hash input for each iteration
+                    //            hashinput[0] = i.clone();
+                    hashinput.push(index.clone());
+                    index += 1;
+                    hasher.input(hashinput.clone());
+                    hashinput.pop();
+                    // obtain the output
+                    let hashresult = hasher.result();
+                    estr.clone_from_slice(&hashresult[0..48]);
 
-                        // obtain the output
-                        let hashresult = hasher.result();
-                        estr.clone_from_slice(&hashresult[0..48]);
-
-                        // convert the first 48 bytes to a potential curve point
-                        let res = Self::cast_string_to_e1(estr);
-                        if res == None {
-                            continue;
-                        };
-
-                        let e1point = res.unwrap();
-                        if e1point.is_zero() {
-                            // return a 0 point after 128 unsuccessful tries
-                            // this should never happen in practise
-                            if i > 128 {
-                                break super::G1Affine::zero();
-                            }
-                        } else {
-                            break e1point;
-                        }
+                    // convert the first 48 bytes to a potential curve point
+                    let res = Self::cast_string_to_e1(estr);
+                    if res == None {
+                        continue;
                     };
-                    point
+
+                    let e1point = res.unwrap();
+                    if e1point.is_zero() {
+                        // return a 0 point after 128 unsuccessful tries
+                        // this should never happen in practice
+                        if index > 128 {
+                            break super::G1Affine::zero();
+                        }
+                    } else {
+                        break e1point;
+                    }
                 }
             }
 
@@ -324,57 +322,55 @@ macro_rules! curve_impl {
             fn hash_to_e2(input: String) -> super::G2Affine {
                 use sha2::Digest;
 
-                // build the hash input: [ index | s ]
+                // build the hash input: [ s | index ]
                 // where index starts from 0 and is incremetal
-                let mut t: String = " ".to_string();
-                t.push_str(&input);
+                //        let mut t: String = " ".to_string();
+                //        t.push_str(&input);
 
-                let mut i = 0;
+                let mut hashinput: Vec<u8> = input.into_bytes();
+                let mut index = 0;
                 let mut x: [u8; 96] = [0; 96];
 
-                unsafe {
-                    let hashinput = t.as_mut_vec();
-                    let point = loop {
-                        // hash to the real part of x-coord
-                        // format the input to the hash
-                        let mut hasher = sha2::Sha384::new();
-                        hashinput[0] = i.clone();
-                        i = i + 1;
-                        hasher.input(hashinput.clone());
+                loop {
+                    // hash to the real part of x-coord
+                    // format the input to the hash
+                    let mut hasher = sha2::Sha384::new();
+                    hashinput.push(index.clone());
+                    index += 1;
+                    hasher.input(hashinput.clone());
+                    hashinput.pop();
+                    // obtain the output
+                    let hashresult = hasher.result();
+                    x[..48].clone_from_slice(&hashresult[0..48]);
 
-                        // obtain the output
-                        let hashresult = hasher.result();
-                        x[..48].clone_from_slice(&hashresult[0..48]);
+                    // hash to the imaginary part of x-coord
+                    // format the input to the hash
+                    let mut hasher = sha2::Sha384::new();
+                    hashinput.push(index.clone());
+                    index += 1;
+                    hasher.input(hashinput.clone());
+                    hashinput.pop();
 
-                        // hash to the imaginary part of x-coord
-                        // format the input to the hash
-                        let mut hasher = sha2::Sha384::new();
-                        hashinput[0] = i.clone();
-                        i = i + 1;
-                        hasher.input(hashinput.clone());
+                    // obtain the output
+                    let hashresult = hasher.result();
+                    x[48..].clone_from_slice(&hashresult[0..48]);
 
-                        // obtain the output
-                        let hashresult = hasher.result();
-                        x[48..].clone_from_slice(&hashresult[0..48]);
-
-                        // convert the whole 96 bytes to a potential curve point
-                        let res = Self::cast_string_to_e2(x);
-                        if res == None {
-                            continue;
-                        };
-
-                        let e2point = res.unwrap();
-                        if e2point.is_zero() {
-                            // return a 0 point after 128 unsuccessful tries
-                            // this should never happen in practise
-                            if i >= 254 {
-                                break super::G2Affine::zero();
-                            }
-                        } else {
-                            break e2point;
-                        }
+                    // convert the whole 96 bytes to a potential curve point
+                    let res = Self::cast_string_to_e2(x);
+                    if res == None {
+                        continue;
                     };
-                    point
+
+                    let e2point = res.unwrap();
+                    if e2point.is_zero() {
+                        // return a 0 point after 128 unsuccessful tries
+                        // this should never happen in practise
+                        if index >= 254 {
+                            break super::G2Affine::zero();
+                        }
+                    } else {
+                        break e2point;
+                    }
                 }
             }
 
