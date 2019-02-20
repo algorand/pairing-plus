@@ -1,27 +1,33 @@
-# pairing [![Crates.io](https://img.shields.io/crates/v/pairing.svg)](https://crates.io/crates/pairing) #
+# Pairing-fork
 
-This is a Rust crate for using pairing-friendly elliptic curves. Currently, only the [BLS12-381](https://z.cash/blog/new-snark-curve.html) construction is implemented.
+TL;DR: This is a fork of the [pairing library](https://github.com/zkcrypto/pairing), with additional features that make the library easy to use for BLS signature scheme.
+The exact GitDiff is available [here](https://github.com/algorand/pairing-fork/compare/183a64b08e9dc7067f78624ec161371f1829623e...master)
 
-## [Documentation](https://docs.rs/pairing/)
 
-Bring the `pairing` crate into your project just as you normally would.
+## Details of changes
 
-## Security Warnings
+### Dependencies
 
-This library does not make any guarantees about constant-time operations, memory access patterns, or resistance to side-channel attacks.
+* SHA2 library
 
-## License
+### Additional functions
 
-Licensed under either of
+* cast strings to and from E1/E2
 
- * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
- * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+* hash to E1/E2
+   * Based on SHA384
+   * Try-and-increment method
 
-at your option.
+* hash to G1/E2
+   * hash to E1/E2 than multiply by co-factor
 
-### Contribution
+* Montgomery multiplications for E1/E2
+   * number of doublings and additions are constant regardless the scalar
 
-Unless you explicitly state otherwise, any contribution intentionally
-submitted for inclusion in the work by you, as defined in the Apache-2.0
-license, shall be dual licensed as above, without any additional terms or
-conditions.
+* Shamir's trick: simultaneous 2 multiplications
+
+### Wrappers of existing functions
+
+* membership testing
+
+* two pairing product operation
