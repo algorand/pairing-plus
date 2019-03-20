@@ -245,10 +245,10 @@ macro_rules! curve_impl {
                 G1Affine::get_point_from_x(x, greatest)
             }
 
-            fn hash_to_e1(input: String) -> super::G1Affine {
+            fn hash_to_e1(input: &[u8]) -> super::G1Affine {
                 use sha2::Digest;
 
-                let mut hashinput: Vec<u8> = input.into_bytes();
+                let mut hashinput: Vec<u8> = input.to_vec();
 
                 // build the hash input: [ s | index ]
                 // where index starts from 0 and is incremetal
@@ -288,7 +288,7 @@ macro_rules! curve_impl {
                 }
             }
 
-            fn hash_to_g1(input: String) -> super::G1 {
+            fn hash_to_g1(input: &[u8]) -> super::G1 {
                 let point = Self::hash_to_e1(input);
                 point.scale_by_cofactor()
             }
@@ -319,7 +319,7 @@ macro_rules! curve_impl {
                 G2Affine::get_point_from_x(x, greatest)
             }
 
-            fn hash_to_e2(input: String) -> super::G2Affine {
+            fn hash_to_e2(input: &[u8]) -> super::G2Affine {
                 use sha2::Digest;
 
                 // build the hash input: [ s | index ]
@@ -327,7 +327,7 @@ macro_rules! curve_impl {
                 //        let mut t: String = " ".to_string();
                 //        t.push_str(&input);
 
-                let mut hashinput: Vec<u8> = input.into_bytes();
+                let mut hashinput: Vec<u8> = input.to_vec();
                 let mut index = 0;
                 let mut x: [u8; 96] = [0; 96];
 
@@ -374,7 +374,7 @@ macro_rules! curve_impl {
                 }
             }
 
-            fn hash_to_g2(input: String) -> super::G2 {
+            fn hash_to_g2(input: &[u8]) -> super::G2 {
                 let point = Self::hash_to_e2(input);
                 point.scale_by_cofactor()
             }

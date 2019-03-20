@@ -190,7 +190,7 @@ mod g1 {
 
         let mut count = 0;
         b.iter(|| {
-            let tmp = G1Affine::hash_to_e1(v[count].as_str().to_string());
+            let tmp = G1Affine::hash_to_e1(v[count].as_bytes());
             count = (count + 1) % SAMPLES;
             tmp
         });
@@ -210,7 +210,7 @@ mod g1 {
 
         let mut count = 0;
         b.iter(|| {
-            let tmp = G1Affine::hash_to_g1(v[count].as_str().to_string());
+            let tmp = G1Affine::hash_to_g1(v[count].as_bytes());
             count = (count + 1) % SAMPLES;
             tmp
         });
@@ -410,7 +410,7 @@ mod g2 {
         let mut count = 0;
         b.iter(|| {
             //let ref input_str = &v[count];
-            let tmp = G2Affine::hash_to_e2(v[count].as_str().to_string());
+            let tmp = G2Affine::hash_to_e2(v[count].as_bytes());
             count = (count + 1) % SAMPLES;
             tmp
         });
@@ -432,7 +432,7 @@ mod g2 {
         let mut count = 0;
         b.iter(|| {
             //let ref input_str = &v[count];
-            let tmp = G2Affine::hash_to_g2(v[count].as_str().to_string());
+            let tmp = G2Affine::hash_to_g2(v[count].as_bytes());
             count = (count + 1) % SAMPLES;
             tmp
         });

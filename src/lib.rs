@@ -263,12 +263,12 @@ pub trait CurveAffine:
     // the current implementation uses try_and_increment method with
     // cast_string_to_e1 subroutine
     // not a constant time implementation
-    fn hash_to_e1(input: String) -> bls12_381::G1Affine;
+    fn hash_to_e1(input: &[u8]) -> bls12_381::G1Affine;
 
     // this function hashes a string into a G1 element (gauranteed)
     // uses hash_to_e1 subroutine
     // not a constant time implementation
-    fn hash_to_g1(input: String) -> bls12_381::G1;
+    fn hash_to_g1(input: &[u8]) -> bls12_381::G1;
 
     // this function casts a compressed string into an element on E2
     // it may fail if the compressed string does not correspond to
@@ -279,12 +279,12 @@ pub trait CurveAffine:
     // the current implementation uses try_and_increment method with
     // cast_string_to_e2 subroutine
     // not a constant time implementation
-    fn hash_to_e2(input: String) -> bls12_381::G2Affine;
+    fn hash_to_e2(input: &[u8]) -> bls12_381::G2Affine;
 
     // this function hashes a string into a G2 element (gauranteed)
     // uses hash_to_e2 subroutine
     // not a constant time implementation
-    fn hash_to_g2(input: String) -> bls12_381::G2;
+    fn hash_to_g2(input: &[u8]) -> bls12_381::G2;
 }
 
 /// An encoded elliptic curve point, which should essentially wrap a `[u8; N]`.
