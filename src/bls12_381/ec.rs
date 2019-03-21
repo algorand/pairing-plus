@@ -225,53 +225,35 @@ macro_rules! curve_impl {
                 (*self).into()
             }
 
-            fn cast_string_to_e1(s: [u8; 48]) -> Option<super::G1Affine> {
-                let s: &mut [u8; 48] = &mut s.clone();
-
-                let greatest = s[0] & (1 << 5) != 0;
-
-                // Unset the four most significant bits.
-                s[0] &= 0x0f;
-
-                let mut x = FqRepr([0; 6]);
-
-                {
-                    let mut reader = &s[..];
-                    x.read_be(&mut reader).unwrap();
-                }
-
-                // Interpret as Fq element.
-                let x = Fq::from_repr(x).unwrap();
-                G1Affine::get_point_from_x(x, greatest)
+            fn cast_string_to_e1(s: [u8; 48]) -> Result<super::G1Affine, GroupDecodingError> {
+                let mut encodedpoint: G1Compressed = EncodedPoint::empty();
+                encodedpoint.as_mut().clone_from_slice(&s);
+                encodedpoint.into_affine_unchecked()
             }
 
             fn hash_to_e1(input: &[u8]) -> super::G1Affine {
-                use sha2::Digest;
-
                 let mut hashinput: Vec<u8> = input.to_vec();
 
                 // build the hash input: [ s | index ]
                 // where index starts from 0 and is incremetal
                 let mut index = 0;
-                let mut estr: [u8; 48] = [0; 48];
-
+                let mut encodedpoint: G1Compressed = EncodedPoint::empty();
                 loop {
                     // format the input to the hash
                     // use Sha384 since the bit length of x is approx 384
                     let mut hasher = sha2::Sha384::new();
-                    // increase the first byte of the hash input for each iteration
-                    //            hashinput[0] = i.clone();
+                    // increase the last byte of the hash input for each iteration
                     hashinput.push(index.clone());
                     index += 1;
                     hasher.input(hashinput.clone());
                     hashinput.pop();
                     // obtain the output
-                    let hashresult = hasher.result();
-                    estr.clone_from_slice(&hashresult[0..48]);
-
+                    let mut hashresult = hasher.result();
+                    hashresult[0] = (hashresult[0] & 0x3f) + 128;
+                    encodedpoint.as_mut().copy_from_slice(&hashresult[0..48]);
                     // convert the first 48 bytes to a potential curve point
-                    let res = Self::cast_string_to_e1(estr);
-                    if res == None {
+                    let res = encodedpoint.into_affine_unchecked();
+                    if res.is_err() {
                         continue;
                     };
 
@@ -293,35 +275,13 @@ macro_rules! curve_impl {
                 point.scale_by_cofactor()
             }
 
-            fn cast_string_to_e2(s: [u8; 96]) -> Option<super::G2Affine> {
-                let s: &mut [u8; 96] = &mut s.clone();
-                let greatest = s[0] & (1 << 5) != 0;
-
-                // Unset the four most significant bits.
-                s[0] &= 0x0f;
-                s[48] &= 0x0f;
-                let mut x_c1 = FqRepr([0; 6]);
-                let mut x_c0 = FqRepr([0; 6]);
-
-                {
-                    let mut reader = &s[..];
-
-                    x_c1.read_be(&mut reader).unwrap();
-                    x_c0.read_be(&mut reader).unwrap();
-                }
-
-                // Interpret as Fq element.
-                let x = super::super::fq2::Fq2 {
-                    c0: Fq::from_repr(x_c0).unwrap(),
-                    c1: Fq::from_repr(x_c1).unwrap(),
-                };
-
-                G2Affine::get_point_from_x(x, greatest)
+            fn cast_string_to_e2(s: [u8; 96]) -> Result<super::G2Affine, GroupDecodingError> {
+                let mut encodedpoint: G2Compressed = EncodedPoint::empty();
+                encodedpoint.as_mut().clone_from_slice(&s);
+                encodedpoint.into_affine_unchecked()
             }
 
             fn hash_to_e2(input: &[u8]) -> super::G2Affine {
-                use sha2::Digest;
-
                 // build the hash input: [ s | index ]
                 // where index starts from 0 and is incremetal
                 //        let mut t: String = " ".to_string();
@@ -342,6 +302,7 @@ macro_rules! curve_impl {
                     // obtain the output
                     let hashresult = hasher.result();
                     x[..48].clone_from_slice(&hashresult[0..48]);
+                    x[0] = (x[0] & 0x3f) + 128;
 
                     // hash to the imaginary part of x-coord
                     // format the input to the hash
@@ -354,10 +315,12 @@ macro_rules! curve_impl {
                     // obtain the output
                     let hashresult = hasher.result();
                     x[48..].clone_from_slice(&hashresult[0..48]);
-
+                    x[48] = x[48] & 0x3f;
                     // convert the whole 96 bytes to a potential curve point
-                    let res = Self::cast_string_to_e2(x);
-                    if res == None {
+                    let mut encodedpoint: G2Compressed = EncodedPoint::empty();
+                    encodedpoint.as_mut().clone_from_slice(&x);
+                    let res = encodedpoint.into_affine_unchecked(); //Self::cast_string_to_e2(x);
+                    if res.is_err() {
                         continue;
                     };
 
@@ -891,8 +854,10 @@ pub mod g1 {
     };
     use super::super::{Bls12, Fq, Fq12, FqRepr, Fr, FrRepr};
     use super::g2::G2Affine;
+    use bls12_381::ec::g2::G2Compressed;
     use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
     use rand::{Rand, Rng};
+    use sha2::Digest;
     use std::fmt;
 
     curve_impl!(
@@ -1620,8 +1585,10 @@ pub mod g2 {
     };
     use super::super::{Bls12, Fq, Fq12, Fq2, FqRepr, Fr, FrRepr};
     use super::g1::G1Affine;
+    use bls12_381::ec::g1::G1Compressed;
     use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
     use rand::{Rand, Rng};
+    use sha2::Digest;
     use std::fmt;
 
     curve_impl!(

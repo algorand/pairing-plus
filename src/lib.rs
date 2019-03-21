@@ -257,7 +257,7 @@ pub trait CurveAffine:
     // this function casts a compressed string into an element on E1
     // it may fail if the compressed string does not correspond to
     // an E1 element
-    fn cast_string_to_e1(s: [u8; 48]) -> Option<bls12_381::G1Affine>;
+    fn cast_string_to_e1(s: [u8; 48]) -> Result<bls12_381::G1Affine, GroupDecodingError>;
 
     // this function hashes a string into an E1 element (not gauranteed on G1)
     // the current implementation uses try_and_increment method with
@@ -273,7 +273,7 @@ pub trait CurveAffine:
     // this function casts a compressed string into an element on E2
     // it may fail if the compressed string does not correspond to
     // an E2 element
-    fn cast_string_to_e2(s: [u8; 96]) -> Option<bls12_381::G2Affine>;
+    fn cast_string_to_e2(s: [u8; 96]) -> Result<bls12_381::G2Affine, GroupDecodingError>;
 
     // this function hashes a string into an E2 element (not gauranteed on G2)
     // the current implementation uses try_and_increment method with

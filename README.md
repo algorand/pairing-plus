@@ -12,8 +12,6 @@ The exact GitDiff is available [here](https://github.com/algorand/pairing-fork/c
 
 ### Additional functions
 
-* cast strings to and from E1/E2
-
 * hash to E1/E2
    * Based on SHA384
    * Try-and-increment method
@@ -27,6 +25,8 @@ The exact GitDiff is available [here](https://github.com/algorand/pairing-fork/c
 * Shamir's trick: simultaneous 2 multiplications
 
 ### Wrappers of existing functions
+
+* cast strings to and from E1/E2
 
 * membership testing
 
