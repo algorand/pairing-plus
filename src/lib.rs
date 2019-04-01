@@ -25,6 +25,7 @@ pub use self::wnaf::Wnaf;
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr, ScalarEngine, SqrtField};
 use std::error::Error;
 use std::fmt;
+
 /// An "engine" is a collection of types (fields, elliptic curve groups, etc.)
 /// with well-defined relationships. In particular, the G1/G2 curve groups are
 /// of prime order `r`, and are equipped with a bilinear pairing function.
@@ -264,6 +265,19 @@ pub trait CurveAffine:
     // cast_string_to_e1 subroutine
     // not a constant time implementation
     fn hash_to_e1(input: &[u8]) -> bls12_381::G1Affine;
+
+    // this function hashes a string into an G1 element
+    // ensures constant number of calls
+    // not a constant time implementation due to underly math
+    fn hash_to_g1_const(input: &[u8]) -> bls12_381::G1;
+
+    // subrouting of hash_to_g1_const
+    // uses Shallue-van de Woestijne encoding
+    // as described in Fouque-Tibouchi paper
+    fn g1_sw_encode(input: bls12_381::Fq) -> bls12_381::G1Affine;
+
+    // given x, compute x^3+b
+    fn rhs_g1(x: &bls12_381::Fq) -> bls12_381::Fq;
 
     // this function hashes a string into a G1 element (gauranteed)
     // uses hash_to_e1 subroutine

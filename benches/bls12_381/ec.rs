@@ -215,7 +215,26 @@ mod g1 {
             tmp
         });
     }
+    #[bench]
+    fn hash_to_g1_const(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
 
+        let mut v: Vec<String> = Vec::new();
+        for _i in 0..SAMPLES {
+            let s = rand::thread_rng()
+                .gen_ascii_chars()
+                .take(10)
+                .collect::<String>();
+            v.push(s);
+        }
+
+        let mut count = 0;
+        b.iter(|| {
+            let tmp = G1Affine::hash_to_g1_const(v[count].as_bytes());
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
 }
 
 mod g2 {

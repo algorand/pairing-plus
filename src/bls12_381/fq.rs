@@ -11,6 +11,9 @@ pub const B_COEFF: Fq = Fq(FqRepr([
     0x9d645513d83de7e,
 ]));
 
+pub const SQRT_NEG_THREE: &str = "1586958781458431025242759403266842894121773480562120986020912974854563298150952611241517463240701";
+pub const SQRT_NEG_THREE_MIN_ONE_DIV_TWO: &str="793479390729215512621379701633421447060886740281060493010456487427281649075476305620758731620350";
+
 // The generators of G1/G2 are computed by finding the lexicographically smallest valid x coordinate,
 // and its lexicographically smallest y coordinate and multiplying it by the cofactor such that the
 // result is nonzero.

@@ -627,3 +627,8 @@ fn test_g2_compressed_invalid_vectors() {
         }
     }
 }
+
+#[test]
+fn test_hash_to_g1_const() {
+    let _tmp = G1Affine::hash_to_g1_const("test".as_bytes());
+}

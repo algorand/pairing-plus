@@ -341,6 +341,118 @@ macro_rules! curve_impl {
                 let point = Self::hash_to_e2(input);
                 point.scale_by_cofactor()
             }
+
+            fn hash_to_g1_const(input: &[u8]) -> super::G1 {
+                let hashinput: Vec<u8> = input.to_vec();
+                let mut hasher = sha2::Sha256::new();
+                hasher.input(hashinput);
+                // obtain the output
+                let hashresult = hasher.result();
+                let mut seed: [u32; 4] = [0; 4];
+                for i in 0..4 {
+                    for j in 0..4 {
+                        seed[i] <<= 8;
+                        seed[i] += *&hashresult[i * 4 + j] as u32;
+                    }
+                }
+                let mut rng = ChaChaRng::from_seed(&seed);
+                let t1 = Fq::rand(&mut rng);
+                let mut p1 = Self::g1_sw_encode(t1).into_projective();
+                let t2 = Fq::rand(&mut rng);
+                let p2 = Self::g1_sw_encode(t2).into_projective();
+                p1.add_assign(&p2);
+                p1.into_affine().scale_by_cofactor()
+            }
+
+            fn g1_sw_encode(input: Fq) -> G1Affine {
+                // b
+                let b = super::super::fq::B_COEFF;
+
+                // sqrt{-3}
+                let sqrt_neg_three = Fq::from_str(&super::super::fq::SQRT_NEG_THREE).unwrap();
+
+                // (sqrt{-3} - 1)/2
+                let sqrt_neg_three_min_one_div_two =
+                    Fq::from_str(&super::super::fq::SQRT_NEG_THREE_MIN_ONE_DIV_TWO).unwrap();
+
+                // w = input^2 + b +1
+                let mut w = input.clone();
+                let t = input.clone();
+                w.square();
+                w.add_assign(&b);
+                w.add_assign(&Fq::one());
+
+                // k = sqrt{-3} /w*t
+                let mut k = w.inverse().unwrap();
+                k.mul_assign(&sqrt_neg_three);
+                k.mul_assign(&t);
+
+                // x1 = -kt + (sqrt{-3} - 1)/2
+                let mut x1 = k.clone();
+                x1.negate();
+                x1.mul_assign(&t);
+                x1.add_assign(&sqrt_neg_three_min_one_div_two);
+
+                // x2 = -x1 - 1
+                let mut x2 = x1.clone();
+                x2.add_assign(&Fq::one());
+                x2.negate();
+
+                // x3 = 1/k^2 +1
+                let mut x3 = k.clone();
+                x3.square();
+                let mut x3 = match x3.inverse() {
+                    None => panic! {"non invertible element"},
+                    Some(t) => t,
+                };
+                x3.add_assign(&Fq::one());
+
+                // compute the potential points for x1, x2 and x3
+                let y1 = Self::rhs_g1(&x1);
+                let y1 = y1.sqrt();
+
+                let y2 = Self::rhs_g1(&x2);
+                let y2 = y2.sqrt();
+
+                let y3 = Self::rhs_g1(&x3);
+                let y3 = y3.sqrt();
+
+                // use index to decide which is the right encoding
+                let index1 = match y1 {
+                    Some(_x) => 1i8,
+                    None => -1i8,
+                };
+                let index2 = match y2 {
+                    Some(_x) => 1i8,
+                    None => -1i8,
+                };
+
+                let index = ((index1 - 1) * index2 % 3 + 1) % 3;
+                let x = match index {
+                    1 => x1,
+                    -2 => x1,
+                    2 => x2,
+                    -1 => x2,
+                    0 => x3,
+                    _ => panic!("index out of range {}", index),
+                };
+
+                // return the right point, with y sign set by 3rd point
+
+                return match G1Affine::get_point_from_x(x, y3.is_some()) {
+                    None => panic! {"point not on curve, {} {} {:?}\n {:?}", index1, index2, x1, x},
+                    Some(t) => t,
+                };
+            }
+
+            // compute the right handside of the equation: y^2 = x^3 + b
+            fn rhs_g1(x: &Fq) -> Fq {
+                let mut x3b = x.clone();
+                x3b.square();
+                x3b.mul_assign(x);
+                x3b.add_assign(&super::super::fq::B_COEFF);
+                x3b
+            }
         }
 
         impl Rand for $projective {
@@ -855,8 +967,9 @@ pub mod g1 {
     use super::super::{Bls12, Fq, Fq12, FqRepr, Fr, FrRepr};
     use super::g2::G2Affine;
     use bls12_381::ec::g2::G2Compressed;
+    use bls12_381::fq2::Fq2;
     use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
-    use rand::{Rand, Rng};
+    use rand::{ChaChaRng, Rand, Rng, SeedableRng};
     use sha2::Digest;
     use std::fmt;
 
@@ -1587,7 +1700,7 @@ pub mod g2 {
     use super::g1::G1Affine;
     use bls12_381::ec::g1::G1Compressed;
     use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
-    use rand::{Rand, Rng};
+    use rand::{ChaChaRng, Rand, Rng, SeedableRng};
     use sha2::Digest;
     use std::fmt;
 
