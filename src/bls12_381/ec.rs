@@ -343,11 +343,20 @@ macro_rules! curve_impl {
             }
 
             fn hash_to_g1_const(input: &[u8]) -> super::G1 {
-                let hashinput: Vec<u8> = input.to_vec();
-                let mut hasher = sha2::Sha256::new();
+                let mut hashinput: Vec<u8> = "h2bH2C-BLS12_381_1-SHA512-FT-".as_bytes().to_vec();
+                hashinput.extend_from_slice(input);
+
+                println!("hash input {:?}", hashinput);
+                for i in hashinput.clone() {
+                    print!("{:}", i as char);
+                }
+                println!();
+                //    let hashinput: Vec<u8> = input.to_vec();
+                let mut hasher = sha2::Sha512::new();
                 hasher.input(hashinput);
                 // obtain the output
                 let hashresult = hasher.result();
+                println!("hash output {:?}", hashresult);
                 let mut seed: [u32; 4] = [0; 4];
                 for i in 0..4 {
                     for j in 0..4 {
@@ -393,11 +402,13 @@ macro_rules! curve_impl {
                 x1.mul_assign(&t);
                 x1.add_assign(&sqrt_neg_three_min_one_div_two);
 
+                println!("x1: {:?}", x1);
                 // x2 = -x1 - 1
                 let mut x2 = x1.clone();
                 x2.add_assign(&Fq::one());
                 x2.negate();
 
+                println!("x2: {:?}", x2);
                 // x3 = 1/k^2 +1
                 let mut x3 = k.clone();
                 x3.square();
@@ -407,6 +418,7 @@ macro_rules! curve_impl {
                 };
                 x3.add_assign(&Fq::one());
 
+                println!("x3: {:?}", x3);
                 // compute the potential points for x1, x2 and x3
                 let y1 = Self::rhs_g1(&x1);
                 let y1 = y1.sqrt();
@@ -414,8 +426,9 @@ macro_rules! curve_impl {
                 let y2 = Self::rhs_g1(&x2);
                 let y2 = y2.sqrt();
 
-                let y3 = Self::rhs_g1(&x3);
-                let y3 = y3.sqrt();
+                // let y3 = Self::rhs_g1(&x3);
+                // let y3 = y3.sqrt();
+                let y3 = input.sqrt();
 
                 // use index to decide which is the right encoding
                 let index1 = match y1 {
@@ -439,7 +452,7 @@ macro_rules! curve_impl {
 
                 // return the right point, with y sign set by 3rd point
 
-                return match G1Affine::get_point_from_x(x, y3.is_some()) {
+                return match G1Affine::get_point_from_x(x, !y3.is_some()) {
                     None => panic! {"point not on curve, {} {} {:?}\n {:?}", index1, index2, x1, x},
                     Some(t) => t,
                 };
