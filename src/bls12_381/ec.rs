@@ -344,33 +344,70 @@ macro_rules! curve_impl {
 
             fn hash_to_g1_const(input: &[u8]) -> super::G1 {
                 let mut hashinput: Vec<u8> = "h2bH2C-BLS12_381_1-SHA512-FT-".as_bytes().to_vec();
+                let inputlen = input.len() as u32;
+                hashinput.push(((inputlen & 0xFF000000) >> 24) as u8);
+                hashinput.push(((inputlen & 0x00FF0000) >> 16) as u8);
+                hashinput.push(((inputlen & 0x0000FF00) >> 8) as u8);
+                hashinput.push((inputlen & 0x000000FF) as u8);
                 hashinput.extend_from_slice(input);
 
-                println!("hash input {:?}", hashinput);
-                for i in hashinput.clone() {
-                    print!("{:}", i as char);
-                }
-                println!();
                 //    let hashinput: Vec<u8> = input.to_vec();
                 let mut hasher = sha2::Sha512::new();
                 hasher.input(hashinput);
                 // obtain the output
                 let hashresult = hasher.result();
-                println!("hash output {:?}", hashresult);
-                let mut seed: [u32; 4] = [0; 4];
-                for i in 0..4 {
-                    for j in 0..4 {
-                        seed[i] <<= 8;
-                        seed[i] += *&hashresult[i * 4 + j] as u32;
-                    }
-                }
-                let mut rng = ChaChaRng::from_seed(&seed);
-                let t1 = Fq::rand(&mut rng);
-                let mut p1 = Self::g1_sw_encode(t1).into_projective();
-                let t2 = Fq::rand(&mut rng);
-                let p2 = Self::g1_sw_encode(t2).into_projective();
-                p1.add_assign(&p2);
-                p1.into_affine().scale_by_cofactor()
+                let hashout = U512::from(hashresult.as_ref());
+
+                // hard coded modulus q
+                let q = U512::from([
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x1a, 0x01, 0x11, 0xea, 0x39,
+                    0x7f, 0xe6, 0x9a, 0x4b, 0x1b, 0xa7, 0xb6, 0x43, 0x4b, 0xac, 0xd7, 0x64, 0x77,
+                    0x4b, 0x84, 0xf3, 0x85, 0x12, 0xbf, 0x67, 0x30, 0xd2, 0xa0, 0xf6, 0xb0, 0xf6,
+                    0x24, 0x1e, 0xab, 0xff, 0xfe, 0xb1, 0x53, 0xff, 0xff, 0xb9, 0xfe, 0xff, 0xff,
+                    0xff, 0xff, 0xaa, 0xab,
+                ]);
+                // t = hashout % q
+                let t = hashout.rem(q);
+
+                // convert t into a primefield object s
+                let mut tslide: [u8; 64] = [0; 64];
+                let bytes: &mut [u8] = tslide.as_mut();
+                t.to_big_endian(bytes);
+                let s = FqRepr([
+                    u64::from_be_bytes([
+                        bytes[56], bytes[57], bytes[58], bytes[59], bytes[60], bytes[61],
+                        bytes[62], bytes[63],
+                    ]),
+                    u64::from_be_bytes([
+                        bytes[48], bytes[49], bytes[50], bytes[51], bytes[52], bytes[53],
+                        bytes[54], bytes[55],
+                    ]),
+                    u64::from_be_bytes([
+                        bytes[40], bytes[41], bytes[42], bytes[43], bytes[44], bytes[45],
+                        bytes[46], bytes[47],
+                    ]),
+                    u64::from_be_bytes([
+                        bytes[32], bytes[33], bytes[34], bytes[35], bytes[36], bytes[37],
+                        bytes[38], bytes[39],
+                    ]),
+                    u64::from_be_bytes([
+                        bytes[24], bytes[25], bytes[26], bytes[27], bytes[28], bytes[29],
+                        bytes[30], bytes[31],
+                    ]),
+                    u64::from_be_bytes([
+                        bytes[16], bytes[17], bytes[18], bytes[19], bytes[20], bytes[21],
+                        bytes[22], bytes[23],
+                    ]),
+                ]);
+
+                let u = Fq::from_repr(s).unwrap();
+                println!("u: {:?}", u);
+
+                // perform sw encoding to get the point
+                let p = Self::g1_sw_encode(u);
+
+                println!("final point: {:?}", p);
+                p.scale_by_cofactor()
             }
 
             fn g1_sw_encode(input: Fq) -> G1Affine {
@@ -979,13 +1016,14 @@ pub mod g1 {
     };
     use super::super::{Bls12, Fq, Fq12, FqRepr, Fr, FrRepr};
     use super::g2::G2Affine;
+    use bigint::U512;
     use bls12_381::ec::g2::G2Compressed;
     use bls12_381::fq2::Fq2;
     use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
     use rand::{ChaChaRng, Rand, Rng, SeedableRng};
     use sha2::Digest;
     use std::fmt;
-
+    use std::ops::Rem;
     curve_impl!(
         "G1",
         G1,
@@ -1711,12 +1749,13 @@ pub mod g2 {
     };
     use super::super::{Bls12, Fq, Fq12, Fq2, FqRepr, Fr, FrRepr};
     use super::g1::G1Affine;
+    use bigint::U512;
     use bls12_381::ec::g1::G1Compressed;
     use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
     use rand::{ChaChaRng, Rand, Rng, SeedableRng};
     use sha2::Digest;
     use std::fmt;
-
+    use std::ops::Rem;
     curve_impl!(
         "G2",
         G2,

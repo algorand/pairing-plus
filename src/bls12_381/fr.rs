@@ -1,5 +1,7 @@
+use bigint::U512;
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
-
+use sha2::Digest;
+use std::ops::Rem;
 #[derive(PrimeField)]
 #[PrimeFieldModulus = "52435875175126190479447740508185965837690552500527637822603658699938581184513"]
 #[PrimeFieldGenerator = "7"]
@@ -7,6 +9,64 @@ pub struct Fr(FrRepr);
 
 #[cfg(test)]
 use rand::{Rand, SeedableRng, XorShiftRng};
+
+impl Fr {
+    pub fn hash_to_fr(input: &[u8]) -> Self {
+        let mut hashinput: Vec<u8> = "hash_to_fr".as_bytes().to_vec();
+        let inputlen = input.len() as u32;
+        hashinput.push(((inputlen & 0xFF000000) >> 24) as u8);
+        hashinput.push(((inputlen & 0x00FF0000) >> 16) as u8);
+        hashinput.push(((inputlen & 0x0000FF00) >> 8) as u8);
+        hashinput.push((inputlen & 0x000000FF) as u8);
+        hashinput.extend_from_slice(input);
+
+        //    let hashinput: Vec<u8> = input.to_vec();
+        let mut hasher = sha2::Sha512::new();
+        hasher.input(hashinput);
+        // obtain the output
+        let hashresult = hasher.result();
+        let hashout = U512::from(hashresult.as_ref());
+
+        // hard coded modulus r
+        let r = U512::from([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0x73, 0xED, 0xA7, 0x53, 0x29, 0x9D, 0x7D, 0x48, 0x33, 0x39, 0xD8, 0x08, 0x09,
+            0xA1, 0xD8, 0x05, 0x53, 0xBD, 0xA4, 0x02, 0xFF, 0xFE, 0x5B, 0xFE, 0xFF, 0xFF, 0xFF,
+            0xFF, 0x00, 0x00, 0x00, 0x01,
+        ]);
+        // t = hashout % r
+        let t = hashout.rem(r);
+
+        // convert t into a primefield object s
+        let mut tslide: [u8; 64] = [0; 64];
+        let bytes: &mut [u8] = tslide.as_mut();
+        t.to_big_endian(bytes);
+        println!("{:?}", t);
+        let s = FrRepr([
+            u64::from_be_bytes([
+                bytes[56], bytes[57], bytes[58], bytes[59], bytes[60], bytes[61], bytes[62],
+                bytes[63],
+            ]),
+            u64::from_be_bytes([
+                bytes[48], bytes[49], bytes[50], bytes[51], bytes[52], bytes[53], bytes[54],
+                bytes[55],
+            ]),
+            u64::from_be_bytes([
+                bytes[40], bytes[41], bytes[42], bytes[43], bytes[44], bytes[45], bytes[46],
+                bytes[47],
+            ]),
+            u64::from_be_bytes([
+                bytes[32], bytes[33], bytes[34], bytes[35], bytes[36], bytes[37], bytes[38],
+                bytes[39],
+            ]),
+        ]);
+
+        let u = Fr::from_repr(s).unwrap();
+        println!("u: {:?}", u);
+
+        u
+    }
+}
 
 #[test]
 fn test_fr_repr_ordering() {

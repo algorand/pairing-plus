@@ -23,7 +23,7 @@ rand = "0.4"
 byteorder = "1"
 ff = { version = "0.4", features = ["derive"] }
 sha2 = "0.8"
-
+bigint = { version = "4", default-features = false }
 
 
 [features]

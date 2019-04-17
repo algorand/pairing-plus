@@ -13,8 +13,10 @@
 extern crate byteorder;
 //#[macro_use]
 extern crate ff;
+extern crate bigint;
 extern crate rand;
 extern crate sha2;
+
 #[cfg(test)]
 pub mod tests;
 
