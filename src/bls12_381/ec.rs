@@ -17,6 +17,11 @@ macro_rules! curve_impl {
             pub(crate) infinity: bool
         }
 
+        #[cfg(feature = "transmutable")]
+        pub const unsafe fn transmute_affine(x: $basefield, y: $basefield, i: bool) -> $affine {
+            $affine { x: x, y: y, infinity: i }
+        }
+
         impl ::std::fmt::Display for $affine
         {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
@@ -33,6 +38,11 @@ macro_rules! curve_impl {
            pub(crate) x: $basefield,
            pub(crate) y: $basefield,
            pub(crate) z: $basefield
+        }
+
+        #[cfg(feature = "transmutable")]
+        pub const unsafe fn transmute_projective(x: $basefield, y: $basefield, z: $basefield) -> $projective {
+            $projective { x: x, y: y, z: z }
         }
 
         impl ::std::fmt::Display for $projective

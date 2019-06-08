@@ -448,6 +448,11 @@ pub const NEGATIVE_ONE: Fq = Fq(FqRepr([
 #[PrimeFieldGenerator = "2"]
 pub struct Fq(FqRepr);
 
+#[cfg(feature = "transmutable")]
+pub const unsafe fn transmute(r: FqRepr) -> Fq {
+    Fq(r)
+}
+
 #[test]
 fn test_b_coeff() {
     assert_eq!(Fq::from_repr(FqRepr::from(4)).unwrap(), B_COEFF);

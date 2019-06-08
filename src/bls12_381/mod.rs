@@ -18,6 +18,16 @@ pub use self::fq2::Fq2;
 pub use self::fq6::Fq6;
 pub use self::fr::{Fr, FrRepr};
 
+#[cfg(feature = "transmutable")]
+pub mod transmute {
+    pub use super::ec::g1::transmute_projective as g1_projective;
+    pub use super::ec::g1::transmute_affine as g1_affine;
+    pub use super::ec::g2::transmute_projective as g2_projective;
+    pub use super::ec::g2::transmute_affine as g2_affine;
+    pub use super::fq::transmute as fq;
+    pub use super::fr::transmute as fr;
+}
+
 use super::{CurveAffine, Engine};
 
 use ff::{BitIterator, Field, ScalarEngine};

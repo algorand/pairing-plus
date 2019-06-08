@@ -5,6 +5,11 @@ use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
 #[PrimeFieldGenerator = "7"]
 pub struct Fr(FrRepr);
 
+#[cfg(feature = "transmutable")]
+pub const unsafe fn transmute(r: FrRepr) -> Fr {
+    Fr(r)
+}
+
 #[cfg(test)]
 use rand::{Rand, SeedableRng, XorShiftRng};
 
