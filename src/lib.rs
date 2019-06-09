@@ -175,6 +175,16 @@ pub trait CurveProjective:
     /// Recommends a wNAF window size given the number of scalars you intend to multiply
     /// a base by. Always returns a number between 2 and 22, inclusive.
     fn recommended_wnaf_for_num_scalars(num_scalars: usize) -> usize;
+
+    /// Borrow references to the X, Y, and Z coordinates of this point.
+    #[cfg(feature = "transmutable")]
+    fn as_tuple(&self) -> (&Self::Base, &Self::Base, &Self::Base);
+
+    /// Borrow mutable references to the X, Y, and Z coordinates of this point.
+    /// Unsafe, because incorrectly modifying the coordinates violates the guarantee
+    /// that the point must be on the curve and in the correct subgroup.
+    #[cfg(feature = "transmutable")]
+    unsafe fn as_tuple_mut(&mut self) -> (&mut Self::Base, &mut Self::Base, &mut Self::Base);
 }
 
 /// Affine representation of an elliptic curve point guaranteed to be
@@ -228,6 +238,16 @@ pub trait CurveAffine:
     fn into_uncompressed(&self) -> Self::Uncompressed {
         <Self::Uncompressed as EncodedPoint>::from_affine(*self)
     }
+
+    /// Borrow references to the X and Y coordinates of this point.
+    #[cfg(feature = "transmutable")]
+    fn as_tuple(&self) -> (&Self::Base, &Self::Base);
+
+    /// Borrow mutable references to the X and Y coordinates of this point.
+    /// Unsafe, because incorrectly modifying the coordinates violates the guarantee
+    /// that the point must be on the curve and in the correct subgroup.
+    #[cfg(feature = "transmutable")]
+    unsafe fn as_tuple_mut(&mut self) -> (&mut Self::Base, &mut Self::Base);
 }
 
 /// An encoded elliptic curve point, which should essentially wrap a `[u8; N]`.

@@ -204,6 +204,15 @@ macro_rules! curve_impl {
                 (*self).into()
             }
 
+            #[cfg(feature = "transmutable")]
+            fn as_tuple(&self) -> (&$basefield, &$basefield) {
+                (&self.x, &self.y)
+            }
+
+            #[cfg(feature = "transmutable")]
+            unsafe fn as_tuple_mut(&mut self) -> (&mut $basefield, &mut $basefield) {
+                (&mut self.x, &mut self.y)
+            }
         }
 
         impl Rand for $projective {
@@ -572,6 +581,16 @@ macro_rules! curve_impl {
 
             fn recommended_wnaf_for_num_scalars(num_scalars: usize) -> usize {
                 Self::empirical_recommended_wnaf_for_num_scalars(num_scalars)
+            }
+
+            #[cfg(feature = "transmutable")]
+            fn as_tuple(&self) -> (&$basefield, &$basefield, &$basefield) {
+                (&self.x, &self.y, &self.z)
+            }
+
+            #[cfg(feature = "transmutable")]
+            unsafe fn as_tuple_mut(&mut self) -> (&mut $basefield, &mut $basefield, &mut $basefield) {
+                (&mut self.x, &mut self.y, &mut self.z)
             }
         }
 
