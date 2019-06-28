@@ -41,7 +41,7 @@ impl Fr {
         let mut tslide: [u8; 64] = [0; 64];
         let bytes: &mut [u8] = tslide.as_mut();
         t.to_big_endian(bytes);
-        println!("{:?}", t);
+        //println!("{:?}", t);
         let s = FrRepr([
             u64::from_be_bytes([
                 bytes[56], bytes[57], bytes[58], bytes[59], bytes[60], bytes[61], bytes[62],
@@ -62,7 +62,7 @@ impl Fr {
         ]);
 
         let u = Fr::from_repr(s).unwrap();
-        println!("u: {:?}", u);
+        //println!("u: {:?}", u);
 
         u
     }
