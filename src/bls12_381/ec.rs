@@ -22,6 +22,20 @@ macro_rules! curve_impl {
             $affine { x: x, y: y, infinity: i }
         }
 
+        // set the default values for the group elements to 0s
+        impl ::std::default::Default for $affine {
+            fn default() -> Self {
+                $affine::zero()
+            }
+        }
+
+        // set the default values for the group elements to 0s
+        impl ::std::default::Default for $projective {
+            fn default() -> Self {
+                $projective::zero()
+            }
+        }
+
         impl ::std::fmt::Display for $affine
         {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
@@ -2045,6 +2059,16 @@ pub mod g2 {
     fn g2_curve_tests() {
         ::tests::curve::curve_tests::<G2>();
     }
+}
+
+#[test]
+fn test_group_defaults() {
+    use CurveAffine;
+    use CurveProjective;
+    assert_eq!(G1::default(), G1::zero());
+    assert_eq!(G2::default(), G2::zero());
+    assert_eq!(G1Affine::default(), G1Affine::zero());
+    assert_eq!(G2Affine::default(), G2Affine::zero());
 }
 
 pub use self::g1::*;
