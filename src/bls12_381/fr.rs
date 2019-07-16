@@ -5,6 +5,15 @@ use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
 #[PrimeFieldGenerator = "7"]
 pub struct Fr(FrRepr);
 
+
+/// setup the default value for Fr to 0
+impl std::default::Default for Fr {
+
+    fn default() -> Self {
+        Fr::zero()
+    }
+}
+
 #[cfg(feature = "transmutable")]
 pub const unsafe fn transmute(r: FrRepr) -> Fr {
     Fr(r)
