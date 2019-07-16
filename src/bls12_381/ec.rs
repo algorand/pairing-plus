@@ -845,24 +845,54 @@ macro_rules! curve_impl {
             }
 
             fn mul_assign<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S) {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
                 let mut res = Self::zero();
-                let mut found_one = false;
+                let mut found_non_zero = false;
 
-                for i in BitIterator::new(other.into()) {
-                    if found_one {
-                        res.double();
-                    } else {
-                        found_one = i;
+                let mut precomp = vec![Self::zero(); 16];
+                precomp[0] = Self::zero();
+                precomp[1] = *self;
+                for i in 2..16 {
+                    if i % 2 == 1 {// if i is odd
+                        precomp[i] = precomp[i-1];
+                        precomp[i].add_assign(self);
                     }
-                    if i {
-                        res.add_assign(self);
+                    else {
+                        precomp[i] = precomp[i/2];
+                        precomp[i].double();
                     }
                 }
-
+                let repr = other.into();
+                let bits = repr.as_ref();
+                for i in (0..bits.len()*16).rev() {
+                    // find the i-th 4-bit chunk of the exponent
+                    let word = i>>4; // i div 16
+                    let shift = (i&15)<<2; // (i mod 16) * 4
+                    let index:usize = ((bits[word]>>shift) & 15) as usize;
+                    if found_non_zero {
+                        res.double();
+                        res.double();
+                        res.double();
+                        res.double();
+                    }
+                    if index>0 {
+                        if !found_non_zero {
+                            res = precomp[index];
+                            found_non_zero = true;
+                        }
+                        else {
+                            res.add_assign(&precomp[index]);
+                        }
+                    }
+                }
                 *self = res;
             }
-
             // this multiplication function always use 255 doubling and additions
+            // TODO: we can use sliding window here also (and gain a factor of 2 in performance), 
+            // just as in mul, but it's less clear
+            // which of the 16 sliding window elements to use in the addition when the index is 0
             fn mul_assign_sec<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S) {
                 let mut res = Self::zero();
                 let mut _discard = Self::zero();
@@ -1681,6 +1711,51 @@ pub mod g1 {
     fn g1_curve_tests() {
         ::tests::curve::curve_tests::<G1>();
     }
+
+
+    #[test]
+    fn test_g1_mul() {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        const ZERO_ONE_TESTS : usize = 10;
+        const SAMPLES: usize = 100;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        for _ in 0..ZERO_ONE_TESTS {
+            // test multiplication by 0
+            let mut test_point = G1::rand(&mut rng);
+            test_point.mul_assign(Fr::zero());
+            assert_eq!(test_point, G1::zero(), "G1 mul by 0 is not correct");
+        }
+
+        for _ in 0..ZERO_ONE_TESTS {
+            // test multiplication by 1
+            let mut test_point = G1::rand(&mut rng);
+            let test_point_copy = test_point;
+            test_point.mul_assign(Fr::one());
+            assert_eq!(test_point, test_point_copy, "G1 mul by 1 is not correct");
+        }
+
+        // test random multiplications
+        for _ in 0..SAMPLES {
+            let p = G1::rand(&mut rng);
+            let mut tmp = p;
+            let s = Fr::rand(&mut rng);
+            tmp.mul_assign(s);
+
+            // perform a basic square and multiply to compare against
+            let mut res = G1::zero();
+            for i in BitIterator::new(s.into_repr()) {
+                res.double();
+                if i {
+                    res.add_assign(&p);
+                }
+            }
+            assert_eq!(res, tmp, "G1 mul is not correct");
+        }
+    }
+
+
     #[test]
     fn test_g1_mul_sec() {
         use rand::{Rand, SeedableRng, XorShiftRng};
@@ -2137,6 +2212,50 @@ pub mod g2 {
             x.add_assign(&Fq2::one());
         }
     }
+
+    #[test]
+    fn test_g2_mul() {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        const ZERO_ONE_TESTS : usize = 10;
+        const SAMPLES: usize = 100;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        for _ in 0..ZERO_ONE_TESTS {
+            // test multiplication by 0
+            let mut test_point = G2::rand(&mut rng);
+            test_point.mul_assign(Fr::zero());
+            assert_eq!(test_point, G2::zero(), "G2 mul by 0 is not correct");
+        }
+
+        for _ in 0..ZERO_ONE_TESTS {
+            // test multiplication by 1
+            let mut test_point = G2::rand(&mut rng);
+            let test_point_copy = test_point;
+            test_point.mul_assign(Fr::one());
+            assert_eq!(test_point, test_point_copy, "G2 mul by 1 is not correct");
+        }
+
+        // test random multiplications
+        for _ in 0..SAMPLES {
+            let p = G2::rand(&mut rng);
+            let mut tmp = p;
+            let s = Fr::rand(&mut rng);
+            tmp.mul_assign(s);
+
+            // perform a basic square and multiply to compare against
+            let mut res = G2::zero();
+            for i in BitIterator::new(s.into_repr()) {
+                res.double();
+                if i {
+                    res.add_assign(&p);
+                }
+            }
+            assert_eq!(res, tmp, "G2 mul is not correct");
+        }
+    }
+
+
     #[test]
     fn test_g2_mul_sec() {
         use rand::{Rand, SeedableRng, XorShiftRng};

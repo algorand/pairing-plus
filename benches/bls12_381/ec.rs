@@ -1,4 +1,5 @@
 mod g1 {
+    use ff::Field;
     use ff::PrimeField;
     use pairing::bls12_381::*;
     use pairing::CurveAffine;
@@ -42,6 +43,35 @@ mod g1 {
         b.iter(|| {
             let mut tmp = v[count].0;
             tmp.mul_assign(v[count].1);
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
+
+    #[bench]
+    fn bench_g1_mul_small_scalar(b: &mut ::test::Bencher) {
+        // this should be over 2 times faster than regular multiplication
+        const SAMPLES: usize = 1000;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let mut scalar = Fr::one();
+        scalar.add_assign(&Fr::one()); // == 2
+        scalar.add_assign(&Fr::one()); // == 3
+        for _ in 0..6 { // square the scalar 6 times to compute 3^{2^6} = 3^64, which takes up 102 bits
+            let s = scalar;
+            scalar.mul_assign(&s);
+        }
+
+
+        let v: Vec<G1> = (0..SAMPLES)
+            .map(|_| (G1::rand(&mut rng)))
+            .collect();
+
+        let mut count = 0;
+        b.iter(|| {
+            let mut tmp = v[count];
+            tmp.mul_assign(scalar);
             count = (count + 1) % SAMPLES;
             tmp
         });
