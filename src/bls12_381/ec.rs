@@ -851,25 +851,27 @@ macro_rules! curve_impl {
                 let mut res = Self::zero();
                 let mut found_non_zero = false;
 
-                let mut precomp = vec![Self::zero(); 16];
-                precomp[0] = Self::zero();
-                precomp[1] = *self;
+                // Sliding window technique: precompute self*0, ..., self*15
+                let mut precomp: Vec<Self>= Vec::with_capacity(16); 
+                precomp.push(Self::zero());
+                precomp.push(*self);
                 for i in 2..16 {
                     if i % 2 == 1 {// if i is odd
-                        precomp[i] = precomp[i-1];
+                        precomp.push(precomp[i-1]);
                         precomp[i].add_assign(self);
                     }
                     else {
-                        precomp[i] = precomp[i/2];
+                        precomp.push(precomp[i/2]);
                         precomp[i].double();
                     }
                 }
                 let repr = other.into();
                 let bits = repr.as_ref();
-                for i in (0..bits.len()*16).rev() {
+                // process the scalar 4 bits (=1 nibble) at a time
+                for nibble_index in (0..bits.len()*16).rev() {
                     // find the i-th 4-bit chunk of the exponent
-                    let word = i>>4; // i div 16
-                    let shift = (i&15)<<2; // (i mod 16) * 4
+                    let word = nibble_index >> 4; // i div 16
+                    let shift = (nibble_index & 15) << 2; // (i mod 16) * 4
                     let index:usize = ((bits[word]>>shift) & 15) as usize;
                     if found_non_zero {
                         res.double();
@@ -889,6 +891,64 @@ macro_rules! curve_impl {
                 }
                 *self = res;
             }
+
+            fn sum_of_products(points: &[Self], scalars: &[&[u64]])->Self {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+                // TODO: figure out what to do if the lengths of the two input slices don't match
+                // For now, take the minimum
+                let mut res = Self::zero();
+                let num_components = if points.len()<scalars.len() {points.len()} else {scalars.len()};
+
+                // sliding window technique: for each input point, precompute that point times 0, times 1, ..., times 15
+                let mut precomp_vec = Vec::with_capacity(num_components);
+                for point in points {
+                    let mut precomp = Vec::with_capacity(16); 
+                    precomp.push(Self::zero());
+                    precomp.push(*point);
+                    for i in 2..16 {
+                        if i % 2 == 1 {// if i is odd
+                            precomp.push(precomp[i-1]);
+                            precomp[i].add_assign(point);
+                        }
+                        else {
+                            precomp.push(precomp[i/2]);
+                            precomp[i].double();
+                        }
+                    }
+                    precomp_vec.push(precomp);
+                }
+
+                let mut max_len = 0usize;
+                for i in 0..num_components {
+                    let curlen = scalars[i].len();
+                    if curlen>max_len {
+                        max_len = curlen;
+                    }
+                }
+
+                // Process all scalars four bits (=1 nibble) at a time
+                for nibble_index in (0..max_len*16).rev() {
+                    res.double();
+                    res.double();
+                    res.double();
+                    res.double();
+                    // find the i-th 4-bit chunk of the exponent
+                    let word = nibble_index>>4; // i div 16
+                    let shift = (nibble_index&15)<<2; // (i mod 16) * 4
+                    for i in 0..num_components {
+                        if word<scalars[i].len() {
+                            let index:usize = ((scalars[i][word]>>shift) & 15) as usize;
+                            if index>0 {
+                                res.add_assign(&precomp_vec[i][index]);
+                            }
+                        }
+                    }
+                }
+                res
+            }
+            
             // this multiplication function always use 255 doubling and additions
             // TODO: we can use sliding window here also (and gain a factor of 2 in performance), 
             // just as in mul, but it's less clear
@@ -1725,7 +1785,7 @@ pub mod g1 {
             // test multiplication by 0
             let mut test_point = G1::rand(&mut rng);
             test_point.mul_assign(Fr::zero());
-            assert_eq!(test_point, G1::zero(), "G1 mul by 0 is not correct");
+            assert_eq!(test_point.into_affine(), G1::zero().into_affine(), "G1 mul by 0 is not correct");
         }
 
         for _ in 0..ZERO_ONE_TESTS {
@@ -1733,7 +1793,7 @@ pub mod g1 {
             let mut test_point = G1::rand(&mut rng);
             let test_point_copy = test_point;
             test_point.mul_assign(Fr::one());
-            assert_eq!(test_point, test_point_copy, "G1 mul by 1 is not correct");
+            assert_eq!(test_point.into_affine(), test_point_copy.into_affine(), "G1 mul by 1 is not correct");
         }
 
         // test random multiplications
@@ -1751,10 +1811,138 @@ pub mod g1 {
                     res.add_assign(&p);
                 }
             }
-            assert_eq!(res, tmp, "G1 mul is not correct");
+            assert_eq!(res.into_affine(), tmp.into_affine(), "G1 mul is not correct");
         }
     }
 
+    #[test]
+    fn test_g1_sum_of_products() {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 15;
+        let points:Vec<G1> = (0..max_points).map(|_| G1::rand(&mut rng)).collect(); 
+
+        for num_points in 0..max_points {
+            {
+                // test vector multiplication by 0
+                let scalars_fr_repr:Vec<FrRepr> = (0..num_points).map(|_| Fr::zero().into_repr()).collect();
+                let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+
+                let res = G1::sum_of_products(&points[0..num_points],&scalars);
+
+                let desired_result = G1::zero();
+
+                assert_eq!(desired_result.into_affine(), res.into_affine(), "Failed at raising multiple points to all-0 vector");
+            }
+        
+            {
+                // test vector multiplication by 1
+                let scalars_fr_repr:Vec<FrRepr> = (0..num_points).map(|_| Fr::one().into_repr()).collect();
+                let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+
+                let res = G1::sum_of_products(&points[0..num_points],&scalars);
+
+                let mut desired_result = G1::zero();
+                for i in 0..num_points {
+                    desired_result.add_assign(&points[i]);
+                }
+
+                assert_eq!(desired_result.into_affine(), res.into_affine(), "Failed at raising multiple points to all-1 vector");
+            }
+        
+            {
+                // test vector multiplication by alternating 0/1
+                let mut scalars_fr_repr:Vec<FrRepr> = Vec::with_capacity(num_points);
+                for i in 0..num_points {
+                    if i%2 == 0 {
+                        scalars_fr_repr.push(Fr::zero().into_repr());
+                    }
+                    else {
+                        scalars_fr_repr.push(Fr::one().into_repr());
+                    }
+                }
+                let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+
+                let res = G1::sum_of_products(&points[0..num_points],&scalars);
+
+                let mut desired_result = G1::zero();
+                for i in 0..num_points {
+                    if i%2 == 1 {
+                        desired_result.add_assign(&points[i]);
+                    }
+                }
+
+                assert_eq!(desired_result.into_affine(), res.into_affine(), "Failed at raising multiple points to alternating 0/1 vector");
+            }
+
+            {
+                // test vector multiplication by alternating 0/1/short/random
+                let mut scalars_fr:Vec<Fr> = Vec::with_capacity(num_points);
+                let mut short_scalar = Fr::one();
+                short_scalar.add_assign(&Fr::one()); // == 2
+                short_scalar.add_assign(&Fr::one()); // == 3
+                for _ in 0..6 { // square the scalar 6 times to compute 3^{2^6} = 3^64, which takes up 102 bits
+                    let s = short_scalar;
+                    short_scalar.mul_assign(&s);
+                }
+
+                for i in 0..num_points {
+                    if i%4 == 0 {
+                        scalars_fr.push(Fr::zero());
+                    }
+                    else if i%4 == 1 {
+                        scalars_fr.push(Fr::one());
+                    }
+                    else if i%4 == 2 {
+                        scalars_fr.push(short_scalar);
+                    }
+                    else if i%4 == 3 {
+                        scalars_fr.push(Fr::rand(&mut rng));
+                    }
+                }
+
+                let mut desired_result = G1::zero();
+                for i in 0..num_points {
+                    if i%4 != 0 {
+                        let mut intermediate_result = points[i];
+                        if i%4 != 1 {
+                            intermediate_result.mul_assign(scalars_fr[i]);
+                        }
+                        desired_result.add_assign(&intermediate_result);
+                    }
+                }
+
+                let scalars_fr_repr:Vec<FrRepr> = scalars_fr.iter().map(|s| s.into_repr()).collect();
+                let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+                let res = G1::sum_of_products(&points[0..num_points],&scalars);
+
+                assert_eq!(desired_result.into_affine(), res.into_affine(), "Failed at raising multiple points to alternating 0/1/short/random vector");
+            }
+        
+            {
+                // test vector multiplication by random
+                let mut scalars_fr:Vec<Fr> = Vec::with_capacity(num_points);
+
+                for _ in 0..num_points {
+                    scalars_fr.push(Fr::rand(&mut rng));
+                }
+
+                let mut desired_result = G1::zero();
+                for i in 0..num_points {
+                    let mut intermediate_result = points[i];
+                    intermediate_result.mul_assign(scalars_fr[i]);
+                    desired_result.add_assign(&intermediate_result);
+                }
+                
+                let scalars_fr_repr:Vec<FrRepr> = scalars_fr.iter().map(|s| s.into_repr()).collect();
+                let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+                let res = G1::sum_of_products(&points[0..num_points],&scalars);
+
+                assert_eq!(desired_result.into_affine(), res.into_affine(), "Failed at raising multiple points to random vector");
+            }
+        }
+    }
 
     #[test]
     fn test_g1_mul_sec() {
@@ -2255,6 +2443,134 @@ pub mod g2 {
         }
     }
 
+    #[test]
+    fn test_g2_sum_of_products() {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 15;
+        let points:Vec<G2> = (0..max_points).map(|_| G2::rand(&mut rng)).collect(); 
+
+        for num_points in 0..max_points {
+            {
+                // test vector multiplication by 0
+                let scalars_fr_repr:Vec<FrRepr> = (0..num_points).map(|_| Fr::zero().into_repr()).collect();
+                let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+
+                let res = G2::sum_of_products(&points[0..num_points],&scalars);
+
+                let desired_result = G2::zero();
+
+                assert_eq!(desired_result.into_affine(), res.into_affine(), "Failed at raising multiple points to all-0 vector");
+            }
+        
+            {
+                // test vector multiplication by 1
+                let scalars_fr_repr:Vec<FrRepr> = (0..num_points).map(|_| Fr::one().into_repr()).collect();
+                let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+
+                let res = G2::sum_of_products(&points[0..num_points],&scalars);
+
+                let mut desired_result = G2::zero();
+                for i in 0..num_points {
+                    desired_result.add_assign(&points[i]);
+                }
+
+                assert_eq!(desired_result.into_affine(), res.into_affine(), "Failed at raising multiple points to all-1 vector");
+            }
+        
+            {
+                // test vector multiplication by alternating 0/1
+                let mut scalars_fr_repr:Vec<FrRepr> = Vec::with_capacity(num_points);
+                for i in 0..num_points {
+                    if i%2 == 0 {
+                        scalars_fr_repr.push(Fr::zero().into_repr());
+                    }
+                    else {
+                        scalars_fr_repr.push(Fr::one().into_repr());
+                    }
+                }
+                let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+
+                let res = G2::sum_of_products(&points[0..num_points],&scalars);
+
+                let mut desired_result = G2::zero();
+                for i in 0..num_points {
+                    if i%2 == 1 {
+                        desired_result.add_assign(&points[i]);
+                    }
+                }
+
+                assert_eq!(desired_result.into_affine(), res.into_affine(), "Failed at raising multiple points to alternating 0/1 vector");
+            }
+
+            {
+                // test vector multiplication by alternating 0/1/short/random
+                let mut scalars_fr:Vec<Fr> = Vec::with_capacity(num_points);
+                let mut short_scalar = Fr::one();
+                short_scalar.add_assign(&Fr::one()); // == 2
+                short_scalar.add_assign(&Fr::one()); // == 3
+                for _ in 0..6 { // square the scalar 6 times to compute 3^{2^6} = 3^64, which takes up 102 bits
+                    let s = short_scalar;
+                    short_scalar.mul_assign(&s);
+                }
+
+                for i in 0..num_points {
+                    if i%4 == 0 {
+                        scalars_fr.push(Fr::zero());
+                    }
+                    else if i%4 == 1 {
+                        scalars_fr.push(Fr::one());
+                    }
+                    else if i%4 == 2 {
+                        scalars_fr.push(short_scalar);
+                    }
+                    else if i%4 == 3 {
+                        scalars_fr.push(Fr::rand(&mut rng));
+                    }
+                }
+
+                let mut desired_result = G2::zero();
+                for i in 0..num_points {
+                    if i%4 != 0 {
+                        let mut intermediate_result = points[i];
+                        if i%4 != 1 {
+                            intermediate_result.mul_assign(scalars_fr[i]);
+                        }
+                        desired_result.add_assign(&intermediate_result);
+                    }
+                }
+
+                let scalars_fr_repr:Vec<FrRepr> = scalars_fr.iter().map(|s| s.into_repr()).collect();
+                let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+                let res = G2::sum_of_products(&points[0..num_points],&scalars);
+
+                assert_eq!(desired_result.into_affine(), res.into_affine(), "Failed at raising multiple points to alternating 0/1/short/random vector");
+            }
+        
+            {
+                // test vector multiplication by random
+                let mut scalars_fr:Vec<Fr> = Vec::with_capacity(num_points);
+
+                for _ in 0..num_points {
+                    scalars_fr.push(Fr::rand(&mut rng));
+                }
+
+                let mut desired_result = G2::zero();
+                for i in 0..num_points {
+                    let mut intermediate_result = points[i];
+                    intermediate_result.mul_assign(scalars_fr[i]);
+                    desired_result.add_assign(&intermediate_result);
+                }
+                
+                let scalars_fr_repr:Vec<FrRepr> = scalars_fr.iter().map(|s| s.into_repr()).collect();
+                let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+                let res = G2::sum_of_products(&points[0..num_points],&scalars);
+
+                assert_eq!(desired_result.into_affine(), res.into_affine(), "Failed at raising multiple points to random vector");
+            }
+        }
+    }
 
     #[test]
     fn test_g2_mul_sec() {

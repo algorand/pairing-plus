@@ -199,7 +199,13 @@ pub trait CurveProjective:
         s1: S,
         s2: S,
     ) -> Self;
+
+    // multiplication of many points with shamir's Trick
+    // computer s1 * p1 + ... + sn * pn simultaneously
+    fn sum_of_products(bases: &[Self], scalars: &[&[u64]])->Self;
+
 }
+
 
 /// Affine representation of an elliptic curve point guaranteed to be
 /// in the correct prime order subgroup.

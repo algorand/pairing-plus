@@ -78,6 +78,20 @@ mod g1 {
     }
 
     #[bench]
+    fn bench_g1_sum_of_products(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points:Vec<G1> = (0..max_points).map(|_| G1::rand(&mut rng)).collect(); 
+        let scalars_fr_repr:Vec<FrRepr> = (0..max_points).map(|_| Fr::rand(&mut rng).into_repr()).collect();
+        let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+        b.iter(|| {
+            G1::sum_of_products(&points,&scalars)
+        });
+    }
+
+    #[bench]
     fn bench_g1_membership(b: &mut ::test::Bencher) {
         const SAMPLES: usize = 1000;
 
