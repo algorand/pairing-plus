@@ -892,6 +892,80 @@ macro_rules! curve_impl {
                 *self = res;
             }
 
+            // Expects pre[0] = (2^64) * self, pre[1] = (2^128) * self, pre[2] = (2^192) * self
+            fn mul_assign_precomp_4<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S, pre : &[Self]) {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+
+                // TODO: this is fragile, because it works only if other.into().as_ref() is exactly four 64-bits words
+
+                // Interleaved sliding window technique: deal with each of the four words of the scalar in parallel
+
+                let mut precomp: Vec<Self>= Vec::with_capacity(16); 
+                precomp.push(Self::zero());         // 0000 - 0*self
+                precomp.push(*self);                // 0001 - 1*self
+                precomp.push(pre[0]);               // 0010 - (2^64)*self
+                precomp.push(pre[0]);
+                precomp[3].add_assign(self);        // 0011 - (2^64+1)*self
+                precomp.push(pre[1]);               // 0100 - (2^128)*self
+                precomp.push(pre[1]);
+                precomp[5].add_assign(self);        // 0101 - (2^128+1)*self
+                precomp.push(pre[0]);
+                precomp[6].add_assign(&pre[1]);     // 0110 - (2^128+2^64)*self
+                precomp.push(precomp[6]);
+                precomp[7].add_assign(self);        // 0111 - (2^128+2^64+1)*self
+                precomp.push(pre[2]);               // 1000  - (2^192)*self
+                for i in 9..16 {
+                    precomp.push(precomp[i-8]);
+                    precomp[i].add_assign(&pre[2]); // 1001 trough 1111 -- 2^192*self + ...
+                }
+
+                let repr = other.into();
+                let bits = repr.as_ref();
+                
+                let mut nibble_index = (bits[3] >> 60) & 8;
+                nibble_index |=        (bits[2] >> 61) & 4;
+                nibble_index |=        (bits[1] >> 62) & 2;
+                nibble_index |=        (bits[0] >> 63) & 1;
+                let mut res = precomp[nibble_index as usize];
+
+                res.double();
+
+                for i in (3..63).rev() {
+                    nibble_index =  (bits[3] >> (i-3)) & 8;
+                    nibble_index |= (bits[2] >> (i-2)) & 4;
+                    nibble_index |= (bits[1] >> (i-1)) & 2;
+                    nibble_index |= (bits[0] >>  i)    & 1;
+                    res.add_assign(&precomp[nibble_index as usize]);
+                    res.double();
+                }
+
+                nibble_index =  (bits[3] << 1) & 8;
+                nibble_index |=  bits[2]       & 4;
+                nibble_index |= (bits[1] >> 1) & 2;
+                nibble_index |= (bits[0] >> 2) & 1;
+                res.add_assign(&precomp[nibble_index as usize]);
+
+                res.double();
+
+                nibble_index =  (bits[3] << 2) & 8;
+                nibble_index |= (bits[2] << 1) & 4;
+                nibble_index |=  bits[1]       & 2;
+                nibble_index |=  bits[0] >> 1  & 1;
+                res.add_assign(&precomp[nibble_index as usize]);
+
+                res.double();
+
+                nibble_index =  (bits[3] << 3) & 8;
+                nibble_index |= (bits[2] << 2) & 4;
+                nibble_index |= (bits[1] << 1) & 2;
+                nibble_index |=  bits[0]       & 1;
+                res.add_assign(&precomp[nibble_index as usize]);
+
+                *self = res;
+            }
+
             fn sum_of_products(points: &[Self], scalars: &[&[u64]])->Self {
                 // TODO: we may decide we should clear memory, such as the old self
                 // and the precomp array.
@@ -1812,6 +1886,80 @@ pub mod g1 {
                 }
             }
             assert_eq!(res.into_affine(), tmp.into_affine(), "G1 mul is not correct");
+        }
+    }
+
+    #[test]
+    fn test_g1_mul_precomp_4() {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        const ZERO_ONE_TESTS : usize = 10;
+        const SAMPLES: usize = 100;
+        let mut pre = [G1::zero(), G1::zero(), G1::zero()];
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        for _ in 0..ZERO_ONE_TESTS {
+            // test multiplication by 0
+            let mut test_point = G1::rand(&mut rng);
+            pre[0] = test_point;
+            for _ in 0..64 {
+                pre[0].double();
+            }
+            pre[1] = pre[0];
+            for _ in 0..64 {
+                pre[1].double();
+            }
+            pre[2] = pre[1];
+            for _ in 0..64 {
+                pre[2].double();
+            }
+  
+            test_point.mul_assign_precomp_4(Fr::zero(), &pre);
+            assert_eq!(test_point.into_affine(), G1::zero().into_affine(), "G1 mul_precomp_4 by 0 is not correct");
+        }
+
+        for _ in 0..ZERO_ONE_TESTS {
+            // test multiplication by 1
+            let mut test_point = G1::rand(&mut rng);
+            pre[0] = test_point;
+            for _ in 0..64 {
+                pre[0].double();
+            }
+            pre[1] = pre[0];
+            for _ in 0..64 {
+                pre[1].double();
+            }
+            pre[2] = pre[1];
+            for _ in 0..64 {
+                pre[2].double();
+            }
+            let test_point_copy = test_point;
+            test_point.mul_assign_precomp_4(Fr::one(), &pre);
+            assert_eq!(test_point.into_affine(), test_point_copy.into_affine(), "G1 mul_precomp_4 by 1 is not correct");
+        }
+
+        // test random multiplications
+        for _ in 0..SAMPLES {
+            let mut test_point = G1::rand(&mut rng);
+            pre[0] = test_point;
+            for _ in 0..64 {
+                pre[0].double();
+            }
+            pre[1] = pre[0];
+            for _ in 0..64 {
+                pre[1].double();
+            }
+            pre[2] = pre[1];
+            for _ in 0..64 {
+                pre[2].double();
+            }
+
+            let mut tmp = test_point;
+            let s = Fr::rand(&mut rng);
+            tmp.mul_assign_precomp_4(s, &pre);
+            test_point.mul_assign(s);
+
+            assert_eq!(test_point.into_affine(), tmp.into_affine(), "G1 mul_precomp_4 is not correct");
         }
     }
 

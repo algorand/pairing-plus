@@ -49,7 +49,43 @@ mod g1 {
     }
 
     #[bench]
-    fn bench_g1_mul_small_scalar(b: &mut ::test::Bencher) {
+    fn bench_g1_mul_assign_precomp_4(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let v: Vec<(G1, Fr, [G1; 3])> = (0..SAMPLES)
+            .map(|_| 
+                {
+                    let p = G1::rand(&mut rng);
+                    let mut p1 = p;
+                    for _ in 0..64 {
+                        p1.double();
+                    }
+                    let mut p2 = p1;
+                    for _ in 0..64 {
+                        p2.double();
+                    }
+                    let mut p3 = p2;
+                    for _ in 0..64 {
+                        p3.double();
+                    }
+                    (p, Fr::rand(&mut rng), [p1,p2,p3])
+                }
+            )
+            .collect();
+
+        let mut count = 0;
+        b.iter(|| {
+            let mut tmp = v[count].0;
+            tmp.mul_assign_precomp_4(v[count].1, &v[count].2);
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
+
+    #[bench]
+    fn bench_g1_mul_short_scalar(b: &mut ::test::Bencher) {
         // this should be over 2 times faster than regular multiplication
         const SAMPLES: usize = 1000;
 

@@ -177,6 +177,10 @@ pub trait CurveProjective:
     /// Performs scalar multiplication of this element.
     fn mul_assign<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S);
 
+    /// Performs scalar multiplication of this element, 
+    /// assuming pre = [(2^64)*self, (2^128)*self, (2^192)*self]
+    fn mul_assign_precomp_4<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S, pre: &[Self]);
+
     /// Performs scalar multiplication of this element in constant time.
     fn mul_assign_sec<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S);
 
