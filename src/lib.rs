@@ -1,18 +1,18 @@
 // `clippy` is a code linting tool for improving code quality by catching
 // common mistakes or strange code patterns. If the `cargo-clippy` feature
 // is provided, all compiler warnings are prohibited.
-#![cfg_attr(feature = "cargo-clippy", deny(warnings))]
-#![cfg_attr(feature = "cargo-clippy", allow(inline_always))]
-#![cfg_attr(feature = "cargo-clippy", allow(too_many_arguments))]
-#![cfg_attr(feature = "cargo-clippy", allow(unreadable_literal))]
-#![cfg_attr(feature = "cargo-clippy", allow(many_single_char_names))]
-#![cfg_attr(feature = "cargo-clippy", allow(new_without_default_derive))]
-#![cfg_attr(feature = "cargo-clippy", allow(write_literal))]
+// #![cfg_attr(feature = "cargo-clippy", deny(warnings))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::inline_always))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::many_single_char_names))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::new_without_default))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::write_literal))]
 // Force public structures to implement Debug
 #![deny(missing_debug_implementations)]
 
 extern crate byteorder;
-#[macro_use]
+// #[macro_use]
 extern crate ff;
 extern crate rand;
 
@@ -101,7 +101,7 @@ pub trait Engine: ScalarEngine {
         G2: Into<Self::G2Affine>,
     {
         Self::final_exponentiation(&Self::miller_loop(
-            [(&(p.into().prepare()), &(q.into().prepare()))].into_iter(),
+            [(&(p.into().prepare()), &(q.into().prepare()))].iter(),
         )).unwrap()
     }
 }
