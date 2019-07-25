@@ -49,7 +49,7 @@ mod g1 {
     }
 
     #[bench]
-    fn bench_g1_mul_assign_precomp_4(b: &mut ::test::Bencher) {
+    fn bench_g1_mul_assign_precomp_3(b: &mut ::test::Bencher) {
         const SAMPLES: usize = 1000;
 
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
@@ -58,19 +58,9 @@ mod g1 {
             .map(|_| 
                 {
                     let p = G1::rand(&mut rng);
-                    let mut p1 = p;
-                    for _ in 0..64 {
-                        p1.double();
-                    }
-                    let mut p2 = p1;
-                    for _ in 0..64 {
-                        p2.double();
-                    }
-                    let mut p3 = p2;
-                    for _ in 0..64 {
-                        p3.double();
-                    }
-                    (p, Fr::rand(&mut rng), [p1,p2,p3])
+                    let mut pre = [G1::zero(); 3];
+                    p.precomp_3(&mut pre);
+                    (p, Fr::rand(&mut rng), pre)
                 }
             )
             .collect();
@@ -78,7 +68,32 @@ mod g1 {
         let mut count = 0;
         b.iter(|| {
             let mut tmp = v[count].0;
-            tmp.mul_assign_precomp_4(v[count].1, &v[count].2);
+            tmp.mul_assign_precomp_3(v[count].1, &v[count].2);
+            count = (count + 1) % SAMPLES;
+            tmp
+        });
+    }
+    #[bench]
+    fn bench_g1_mul_assign_precomp_256(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let v: Vec<(G1, Fr, [G1; 256])> = (0..SAMPLES)
+            .map(|_| 
+                {
+                    let p = G1::rand(&mut rng);
+                    let mut pre = [G1::zero(); 256];
+                    p.precomp_256(&mut pre);
+                    (p, Fr::rand(&mut rng), pre)
+                }
+            )
+            .collect();
+
+        let mut count = 0;
+        b.iter(|| {
+            let mut tmp = v[count].0;
+            tmp.mul_assign_precomp_256(v[count].1, &v[count].2);
             count = (count + 1) % SAMPLES;
             tmp
         });
@@ -124,6 +139,24 @@ mod g1 {
         let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
         b.iter(|| {
             G1::sum_of_products(&points,&scalars)
+        });
+    }
+
+    #[bench]
+    fn bench_g1_sum_of_products_precomp_256(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points:Vec<G1> = (0..max_points).map(|_| G1::rand(&mut rng)).collect(); 
+        let mut pre = vec![G1::zero(); 256*max_points];
+        for i in 0..max_points {
+            points[i].precomp_256(&mut pre[i*256..(i+1)*256]);
+        }
+        let scalars_fr_repr:Vec<FrRepr> = (0..max_points).map(|_| Fr::rand(&mut rng).into_repr()).collect();
+        let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+        b.iter(|| {
+            G1::sum_of_products_precomp_256(&points,&scalars, &pre)
         });
     }
 

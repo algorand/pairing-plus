@@ -177,9 +177,20 @@ pub trait CurveProjective:
     /// Performs scalar multiplication of this element.
     fn mul_assign<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S);
 
+    /// pre[0] becomes (2^64) * self, pre[1]  becomes (2^128) * self, and pre[2] (becomes 2^196) * self
+    fn precomp_3(&self, pre: & mut [Self]);
+
     /// Performs scalar multiplication of this element, 
     /// assuming pre = [(2^64)*self, (2^128)*self, (2^192)*self]
-    fn mul_assign_precomp_4<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S, pre: &[Self]);
+    fn mul_assign_precomp_3<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S, pre: &[Self]);
+
+    /// pre[i] becomes (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..25
+    fn precomp_256(&self, pre: &mut [Self]);
+
+
+    /// Performs scalar multiplication of this element, 
+    /// assuming  pre[i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..256
+    fn mul_assign_precomp_256<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S, pre : &[Self]);
 
     /// Performs scalar multiplication of this element in constant time.
     fn mul_assign_sec<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S);
@@ -195,8 +206,8 @@ pub trait CurveProjective:
     /// a base by. Always returns a number between 2 and 22, inclusive.
     fn recommended_wnaf_for_num_scalars(num_scalars: usize) -> usize;
 
-    // multiplication with shamir's Trick
-    // computer s1 * p1 + s2 * p2 simultaneously
+    /// multiplication with shamir's Trick
+    /// compute s1 * p1 + s2 * p2 simultaneously
     fn mul_shamir<S: Into<<Self::Scalar as PrimeField>::Repr>>(
         p1: Self,
         p2: Self,
@@ -204,9 +215,14 @@ pub trait CurveProjective:
         s2: S,
     ) -> Self;
 
-    // multiplication of many points with shamir's Trick
-    // computer s1 * p1 + ... + sn * pn simultaneously
+    /// multiplication of many points with shamir's Trick
+    /// computer s1 * p1 + ... + sn * pn simultaneously
     fn sum_of_products(bases: &[Self], scalars: &[&[u64]])->Self;
+
+    /// multiplication of many points with shamir's Trick and precompuation
+    /// computer s1 * p1 + ... + sn * pn simultaneously
+    /// assuming  pre[j*256+i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * bases[j] for each j and i in 0..256
+    fn sum_of_products_precomp_256(bases: &[Self], scalars: &[&[u64]], pre: &[Self])->Self;
 
 }
 
