@@ -198,8 +198,57 @@ macro_rules! curve_impl {
             }
 
             fn mul<S: Into<<Self::Scalar as PrimeField>::Repr>>(&self, by: S) -> $projective {
-                let bits = BitIterator::new(by.into());
-                self.mul_bits(bits)
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+                // TODO: keep 0 and 1 elt of precomp?
+                let mut res = Self::Projective::zero();
+                let mut found_non_zero = false;
+
+                // Sliding window technique: precompute self*0, ..., self*15
+                let mut precomp: Vec<Self::Projective> = Vec::with_capacity(16); 
+                precomp.push(Self::Projective::zero());
+                precomp.push(self.into_projective());
+                for i in 2..16 {
+                    if i % 2 == 1 {// if i is odd
+                        precomp.push(precomp[i-1]);
+                        precomp[i].add_assign_mixed(self);
+                    }
+                    else {
+                        precomp.push(precomp[i/2]);
+                        precomp[i].double();
+                    }
+                }
+                let repr = by.into();
+                let bits = repr.as_ref();
+                // process the scalar 4 bits (=1 nibble) at a time
+                for nibble_index in (0..bits.len()*16).rev() {
+                    // find the i-th 4-bit chunk of the exponent
+                    let word = nibble_index >> 4; // i div 16
+                    let shift = (nibble_index & 15) << 2; // (i mod 16) * 4
+                    let index:usize = ((bits[word]>>shift) & 15) as usize;
+                    if found_non_zero {
+                        res.double();
+                        res.double();
+                        res.double();
+                        res.double();
+                    }
+                    if index>0 {
+                        if !found_non_zero {
+                            res = precomp[index];
+                            found_non_zero = true;
+                        }
+                        else {
+                            if index == 1 {
+                                res.add_assign_mixed(self);
+                            }
+                            else {
+                                res.add_assign(&precomp[index]);
+                            }
+                        }
+                    }
+                }
+                res
             }
 
             fn mul_sec<S: Into<<Self::Scalar as PrimeField>::Repr>>(&self, by: S) -> $projective {
@@ -502,6 +551,223 @@ macro_rules! curve_impl {
                 x3b.mul_assign(x);
                 x3b.add_assign(&super::super::fq::B_COEFF);
                 x3b
+            }
+
+
+            // pre[0] becomes (2^64) * self, pre[1]  becomes (2^128) * self, and pre[2] (becomes 2^196) * self
+            fn precomp_3(&self, pre: & mut [Self]) {
+                // TODO: check if pre has the right length?
+                let mut p = self.into_projective();
+                for i in 0..3 {
+                    for _ in 0..64 {
+                        p.double();
+                    }
+                    pre[i] = p.into_affine();
+                }
+            }
+
+            // Expects pre[0] = (2^64) * self, pre[1] = (2^128) * self, pre[2] = (2^192) * self
+            fn mul_precomp_3<S: Into<<Self::Scalar as PrimeField>::Repr>>(&self, other: S, pre : &[Self]) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+
+                // TODO: this is fragile, because it works only if other.into().as_ref() is exactly four 64-bits words
+
+                // Interleaved window technique: deal with each of the four words of the scalar in parallel
+
+                let mut precomp = Vec::with_capacity(16); 
+                precomp.push(Self::Projective::zero());                 // 0000 - 0*self
+                precomp.push(self.into_projective());                   // 0001 - 1*self
+                precomp.push(pre[0].into_projective());                 // 0010 - (2^64)*self
+                precomp.push(precomp[2]);
+                precomp[3].add_assign_mixed(self);                      // 0011 - (2^64+1)*self
+                precomp.push(pre[1].into_projective());                 // 0100 - (2^128)*self
+                precomp.push(precomp[4]);
+                precomp[5].add_assign_mixed(self);                      // 0101 - (2^128+1)*self
+                precomp.push(precomp[2]);
+                precomp[6].add_assign_mixed(&pre[1]);                   // 0110 - (2^128+2^64)*self
+                precomp.push(precomp[6]);
+                precomp[7].add_assign_mixed(self);                      // 0111 - (2^128+2^64+1)*self
+                precomp.push(pre[2].into_projective());                 // 1000  - (2^192)*self
+                for i in 9..16 {
+                    precomp.push(precomp[i-8]);
+                    precomp[i].add_assign_mixed(&pre[2]);               // 1001 trough 1111 -- 2^192*self + ...
+                }
+
+                let repr = other.into();
+                let bits = repr.as_ref();
+                
+                let mut nibble = (bits[3] >> 60) & 8;
+                nibble |=        (bits[2] >> 61) & 4;
+                nibble |=        (bits[1] >> 62) & 2;
+                nibble |=        (bits[0] >> 63) & 1;
+                let mut res = precomp[nibble as usize];
+
+                for i in (0..63).rev() {
+                    res.double();
+                    nibble =  ((bits[3] >> i) << 3) & 8; // can't shift by i-3 because it can be negative
+                    nibble |= ((bits[2] >> i) << 2) & 4;
+                    nibble |= ((bits[1] >> i) << 1) & 2;
+                    nibble |=  (bits[0] >> i)       & 1;
+                    res.add_assign(&precomp[nibble as usize]);
+                }
+                res
+            }
+
+            // pre[i] becomes (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..25
+            fn precomp_256(&self, pre: & mut [Self]) {
+                // TODO: check if pre has the right length?
+                pre[0] = Self::zero();
+                let mut piece_length = 1;
+                let mut power_of_2_times_self = self.into_projective(); // power_of_2_times_self = 2^{32*piece_length} * self
+                while piece_length <= 128 { // operate in pieces of length 1, 2, 4, 8, 16, 32, 64, 128
+                    pre[piece_length] = power_of_2_times_self.into_affine();
+                    for i in 1..piece_length {
+                        pre[i+piece_length] = pre[i];
+                        let mut temp = pre[i].into_projective();
+                        temp.add_assign_mixed(&pre[piece_length]);
+                        pre[i+piece_length] = temp.into_affine();
+                    }
+                    if piece_length < 128 {
+                        for _ in 0..32 {
+                            power_of_2_times_self.double();
+                        }
+                    }
+                    piece_length *= 2;
+                }
+            }
+
+
+            // Expects pre[i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..256
+            // pre can be obtained by calling precomp_256
+            fn mul_precomp_256<S: Into<<Self::Scalar as PrimeField>::Repr>>(&self, other: S, pre : &[Self]) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+
+                // TODO: this is fragile, because it works only if other.into().as_ref() is exactly four 64-bits words
+
+                // Interleaved window technique: deal with each of the 8 32-bit chunks words of the scalar in parallel
+                
+                let repr = other.into();
+                let bits = repr.as_ref();
+
+
+                let mut byte = (bits[3] >> 56) & 128;                
+                byte |=        (bits[3] >> 25) &  64;
+                byte |=        (bits[2] >> 58) &  32;
+                byte |=        (bits[2] >> 27) &  16;
+                byte |=        (bits[1] >> 60) &   8;
+                byte |=        (bits[1] >> 29) &   4;
+                byte |=        (bits[0] >> 62) &   2;
+                byte |=        (bits[0] >> 31) &   1;
+                let mut res = pre[byte as usize].into_projective();
+
+                for i in (0..31).rev() {
+                    res.double();
+                    byte =  (bits[3] >> (i+25))    & 128;
+                    byte |= ((bits[3] >> i) << 6)  &  64; // can't shift by i-6 because it can be negative
+                    byte |= (bits[2] >> (i+27))    &  32;
+                    byte |= ((bits[2] >> i) << 4)  &  16;
+                    byte |= (bits[1] >> (i+29))    &   8;
+                    byte |= ((bits[1] >> i) << 2)  &   4;
+                    byte |= (bits[0] >> (i+31))    &   2;
+                    byte |= (bits[0] >>  i)        &   1;
+                    res.add_assign_mixed(&pre[byte as usize]);
+                }
+                res
+            }
+
+            fn sum_of_products(points: &[Self], scalars: &[&[u64]]) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+                // TODO: figure out what to do if the lengths of the two input slices don't match
+                // For now, take the minimum
+                let mut res = Self::Projective::zero();
+                let num_components = if points.len()<scalars.len() {points.len()} else {scalars.len()};
+
+                //  window technique: for each input point, precompute that point times 0, times 1, ..., times 15
+                let mut precomp_vec = Vec::with_capacity(num_components);
+                for point in points {
+                    let mut precomp = Vec::with_capacity(16); 
+                    precomp.push(Self::Projective::zero());
+                    precomp.push(point.into_projective());
+                    for i in 2..16 {
+                        if i % 2 == 1 {// if i is odd
+                            precomp.push(precomp[i-1]);
+                            precomp[i].add_assign_mixed(point);
+                        }
+                        else {
+                            precomp.push(precomp[i/2]);
+                            precomp[i].double();
+                        }
+                    }
+                    precomp_vec.push(precomp);
+                }
+
+                // TODO: this is not needed when all scalars are exactly four words, as they seem to be
+                let mut max_len = 0usize; 
+                for i in 0..num_components {
+                    let curlen = scalars[i].len();
+                    if curlen>max_len {
+                        max_len = curlen;
+                    }
+                }
+
+                // Process all scalars four bits (=1 nibble) at a time
+                for nibble_index in (0..max_len*16).rev() {
+                    res.double();
+                    res.double();
+                    res.double();
+                    res.double();
+                    // find the i-th 4-bit chunk of the exponent
+                    let word = nibble_index>>4; // i div 16
+                    let shift = (nibble_index&15)<<2; // (i mod 16) * 4
+                    for i in 0..num_components {
+                        if word<scalars[i].len() {
+                            let index:usize = ((scalars[i][word]>>shift) & 15) as usize;
+                            if index>0 {
+                                res.add_assign(&precomp_vec[i][index]);
+                            }
+                        }
+                    }
+                }
+                res
+            }
+            
+            // Expects pre[j*256+i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self[j] for i in 0..256 and for each j
+            // pre can be obtained by calling precomp_256
+            fn sum_of_products_precomp_256(points: &[Self], scalars: &[&[u64]], pre: &[Self]) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+                // TODO: figure out what to do if the lengths of the two input slices don't match
+                // For now, take the minimum
+                let mut res = Self::Projective::zero();
+                let num_components = if points.len()<scalars.len() {points.len()} else {scalars.len()};
+
+                // TODO: this is fragile, because it works only if other.into().as_ref() is exactly four 64-bits words and if pre is exactly the right length
+
+                // Interleaved window technique: deal with each of the 8 32-bit chunks words of each scalar in parallel
+
+                for i in (0..32).rev() {
+                    res.double();
+                    for j in 0..num_components {
+                        let mut byte 
+                              =  (scalars[j][3] >> (i+25))   & 128;
+                        byte |= ((scalars[j][3] >> i) << 6)  &  64; // can't shift by i-6 because it can be negative
+                        byte |= (scalars[j][2] >> (i+27))    &  32;
+                        byte |= ((scalars[j][2] >> i) << 4)  &  16;
+                        byte |= (scalars[j][1] >> (i+29))    &   8;
+                        byte |= ((scalars[j][1] >> i) << 2)  &   4;
+                        byte |= (scalars[j][0] >> (i+31))    &   2;
+                        byte |= (scalars[j][0] >>  i)        &   1;
+                        res.add_assign_mixed(&pre[(j<<8)+byte as usize]);
+                    }
+                }
+                res
             }
         }
 
@@ -848,6 +1114,8 @@ macro_rules! curve_impl {
                 // TODO: we may decide we should clear memory, such as the old self
                 // and the precomp array.
                 // For now, none of the other functions do that, either.
+                // TODO: keep 0 and 1 elt of precomp?
+
                 let mut res = Self::zero();
                 let mut found_non_zero = false;
 
@@ -892,231 +1160,10 @@ macro_rules! curve_impl {
                 *self = res;
             }
 
-            // pre[0] becomes (2^64) * self, pre[1]  becomes (2^128) * self, and pre[2] (becomes 2^196) * self
-            fn precomp_3(&self, pre: & mut [Self]) {
-                // TODO: check if pre has the right length?
-                pre[0] = *self;
-                for _ in 0..64 {
-                    pre[0].double();
-                }
-                pre[1] = pre[0];
-                for _ in 0..64 {
-                    pre[1].double();
-                }
-                pre[2] = pre[1];
-                for _ in 0..64 {
-                    pre[2].double();
-                }
-            }
-
-            // Expects pre[0] = (2^64) * self, pre[1] = (2^128) * self, pre[2] = (2^192) * self
-            fn mul_assign_precomp_3<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S, pre : &[Self]) {
-                // TODO: we may decide we should clear memory, such as the old self
-                // and the precomp array.
-                // For now, none of the other functions do that, either.
-
-                // TODO: this is fragile, because it works only if other.into().as_ref() is exactly four 64-bits words
-
-                // Interleaved sliding window technique: deal with each of the four words of the scalar in parallel
-
-                let mut precomp: Vec<Self>= Vec::with_capacity(16); 
-                precomp.push(Self::zero());         // 0000 - 0*self
-                precomp.push(*self);                // 0001 - 1*self
-                precomp.push(pre[0]);               // 0010 - (2^64)*self
-                precomp.push(pre[0]);
-                precomp[3].add_assign(self);        // 0011 - (2^64+1)*self
-                precomp.push(pre[1]);               // 0100 - (2^128)*self
-                precomp.push(pre[1]);
-                precomp[5].add_assign(self);        // 0101 - (2^128+1)*self
-                precomp.push(pre[0]);
-                precomp[6].add_assign(&pre[1]);     // 0110 - (2^128+2^64)*self
-                precomp.push(precomp[6]);
-                precomp[7].add_assign(self);        // 0111 - (2^128+2^64+1)*self
-                precomp.push(pre[2]);               // 1000  - (2^192)*self
-                for i in 9..16 {
-                    precomp.push(precomp[i-8]);
-                    precomp[i].add_assign(&pre[2]); // 1001 trough 1111 -- 2^192*self + ...
-                }
-
-                let repr = other.into();
-                let bits = repr.as_ref();
-                
-                let mut nibble = (bits[3] >> 60) & 8;
-                nibble |=        (bits[2] >> 61) & 4;
-                nibble |=        (bits[1] >> 62) & 2;
-                nibble |=        (bits[0] >> 63) & 1;
-                let mut res = precomp[nibble as usize];
-
-                for i in (0..63).rev() {
-                    res.double();
-                    nibble =  ((bits[3] >> i) << 3) & 8; // can't shift by i-3 because it can be negative
-                    nibble |= ((bits[2] >> i) << 2) & 4;
-                    nibble |= ((bits[1] >> i) << 1) & 2;
-                    nibble |=  (bits[0] >> i)       & 1;
-                    res.add_assign(&precomp[nibble as usize]);
-                }
-
-                *self = res;
-            }
-
-            // pre[i] becomes (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..25
-            fn precomp_256(&self, pre: & mut [Self]) {
-                // TODO: check if pre has the right length?
-                pre[0] = Self::zero();
-                let mut piece_length = 1;
-                let mut power_of_2_times_self = *self; // power_of_2_times_self = 2^{32*piece_length} * self
-                while piece_length <= 128 { // operate in pieces of length 1, 2, 4, 8, 16, 32, 64, 128
-                    pre[piece_length] = power_of_2_times_self;
-                    for i in 1..piece_length {
-                        pre[i+piece_length] = pre[i];
-                        pre[i+piece_length].add_assign(&power_of_2_times_self);
-                    }
-                    if piece_length < 128 {
-                        for _ in 0..32 {
-                            power_of_2_times_self.double();
-                        }
-                    }
-                    piece_length *= 2;
-                }
-            }
-
-
-            // Expects pre[i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..256
-            // pre can be obtained by calling precomp_256
-            fn mul_assign_precomp_256<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S, pre : &[Self]) {
-                // TODO: we may decide we should clear memory, such as the old self
-                // and the precomp array.
-                // For now, none of the other functions do that, either.
-
-                // TODO: this is fragile, because it works only if other.into().as_ref() is exactly four 64-bits words
-
-                // Interleaved sliding window technique: deal with each of the 8 32-bit chunks words of the scalar in parallel
-                
-                let repr = other.into();
-                let bits = repr.as_ref();
-
-
-                let mut byte = (bits[3] >> 56) & 128;                
-                byte |=        (bits[3] >> 25) &  64;
-                byte |=        (bits[2] >> 58) &  32;
-                byte |=        (bits[2] >> 27) &  16;
-                byte |=        (bits[1] >> 60) &   8;
-                byte |=        (bits[1] >> 29) &   4;
-                byte |=        (bits[0] >> 62) &   2;
-                byte |=        (bits[0] >> 31) &   1;
-                let mut res = pre[byte as usize];
-
-                for i in (0..31).rev() {
-                    res.double();
-                    byte =  (bits[3] >> (i+25))    & 128;
-                    byte |= ((bits[3] >> i) << 6)  &  64; // can't shift by i-6 because it can be negative
-                    byte |= (bits[2] >> (i+27))    &  32;
-                    byte |= ((bits[2] >> i) << 4)  &  16;
-                    byte |= (bits[1] >> (i+29))    &   8;
-                    byte |= ((bits[1] >> i) << 2)  &   4;
-                    byte |= (bits[0] >> (i+31))    &   2;
-                    byte |= (bits[0] >>  i)        &   1;
-                    res.add_assign(&pre[byte as usize]);
-                }
-                *self = res;
-            }
-
-            fn sum_of_products(points: &[Self], scalars: &[&[u64]])->Self {
-                // TODO: we may decide we should clear memory, such as the old self
-                // and the precomp array.
-                // For now, none of the other functions do that, either.
-                // TODO: figure out what to do if the lengths of the two input slices don't match
-                // For now, take the minimum
-                let mut res = Self::zero();
-                let num_components = if points.len()<scalars.len() {points.len()} else {scalars.len()};
-
-                // sliding window technique: for each input point, precompute that point times 0, times 1, ..., times 15
-                let mut precomp_vec = Vec::with_capacity(num_components);
-                for point in points {
-                    let mut precomp = Vec::with_capacity(16); 
-                    precomp.push(Self::zero());
-                    precomp.push(*point);
-                    for i in 2..16 {
-                        if i % 2 == 1 {// if i is odd
-                            precomp.push(precomp[i-1]);
-                            precomp[i].add_assign(point);
-                        }
-                        else {
-                            precomp.push(precomp[i/2]);
-                            precomp[i].double();
-                        }
-                    }
-                    precomp_vec.push(precomp);
-                }
-
-                // TODO: this is not needed when all scalars are exactly four words, as they seem to be
-                let mut max_len = 0usize; 
-                for i in 0..num_components {
-                    let curlen = scalars[i].len();
-                    if curlen>max_len {
-                        max_len = curlen;
-                    }
-                }
-
-                // Process all scalars four bits (=1 nibble) at a time
-                for nibble_index in (0..max_len*16).rev() {
-                    res.double();
-                    res.double();
-                    res.double();
-                    res.double();
-                    // find the i-th 4-bit chunk of the exponent
-                    let word = nibble_index>>4; // i div 16
-                    let shift = (nibble_index&15)<<2; // (i mod 16) * 4
-                    for i in 0..num_components {
-                        if word<scalars[i].len() {
-                            let index:usize = ((scalars[i][word]>>shift) & 15) as usize;
-                            if index>0 {
-                                res.add_assign(&precomp_vec[i][index]);
-                            }
-                        }
-                    }
-                }
-                res
-            }
-            
-            // Expects pre[j*256+i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self[j] for i in 0..256 and for each j
-            // pre can be obtained by calling precomp_256
-            fn sum_of_products_precomp_256(points: &[Self], scalars: &[&[u64]], pre: &[Self])->Self {
-                // TODO: we may decide we should clear memory, such as the old self
-                // and the precomp array.
-                // For now, none of the other functions do that, either.
-                // TODO: figure out what to do if the lengths of the two input slices don't match
-                // For now, take the minimum
-                let mut res = Self::zero();
-                let num_components = if points.len()<scalars.len() {points.len()} else {scalars.len()};
-
-                // TODO: this is fragile, because it works only if other.into().as_ref() is exactly four 64-bits words and if pre is exactly the right length
-
-                // Interleaved sliding window technique: deal with each of the 8 32-bit chunks words of each scalar in parallel
-
-                for i in (0..32).rev() {
-                    res.double();
-                    for j in 0..num_components {
-                        let mut byte 
-                              =  (scalars[j][3] >> (i+25))    & 128;
-                        byte |= ((scalars[j][3] >> i) << 6)  &  64; // can't shift by i-6 because it can be negative
-                        byte |= (scalars[j][2] >> (i+27))    &  32;
-                        byte |= ((scalars[j][2] >> i) << 4)  &  16;
-                        byte |= (scalars[j][1] >> (i+29))    &   8;
-                        byte |= ((scalars[j][1] >> i) << 2)  &   4;
-                        byte |= (scalars[j][0] >> (i+31))    &   2;
-                        byte |= (scalars[j][0] >>  i)        &   1;
-                        res.add_assign(&pre[(j<<8)+byte as usize]);
-                    }
-                }
-                res
-            }
-            
-
             // this multiplication function always uses 255 doubling and additions
-            // TODO: we can use sliding window here also (and gain a factor of 2 in performance), 
+            // TODO: we can use  window here also (and gain a factor of 2 in performance), 
             // just as in mul, but it's less clear
-            // which of the 16 sliding window elements to use in the addition when the index is 0
+            // which of the 16  window elements to use in the addition when the index is 0
             fn mul_assign_sec<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S) {
                 let mut res = Self::zero();
                 let mut _discard = Self::zero();
@@ -1937,6 +1984,7 @@ pub mod g1 {
     }
 
 
+// TODO: these tests should move
     #[test]
     fn test_g1_mul() {
         use rand::{Rand, SeedableRng, XorShiftRng};
@@ -1944,48 +1992,51 @@ pub mod g1 {
         const SAMPLES: usize = 100;
 
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
-        let mut pre_3=[G1::zero(); 3];
-        let mut pre_256=[G1::zero(); 256];
+        let mut pre_3=[G1Affine::zero(); 3];
+        let mut pre_256=[G1Affine::zero(); 256];
 
         for _ in 0..ZERO_ONE_TESTS {
             // test multiplication by 0 and by 1
             let test_point = G1::rand(&mut rng);
             let affine_test_point = test_point.into_affine();
-            let affine_zero = G1::zero().into_affine();
-            test_point.precomp_3(&mut pre_3);
-            test_point.precomp_256(&mut pre_256);
+            affine_test_point.precomp_3(&mut pre_3);
+            affine_test_point.precomp_256(&mut pre_256);
 
             let mut test_point_copy = test_point;
             
             test_point_copy.mul_assign(Fr::zero());
-            assert_eq!(test_point_copy.into_affine(), affine_zero, "G1 mul by 0 is not correct");
+            assert_eq!(test_point_copy, G1::zero(), "G1 mul by 0 is not correct");
+
+            let res0 = affine_test_point.mul(Fr::zero());
+            assert_eq!(res0, G1::zero(), "G1 affine mul by 0 is not correct");
+
+            let res03 = affine_test_point.mul_precomp_3(Fr::zero(), &pre_3);
+            assert_eq!(res03, G1::zero(), "G1 mul_precomp_3 by 0 is not correct");
             
-            test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_3(Fr::zero(), &pre_3);
-            assert_eq!(test_point_copy.into_affine(), affine_zero, "G1 mul_precomp_3 by 0 is not correct");
-            
-            test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_256(Fr::zero(), &pre_256);
-            assert_eq!(test_point_copy.into_affine(), affine_zero, "G1 mul_precomp_256 by 0 is not correct");
+            let res0256 = affine_test_point.mul_precomp_256(Fr::zero(), &pre_256);
+            assert_eq!(res0256, G1::zero(), "G1 mul_precomp_256 by 0 is not correct");
 
             test_point_copy = test_point;
             test_point_copy.mul_assign(Fr::one());
             assert_eq!(test_point_copy.into_affine(), affine_test_point, "G1 mul by 1 is not correct");
 
-            test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_3(Fr::one(), &pre_3);
-            assert_eq!(test_point_copy.into_affine(), affine_test_point, "G1 mul_precomp_3 by 1 is not correct");
+            let res1 = affine_test_point.mul(Fr::one());
+            assert_eq!(res1, test_point, "G1 affine mul by 1 is not correct");
 
-            test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_256(Fr::one(), &pre_256);
-            assert_eq!(test_point_copy.into_affine(), affine_test_point, "G1 mul_precomp_256 by 1 is not correct");
+            let res13 = affine_test_point.mul_precomp_3(Fr::one(), &pre_3);
+            assert_eq!(res13, test_point, "G1 mul_precomp_3 by 1 is not correct");
+
+            let res1256 = affine_test_point.mul_precomp_256(Fr::one(), &pre_256);
+            assert_eq!(res1256, test_point, "G1 mul_precomp_256 by 1 is not correct");
         }
 
         // test random multiplications
         for _ in 0..SAMPLES {
             let test_point = G1::rand(&mut rng);
-            test_point.precomp_3(&mut pre_3);
-            test_point.precomp_256(&mut pre_256);
+            let affine_test_point = test_point.into_affine();
+
+            affine_test_point.precomp_3(&mut pre_3);
+            affine_test_point.precomp_256(&mut pre_256);
 
             let s = Fr::rand(&mut rng);
 
@@ -1998,19 +2049,18 @@ pub mod g1 {
                 }
             }
 
-            let affine_res = correct_res.into_affine();
-
             let mut test_point_copy = test_point;
             test_point_copy.mul_assign(s);
-            assert_eq!(test_point_copy.into_affine(), affine_res, "G1 mul_precomp_256 is not correct");
+            assert_eq!(test_point_copy, correct_res, "G1 mul_assign is not correct");
 
-            test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_3(s, &pre_3);
-            assert_eq!(test_point_copy.into_affine(), affine_res, "G1 mul_precomp_256 is not correct");
+            let res = affine_test_point.mul(s);
+            assert_eq!(res, correct_res, "G1 affine mul is not correct");
 
-            test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_256(s, &pre_256);
-            assert_eq!(test_point_copy.into_affine(), affine_res, "G1 mul_precomp_256 is not correct");
+            let res3 = affine_test_point.mul_precomp_3(s, &pre_3);
+            assert_eq!(res3, correct_res, "G1 mul_precomp_3 is not correct");
+
+            let res256 = affine_test_point.mul_precomp_256(s, &pre_256);
+            assert_eq!(res256, correct_res, "G1 mul_precomp_256 is not correct");
         }
     }
 
@@ -2021,8 +2071,8 @@ pub mod g1 {
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
         let max_points = 15;
-        let points:Vec<G1> = (0..max_points).map(|_| G1::rand(&mut rng)).collect(); 
-        let mut precomp = vec![G1::zero(); 256*max_points];
+        let points:Vec<G1Affine> = (0..max_points).map(|_| G1::rand(&mut rng).into_affine()).collect(); 
+        let mut precomp = vec![G1Affine::zero(); 256*max_points];
         for i in 0..max_points {
             points[i].precomp_256(&mut precomp[i*256..(i+1)*256]);
         }
@@ -2033,13 +2083,13 @@ pub mod g1 {
                 let scalars_fr_repr:Vec<FrRepr> = (0..num_points).map(|_| Fr::zero().into_repr()).collect();
                 let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
 
-                let desired_result = G1::zero().into_affine();
+                let desired_result = G1::zero();
 
-                let res_no_precomp = G1::sum_of_products(&points[0..num_points],&scalars);
-                assert_eq!(desired_result, res_no_precomp.into_affine(), "Failed at raising multiple points to all-0 vector");
+                let res_no_precomp = G1Affine::sum_of_products(&points[0..num_points],&scalars);
+                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to all-0 vector");
 
-                let res_precomp = G1::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
-                assert_eq!(desired_result, res_precomp.into_affine(), "Failed at raising multiple points to all-0 vector with precomputation");
+                let res_precomp = G1Affine::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
+                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to all-0 vector with precomputation");
             }
         
             {
@@ -2049,14 +2099,14 @@ pub mod g1 {
 
                 let mut desired_result = G1::zero();
                 for i in 0..num_points {
-                    desired_result.add_assign(&points[i]);
+                    desired_result.add_assign_mixed(&points[i]);
                 }
 
-                let res_no_precomp = G1::sum_of_products(&points[0..num_points],&scalars);
-                assert_eq!(desired_result.into_affine(), res_no_precomp.into_affine(), "Failed at raising multiple points to all-0 vector");
+                let res_no_precomp = G1Affine::sum_of_products(&points[0..num_points],&scalars);
+                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to all-0 vector");
 
-                let res_precomp = G1::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
-                assert_eq!(desired_result.into_affine(), res_precomp.into_affine(), "Failed at raising multiple points to all-0 vector with precomputation");
+                let res_precomp = G1Affine::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
+                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to all-0 vector with precomputation");
             }
         
             {
@@ -2075,14 +2125,14 @@ pub mod g1 {
                 let mut desired_result = G1::zero();
                 for i in 0..num_points {
                     if i%2 == 1 {
-                        desired_result.add_assign(&points[i]);
+                        desired_result.add_assign_mixed(&points[i]);
                     }
                 }
-                let res_no_precomp = G1::sum_of_products(&points[0..num_points],&scalars);
-                assert_eq!(desired_result.into_affine(), res_no_precomp.into_affine(), "Failed at raising multiple points to all-0 vector");
+                let res_no_precomp = G1Affine::sum_of_products(&points[0..num_points],&scalars);
+                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to all-0 vector");
 
-                let res_precomp = G1::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
-                assert_eq!(desired_result.into_affine(), res_precomp.into_affine(), "Failed at raising multiple points to all-0 vector with precomputation");
+                let res_precomp = G1Affine::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
+                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to all-0 vector with precomputation");
             }
 
             {
@@ -2114,7 +2164,7 @@ pub mod g1 {
                 let mut desired_result = G1::zero();
                 for i in 0..num_points {
                     if i%4 != 0 {
-                        let mut intermediate_result = points[i];
+                        let mut intermediate_result = points[i].into_projective();
                         if i%4 != 1 {
                             intermediate_result.mul_assign(scalars_fr[i]);
                         }
@@ -2125,11 +2175,11 @@ pub mod g1 {
                 let scalars_fr_repr:Vec<FrRepr> = scalars_fr.iter().map(|s| s.into_repr()).collect();
                 let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
 
-                let res_no_precomp = G1::sum_of_products(&points[0..num_points],&scalars);
-                assert_eq!(desired_result.into_affine(), res_no_precomp.into_affine(), "Failed at raising multiple points to all-0 vector");
+                let res_no_precomp = G1Affine::sum_of_products(&points[0..num_points],&scalars);
+                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to all-0 vector");
 
-                let res_precomp = G1::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
-                assert_eq!(desired_result.into_affine(), res_precomp.into_affine(), "Failed at raising multiple points to all-0 vector with precomputation");
+                let res_precomp = G1Affine::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
+                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to all-0 vector with precomputation");
             }
         
             {
@@ -2142,7 +2192,7 @@ pub mod g1 {
 
                 let mut desired_result = G1::zero();
                 for i in 0..num_points {
-                    let mut intermediate_result = points[i];
+                    let mut intermediate_result = points[i].into_projective();
                     intermediate_result.mul_assign(scalars_fr[i]);
                     desired_result.add_assign(&intermediate_result);
                 }
@@ -2150,11 +2200,11 @@ pub mod g1 {
                 let scalars_fr_repr:Vec<FrRepr> = scalars_fr.iter().map(|s| s.into_repr()).collect();
                 let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
 
-                let res_no_precomp = G1::sum_of_products(&points[0..num_points],&scalars);
-                assert_eq!(desired_result.into_affine(), res_no_precomp.into_affine(), "Failed at raising multiple points to all-0 vector");
+                let res_no_precomp = G1Affine::sum_of_products(&points[0..num_points],&scalars);
+                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to all-0 vector");
 
-                let res_precomp = G1::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
-                assert_eq!(desired_result.into_affine(), res_precomp.into_affine(), "Failed at raising multiple points to all-0 vector with precomputation");
+                let res_precomp = G1Affine::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
+                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to all-0 vector with precomputation");
             }
         }
     }
@@ -2617,7 +2667,7 @@ pub mod g2 {
             x.add_assign(&Fq2::one());
         }
     }
-
+/*
     #[test]
     fn test_g2_mul() {
         use rand::{Rand, SeedableRng, XorShiftRng};
@@ -2626,7 +2676,7 @@ pub mod g2 {
 
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
         let mut pre_3=[G2::zero(); 3];
-        let mut pre_256=[G2::zero(); 256];
+        let mut pre_256=[G2Affine::zero(); 256];
 
         for _ in 0..ZERO_ONE_TESTS {
             // test multiplication by 0 and by 1
@@ -2642,11 +2692,11 @@ pub mod g2 {
             assert_eq!(test_point_copy.into_affine(), affine_zero, "G2 mul by 0 is not correct");
             
             test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_3(Fr::zero(), &pre_3);
+            test_point_copy.mul_mixed_precomp_3(Fr::zero(), &pre_3);
             assert_eq!(test_point_copy.into_affine(), affine_zero, "G2 mul_precomp_3 by 0 is not correct");
             
             test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_256(Fr::zero(), &pre_256);
+            test_point_copy.mul_mixed_precomp_256(Fr::zero(), &pre_256);
             assert_eq!(test_point_copy.into_affine(), affine_zero, "G2 mul_precomp_256 by 0 is not correct");
 
             test_point_copy = test_point;
@@ -2654,11 +2704,11 @@ pub mod g2 {
             assert_eq!(test_point_copy.into_affine(), affine_test_point, "G2 mul by 1 is not correct");
 
             test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_3(Fr::one(), &pre_3);
+            test_point_copy.mul_mixed_precomp_3(Fr::one(), &pre_3);
             assert_eq!(test_point_copy.into_affine(), affine_test_point, "G2 mul_precomp_3 by 1 is not correct");
 
             test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_256(Fr::one(), &pre_256);
+            test_point_copy.mul_mixed_precomp_256(Fr::one(), &pre_256);
             assert_eq!(test_point_copy.into_affine(), affine_test_point, "G2 mul_precomp_256 by 1 is not correct");
         }
 
@@ -2686,11 +2736,11 @@ pub mod g2 {
             assert_eq!(test_point_copy.into_affine(), affine_res, "G2 mul_precomp_256 is not correct");
 
             test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_3(s, &pre_3);
+            test_point_copy.mul_mixed_precomp_3(s, &pre_3);
             assert_eq!(test_point_copy.into_affine(), affine_res, "G2 mul_precomp_256 is not correct");
 
             test_point_copy = test_point;
-            test_point_copy.mul_assign_precomp_256(s, &pre_256);
+            test_point_copy.mul_mixed_precomp_256(s, &pre_256);
             assert_eq!(test_point_copy.into_affine(), affine_res, "G2 mul_precomp_256 is not correct");
         }
     }
@@ -2702,7 +2752,7 @@ pub mod g2 {
 
         let max_points = 15;
         let points:Vec<G2> = (0..max_points).map(|_| G2::rand(&mut rng)).collect(); 
-        let mut precomp = vec![G2::zero(); 256*max_points];
+        let mut precomp = vec![G2Affine::zero(); 256*max_points];
         for i in 0..max_points {
             points[i].precomp_256(&mut precomp[i*256..(i+1)*256]);
         }
@@ -2838,7 +2888,7 @@ pub mod g2 {
             }
         }
     }
-
+*/
 
     #[test]
     fn test_g2_mul_sec() {

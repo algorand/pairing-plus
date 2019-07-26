@@ -177,21 +177,6 @@ pub trait CurveProjective:
     /// Performs scalar multiplication of this element.
     fn mul_assign<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S);
 
-    /// pre[0] becomes (2^64) * self, pre[1]  becomes (2^128) * self, and pre[2] (becomes 2^196) * self
-    fn precomp_3(&self, pre: & mut [Self]);
-
-    /// Performs scalar multiplication of this element, 
-    /// assuming pre = [(2^64)*self, (2^128)*self, (2^192)*self]
-    fn mul_assign_precomp_3<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S, pre: &[Self]);
-
-    /// pre[i] becomes (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..25
-    fn precomp_256(&self, pre: &mut [Self]);
-
-
-    /// Performs scalar multiplication of this element, 
-    /// assuming  pre[i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..256
-    fn mul_assign_precomp_256<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S, pre : &[Self]);
-
     /// Performs scalar multiplication of this element in constant time.
     fn mul_assign_sec<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S);
 
@@ -214,15 +199,6 @@ pub trait CurveProjective:
         s1: S,
         s2: S,
     ) -> Self;
-
-    /// multiplication of many points with shamir's Trick
-    /// computer s1 * p1 + ... + sn * pn simultaneously
-    fn sum_of_products(bases: &[Self], scalars: &[&[u64]])->Self;
-
-    /// multiplication of many points with shamir's Trick and precompuation
-    /// computer s1 * p1 + ... + sn * pn simultaneously
-    /// assuming  pre[j*256+i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * bases[j] for each j and i in 0..256
-    fn sum_of_products_precomp_256(bases: &[Self], scalars: &[&[u64]], pre: &[Self])->Self;
 
 }
 
@@ -255,7 +231,7 @@ pub trait CurveAffine:
     /// Negates this element.
     fn negate(&mut self);
 
-    /// Performs scalar multiplication of this element with mixed addition.
+    /// Performs scalar multiplication of this element with sliding window.
     fn mul<S: Into<<Self::Scalar as PrimeField>::Repr>>(&self, other: S) -> Self::Projective;
 
     /// Performs scalar multiplication of this element with mixed addition.
@@ -327,6 +303,31 @@ pub trait CurveAffine:
     // uses hash_to_e2 subroutine
     // not a constant time implementation
     fn hash_to_g2(input: &[u8]) -> bls12_381::G2;
+
+    /// multiplication of many points with shamir's Trick
+    /// computer s1 * p1 + ... + sn * pn simultaneously
+    fn sum_of_products(bases: &[Self], scalars: &[&[u64]])->Self::Projective;
+
+    /// multiplication of many points with shamir's Trick and precompuation
+    /// computer s1 * p1 + ... + sn * pn simultaneously
+    /// assuming  pre[j*256+i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * bases[j] for each j and i in 0..256
+    fn sum_of_products_precomp_256(bases: &[Self], scalars: &[&[u64]], pre: &[Self])->Self::Projective;
+
+    /// pre[0] becomes (2^64) * self, pre[1]  becomes (2^128) * self, and pre[2] (becomes 2^196) * self
+    fn precomp_3(&self, pre: & mut [Self]);
+
+    /// Performs scalar multiplication of this element, 
+    /// assuming pre = [(2^64)*self, (2^128)*self, (2^192)*self]
+    fn mul_precomp_3<S: Into<<Self::Scalar as PrimeField>::Repr>>(&self, other: S, pre: &[Self])->Self::Projective;
+
+    /// pre[i] becomes (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..25
+    fn precomp_256(&self, pre: &mut [Self]);
+
+
+    /// Performs scalar multiplication of this element, 
+    /// assuming  pre[i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..256
+    fn mul_precomp_256<S: Into<<Self::Scalar as PrimeField>::Repr>>(&self, other: S, pre : &[Self])->Self::Projective;
+
 }
 
 /// An encoded elliptic curve point, which should essentially wrap a `[u8; N]`.
