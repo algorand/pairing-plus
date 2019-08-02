@@ -14,12 +14,15 @@
 extern crate byteorder;
 // #[macro_use]
 extern crate ff;
+extern crate hkdf;
 extern crate rand;
+extern crate sha2;
 
 #[cfg(test)]
 pub mod tests;
 
 pub mod bls12_381;
+pub mod hash_to_field;
 
 mod wnaf;
 pub use self::wnaf::Wnaf;
