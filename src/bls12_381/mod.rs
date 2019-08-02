@@ -4,6 +4,7 @@ mod fq12;
 mod fq2;
 mod fq6;
 mod fr;
+mod isogeny;
 mod osswu_map;
 
 #[cfg(test)]
@@ -18,6 +19,7 @@ pub use self::fq12::Fq12;
 pub use self::fq2::Fq2;
 pub use self::fq6::Fq6;
 pub use self::fr::{Fr, FrRepr};
+pub use self::isogeny::IsogenyMap;
 pub use self::osswu_map::OSSWUMap;
 
 pub mod transmute {
