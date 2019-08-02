@@ -1,3 +1,4 @@
+mod cofactor;
 mod ec;
 mod fq;
 mod fq12;
@@ -10,6 +11,7 @@ mod osswu_map;
 #[cfg(test)]
 mod tests;
 
+pub use self::cofactor::ClearH;
 pub use self::ec::{
     G1, G1Affine, G1Compressed, G1Prepared, G1Uncompressed, G2, G2Affine, G2Compressed, G2Prepared,
     G2Uncompressed,
