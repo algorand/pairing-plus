@@ -2,7 +2,7 @@ use super::fq::{FROBENIUS_COEFF_FQ2_C1, Fq, NEGATIVE_ONE};
 use ff::{Field, SqrtField};
 use hash_to_field::{BaseFromRO, FromRO};
 use rand::{Rand, Rng};
-
+use signum::{Signum0, Sgn0Result};
 use std::cmp::Ordering;
 
 /// An element of Fq2, represented by c0 + c1 * u.
@@ -230,6 +230,17 @@ impl FromRO for Fq2 {
         Fq2 {
             c0: c0_val,
             c1: c1_val,
+        }
+    }
+}
+
+impl Signum0 for Fq2 {
+    fn sgn0(&self) -> Sgn0Result {
+        let Fq2 { c0, c1 } = self;
+        if c1.is_zero() {
+            c0.sgn0()
+        } else {
+            c1.sgn0()
         }
     }
 }
@@ -977,4 +988,96 @@ fn test_fq2_hash_to_field() {
 
     let fq2_val = hash_iter.with_ctr(1);
     assert_eq!(fq2_val, expect);
+}
+
+#[test]
+fn test_fq2_sgn0() {
+    use super::fq::P_M1_OVER2;
+
+    assert_eq!(Fq2::zero().sgn0(), Sgn0Result::NonNegative);
+    assert_eq!(Fq2::one().sgn0(), Sgn0Result::NonNegative);
+    assert_eq!(
+        Fq2 {
+            c0: P_M1_OVER2,
+            c1: Fq::zero()
+        }
+        .sgn0(),
+        Sgn0Result::NonNegative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: P_M1_OVER2,
+            c1: Fq::one()
+        }
+        .sgn0(),
+        Sgn0Result::NonNegative
+    );
+
+    let p_p1_over2 = {
+        let mut tmp = P_M1_OVER2;
+        tmp.add_assign(&Fq::one());
+        tmp
+    };
+    assert_eq!(
+        Fq2 {
+            c0: p_p1_over2,
+            c1: Fq::zero()
+        }
+        .sgn0(),
+        Sgn0Result::Negative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: p_p1_over2,
+            c1: Fq::one()
+        }
+        .sgn0(),
+        Sgn0Result::NonNegative
+    );
+
+    let m1 = {
+        let mut tmp = Fq::one();
+        tmp.negate();
+        tmp
+    };
+    assert_eq!(
+        Fq2 {
+            c0: P_M1_OVER2,
+            c1: m1
+        }
+        .sgn0(),
+        Sgn0Result::Negative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: p_p1_over2,
+            c1: m1
+        }
+        .sgn0(),
+        Sgn0Result::Negative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: Fq::zero(),
+            c1: m1
+        }
+        .sgn0(),
+        Sgn0Result::Negative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: P_M1_OVER2,
+            c1: p_p1_over2
+        }
+        .sgn0(),
+        Sgn0Result::Negative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: p_p1_over2,
+            c1: P_M1_OVER2
+        }
+        .sgn0(),
+        Sgn0Result::NonNegative
+    );
 }
