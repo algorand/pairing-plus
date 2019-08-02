@@ -2,7 +2,7 @@
 name = "pairing"
 
 # Remember to change version string in README.md.
-version = "0.14.6"
+version = "0.14.7"
 authors = [
     "Sean Bowe <ewillbefull@gmail.com>",
     "Jack Grigg <jack@z.cash>",
@@ -22,5 +22,5 @@ hkdf = "0.8.0"
 sha2 = "0.8.0"
 
 [features]
-transmutable = []
 default = []
+transmutable = []

@@ -20,7 +20,6 @@ pub use self::fq6::Fq6;
 pub use self::fr::{Fr, FrRepr};
 pub use self::osswu_map::OSSWUMap;
 
-#[cfg(feature = "transmutable")]
 pub mod transmute {
     pub use super::ec::g1::transmute_projective as g1_projective;
     pub use super::ec::g1::transmute_affine as g1_affine;

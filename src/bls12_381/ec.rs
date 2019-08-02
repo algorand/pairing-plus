@@ -17,7 +17,6 @@ macro_rules! curve_impl {
             pub(crate) infinity: bool
         }
 
-        #[cfg(feature = "transmutable")]
         pub const unsafe fn transmute_affine(x: $basefield, y: $basefield, i: bool) -> $affine {
             $affine { x: x, y: y, infinity: i }
         }
@@ -54,7 +53,6 @@ macro_rules! curve_impl {
            pub(crate) z: $basefield
         }
 
-        #[cfg(feature = "transmutable")]
         pub const unsafe fn transmute_projective(x: $basefield, y: $basefield, z: $basefield) -> $projective {
             $projective { x: x, y: y, z: z }
         }
@@ -218,12 +216,10 @@ macro_rules! curve_impl {
                 (*self).into()
             }
 
-            #[cfg(feature = "transmutable")]
             fn as_tuple(&self) -> (&$basefield, &$basefield) {
                 (&self.x, &self.y)
             }
 
-            #[cfg(feature = "transmutable")]
             unsafe fn as_tuple_mut(&mut self) -> (&mut $basefield, &mut $basefield) {
                 (&mut self.x, &mut self.y)
             }
@@ -597,12 +593,10 @@ macro_rules! curve_impl {
                 Self::empirical_recommended_wnaf_for_num_scalars(num_scalars)
             }
 
-            #[cfg(feature = "transmutable")]
             fn as_tuple(&self) -> (&$basefield, &$basefield, &$basefield) {
                 (&self.x, &self.y, &self.z)
             }
 
-            #[cfg(feature = "transmutable")]
             unsafe fn as_tuple_mut(&mut self) -> (&mut $basefield, &mut $basefield, &mut $basefield) {
                 (&mut self.x, &mut self.y, &mut self.z)
             }

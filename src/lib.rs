@@ -180,13 +180,11 @@ pub trait CurveProjective:
     fn recommended_wnaf_for_num_scalars(num_scalars: usize) -> usize;
 
     /// Borrow references to the X, Y, and Z coordinates of this point.
-    #[cfg(feature = "transmutable")]
     fn as_tuple(&self) -> (&Self::Base, &Self::Base, &Self::Base);
 
     /// Borrow mutable references to the X, Y, and Z coordinates of this point.
     /// Unsafe, because incorrectly modifying the coordinates violates the guarantee
     /// that the point must be on the curve and in the correct subgroup.
-    #[cfg(feature = "transmutable")]
     unsafe fn as_tuple_mut(&mut self) -> (&mut Self::Base, &mut Self::Base, &mut Self::Base);
 }
 
@@ -243,13 +241,11 @@ pub trait CurveAffine:
     }
 
     /// Borrow references to the X and Y coordinates of this point.
-    #[cfg(feature = "transmutable")]
     fn as_tuple(&self) -> (&Self::Base, &Self::Base);
 
     /// Borrow mutable references to the X and Y coordinates of this point.
     /// Unsafe, because incorrectly modifying the coordinates violates the guarantee
     /// that the point must be on the curve and in the correct subgroup.
-    #[cfg(feature = "transmutable")]
     unsafe fn as_tuple_mut(&mut self) -> (&mut Self::Base, &mut Self::Base);
 }
 
