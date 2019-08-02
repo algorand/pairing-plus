@@ -1,7 +1,7 @@
 // `clippy` is a code linting tool for improving code quality by catching
 // common mistakes or strange code patterns. If the `cargo-clippy` feature
 // is provided, all compiler warnings are prohibited.
-// #![cfg_attr(feature = "cargo-clippy", deny(warnings))]
+#![cfg_attr(feature = "cargo-clippy", deny(warnings))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::inline_always))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]
@@ -12,7 +12,6 @@
 #![deny(missing_debug_implementations)]
 
 extern crate byteorder;
-// #[macro_use]
 extern crate ff;
 extern crate hkdf;
 extern crate rand;

@@ -5,7 +5,7 @@ pub fn random_frobenius_tests<F: Field, C: AsRef<[u64]>>(characteristic: C, maxp
     let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
     for _ in 0..100 {
-        for i in 0..(maxpower + 1) {
+        for i in 0..=maxpower {
             let mut a = F::rand(&mut rng);
             let mut b = a;
 

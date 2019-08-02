@@ -1,7 +1,7 @@
 use super::fq::{FROBENIUS_COEFF_FQ2_C1, Fq, NEGATIVE_ONE};
 use ff::{Field, SqrtField};
+use hash_to_field::{BaseFromRO, FromRO};
 use rand::{Rand, Rng};
-use ::hash_to_field::{BaseFromRO, FromRO};
 
 use std::cmp::Ordering;
 
@@ -241,7 +241,7 @@ fn test_fq2_ordering() {
         c1: Fq::zero(),
     };
 
-    let mut b = a.clone();
+    let mut b = a;
 
     assert!(a.cmp(&b) == Ordering::Equal);
     b.c0.add_assign(&Fq::one());

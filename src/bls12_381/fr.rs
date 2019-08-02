@@ -1,8 +1,8 @@
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
+use hash_to_field::{BaseFromRO};
 use sha2::digest::generic_array::typenum::U48;
 use sha2::digest::generic_array::GenericArray;
 use std::io::{Cursor, Read};
-use ::hash_to_field::{BaseFromRO};
 
 #[derive(PrimeField)]
 #[PrimeFieldModulus = "52435875175126190479447740508185965837690552500527637822603658699938581184513"]

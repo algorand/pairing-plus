@@ -1,9 +1,9 @@
 use super::fq2::Fq2;
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
+use hash_to_field::{BaseFromRO};
 use sha2::digest::generic_array::typenum::U64;
 use sha2::digest::generic_array::GenericArray;
 use std::io::{Cursor, Read};
-use ::hash_to_field::{BaseFromRO};
 
 // B coefficient of BLS12-381 curve, 4.
 pub const B_COEFF: Fq = Fq(FqRepr([
@@ -491,6 +491,7 @@ fn test_b_coeff() {
 }
 
 #[test]
+#[allow(clippy::cognitive_complexity)]
 fn test_frob_coeffs() {
     let mut nqr = Fq::one();
     nqr.negate();
