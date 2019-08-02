@@ -4,6 +4,7 @@ mod g1 {
     use pairing::bls12_381::*;
     use pairing::CurveAffine;
     use pairing::CurveProjective;
+    use pairing::wnaf::Wnaf;
     use rand::{Rand, Rng, SeedableRng, XorShiftRng};
     #[bench]
     fn bench_g1_mul_shamir(b: &mut ::test::Bencher) {
@@ -47,6 +48,26 @@ mod g1 {
             tmp
         });
     }
+
+    #[bench]
+    fn bench_g1_mul_wnaf(b: &mut ::test::Bencher) {
+        const SAMPLES: usize = 1000;
+
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let v: Vec<(G1, Fr)> = (0..SAMPLES)
+            .map(|_| (G1::rand(&mut rng), Fr::rand(&mut rng)))
+            .collect();
+
+        let mut count = 0;
+        b.iter(|| {
+            count = (count + 1) % SAMPLES;
+            let mut wnaf = Wnaf::new();
+            wnaf.base(v[count].0, 1).scalar(v[count].1.into_repr())
+        });
+    }
+
+
 
     #[bench]
     fn bench_g1affine_mul(b: &mut ::test::Bencher) {
