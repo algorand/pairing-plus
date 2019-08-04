@@ -9,7 +9,7 @@ use bls12_381::{Fq, Fq2, FqRepr, G1, G2};
 /* *** addchain for 15132376222941642752 *** */
 /* Bos-Coster (win=2) : 69 links, 2 variables */
 /// Addition chain implementing exponentiation by -z = 0xd201000000010000
-fn chain_z<PtT: CurveProjective>(tmpvar1: &mut PtT, tmpvar0: &PtT) {
+pub(super) fn chain_z<PtT: CurveProjective>(tmpvar1: &mut PtT, tmpvar0: &PtT) {
     *tmpvar1 = *tmpvar0;
     tmpvar1.double(); /*    0 : 2 */
     tmpvar1.add_assign(tmpvar0); /*    1 : 3 */
@@ -112,7 +112,7 @@ fn qi_y(y: &mut Fq2) {
     y.c1 = c1;
 }
 
-fn psi(pt: &mut G2) {
+pub(super) fn psi(pt: &mut G2) {
     const IWSC: Fq2 =
         Fq2 {
             c0: Fq(FqRepr([

@@ -163,6 +163,13 @@ pub trait CurveProjective:
     /// Adds an affine element to this element.
     fn add_assign_mixed(&mut self, other: &Self::Affine);
 
+    /// Subtracts an affine element from this element
+    fn sub_assign_mixed(&mut self, other: &Self::Affine) {
+        let mut tmp = *other;
+        tmp.negate();
+        self.add_assign_mixed(&tmp);
+    }
+
     /// Negates this element.
     fn negate(&mut self);
 
@@ -278,6 +285,11 @@ pub trait EncodedPoint:
     /// Creates an `EncodedPoint` from an affine point, as long as the
     /// point is not the point at infinity.
     fn from_affine(affine: Self::Affine) -> Self;
+}
+
+pub trait SubgroupCheck {
+    /// Subgroup membership check
+    fn in_subgroup(&self) -> bool;
 }
 
 /// An error that may occur when trying to decode an `EncodedPoint`.
