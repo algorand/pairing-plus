@@ -11,12 +11,12 @@ pub trait SerDes: Sized {
     fn serialize<W: Write>(&self, writer: &mut W, compressed: Compressed) -> Result<()>;
 
     /// Deserialize a struct; also returns a flag
-    /// if the struct was compressed or not.
+    /// if the element was compressed or not.
     fn deserialize<R: Read>(reader: &mut R) -> Result<(Self, Compressed)>;
 }
 
 impl SerDes for G1 {
-    /// Convert a PixelG1 point to a blob.
+    /// Convert a G1 point to a blob.
     fn serialize<W: Write>(&self, writer: &mut W, compressed: Compressed) -> Result<()> {
         let t = self.into_affine();
 
@@ -36,7 +36,7 @@ impl SerDes for G1 {
         Ok(())
     }
 
-    /// Deserialize a PixelG1 element from a blob.
+    /// Deserialize a G1 element from a blob.
     /// Returns an error if deserialization fails.
     fn deserialize<R: Read>(reader: &mut R) -> Result<(Self, Compressed)> {
         // read into buf of compressed size
@@ -80,7 +80,7 @@ impl SerDes for G1 {
 }
 
 impl SerDes for G2 {
-    /// Convert a PixelG1 point to a blob.
+    /// Convert a G2 point to a blob.
     fn serialize<W: Write>(&self, writer: &mut W, compressed: Compressed) -> Result<()> {
         let t = self.into_affine();
         // convert element into an (un)compressed byte string
@@ -99,7 +99,7 @@ impl SerDes for G2 {
         Ok(())
     }
 
-    /// Deserialize a PixelG2 element from a blob.
+    /// Deserialize a G2 element from a blob.
     /// Returns an error if deserialization fails.
     fn deserialize<R: Read>(reader: &mut R) -> Result<(Self, Compressed)> {
         // read into buf of compressed size
@@ -150,7 +150,7 @@ mod serdes_test {
         // G1::zero, compressed
         let g1_zero = G1::zero();
         let mut buf: Vec<u8> = vec![];
-        // serialize a PixelG1 element into buffer
+        // serialize a G1 element into buffer
         assert!(g1_zero.serialize(&mut buf, true).is_ok());
         assert_eq!(buf.len(), 48, "length of blob is incorrect");
         let (g1_zero_recover, compressed) = G1::deserialize(&mut buf[..].as_ref()).unwrap();
@@ -160,7 +160,7 @@ mod serdes_test {
         // G1::one, compressed
         let g1_one = G1::one();
         let mut buf: Vec<u8> = vec![];
-        // serialize a PixelG1 element into buffer
+        // serialize a G1 element into buffer
         assert!(g1_one.serialize(&mut buf, true).is_ok());
         assert_eq!(buf.len(), 48, "length of blob is incorrect");
         let (g1_one_recover, compressed) = G1::deserialize(&mut buf[..].as_ref()).unwrap();
@@ -169,7 +169,7 @@ mod serdes_test {
 
         // G1::zero, uncompressed
         let mut buf: Vec<u8> = vec![];
-        // serialize a PixelG1 element into buffer
+        // serialize a G1 element into buffer
         assert!(g1_zero.serialize(&mut buf, false).is_ok());
         assert_eq!(buf.len(), 96, "length of blob is incorrect");
         let (g1_zero_recover, compressed) = G1::deserialize(&mut buf[..].as_ref()).unwrap();
@@ -178,7 +178,7 @@ mod serdes_test {
 
         // G1::one, uncompressed
         let mut buf: Vec<u8> = vec![];
-        // serialize a PixelG1 element into buffer
+        // serialize a G1 element into buffer
         assert!(g1_one.serialize(&mut buf, false).is_ok());
         assert_eq!(buf.len(), 96, "length of blob is incorrect");
         let (g1_one_recover, compressed) = G1::deserialize(&mut buf[..].as_ref()).unwrap();
@@ -191,7 +191,7 @@ mod serdes_test {
         // G2::zero, compressed
         let g2_zero = G2::zero();
         let mut buf: Vec<u8> = vec![];
-        // serialize a PixelG2 element into buffer
+        // serialize a G2 element into buffer
         assert!(g2_zero.serialize(&mut buf, true).is_ok());
         assert_eq!(buf.len(), 96, "length of blob is incorrect");
         let (g2_zero_recover, compressed) = G2::deserialize(&mut buf[..].as_ref()).unwrap();
@@ -201,7 +201,7 @@ mod serdes_test {
         // G2::one, compressed
         let g2_one = G2::one();
         let mut buf: Vec<u8> = vec![];
-        // serialize a PixelG2 element into buffer
+        // serialize a G2 element into buffer
         assert!(g2_one.serialize(&mut buf, true).is_ok());
         assert_eq!(buf.len(), 96, "length of blob is incorrect");
         let (g2_one_recover, compressed) = G2::deserialize(&mut buf[..].as_ref()).unwrap();
@@ -210,7 +210,7 @@ mod serdes_test {
 
         // G2::zero, uncompressed
         let mut buf: Vec<u8> = vec![];
-        // serialize a PixelG2 element into buffer
+        // serialize a G2 element into buffer
         assert!(g2_zero.serialize(&mut buf, false).is_ok());
         assert_eq!(buf.len(), 192, "length of blob is incorrect");
         let (g2_zero_recover, compressed) = G2::deserialize(&mut buf[..].as_ref()).unwrap();
@@ -219,7 +219,7 @@ mod serdes_test {
 
         // G2::one, uncompressed
         let mut buf: Vec<u8> = vec![];
-        // serialize a PixelG2 element into buffer
+        // serialize a G2 element into buffer
         assert!(g2_one.serialize(&mut buf, false).is_ok());
         assert_eq!(buf.len(), 192, "length of blob is incorrect");
         let (g2_one_recover, compressed) = G2::deserialize(&mut buf[..].as_ref()).unwrap();

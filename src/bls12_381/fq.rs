@@ -1,9 +1,9 @@
 use super::fq2::Fq2;
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
-use hash_to_field::{BaseFromRO};
+use hash_to_field::BaseFromRO;
 use sha2::digest::generic_array::typenum::U64;
 use sha2::digest::generic_array::GenericArray;
-use signum::{Signum0, Sgn0Result};
+use signum::{Sgn0Result, Signum0};
 use std::cmp::Ordering;
 use std::io::{Cursor, Read};
 
@@ -474,13 +474,13 @@ impl BaseFromRO for Fq {
 
     fn from_okm(okm: &GenericArray<u8, U64>) -> Fq {
         const F_2_256: Fq = Fq(FqRepr([
-                0x75b3cd7c5ce820fu64,
-                0x3ec6ba621c3edb0bu64,
-                0x168a13d82bff6bceu64,
-                0x87663c4bf8c449d2u64,
-                0x15f34c83ddc8d830u64,
-                0xf9628b49caa2e85u64,
-            ]));
+            0x75b3cd7c5ce820fu64,
+            0x3ec6ba621c3edb0bu64,
+            0x168a13d82bff6bceu64,
+            0x87663c4bf8c449d2u64,
+            0x15f34c83ddc8d830u64,
+            0xf9628b49caa2e85u64,
+        ]));
 
         // unwraps are safe here: we only use 32 bytes at a time, which is strictly less than p
         let mut repr = FqRepr::default();
@@ -1643,26 +1643,24 @@ fn test_fq_is_valid() {
     a.0.sub_noborrow(&FqRepr::from(1));
     assert!(a.is_valid());
     assert!(Fq(FqRepr::from(0)).is_valid());
-    assert!(
-        Fq(FqRepr([
-            0xdf4671abd14dab3e,
-            0xe2dc0c9f534fbd33,
-            0x31ca6c880cc444a6,
-            0x257a67e70ef33359,
-            0xf9b29e493f899b36,
-            0x17c8be1800b9f059
-        ])).is_valid()
-    );
-    assert!(
-        !Fq(FqRepr([
-            0xffffffffffffffff,
-            0xffffffffffffffff,
-            0xffffffffffffffff,
-            0xffffffffffffffff,
-            0xffffffffffffffff,
-            0xffffffffffffffff
-        ])).is_valid()
-    );
+    assert!(Fq(FqRepr([
+        0xdf4671abd14dab3e,
+        0xe2dc0c9f534fbd33,
+        0x31ca6c880cc444a6,
+        0x257a67e70ef33359,
+        0xf9b29e493f899b36,
+        0x17c8be1800b9f059
+    ]))
+    .is_valid());
+    assert!(!Fq(FqRepr([
+        0xffffffffffffffff,
+        0xffffffffffffffff,
+        0xffffffffffffffff,
+        0xffffffffffffffff,
+        0xffffffffffffffff,
+        0xffffffffffffffff
+    ]))
+    .is_valid());
 
     let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
@@ -1998,7 +1996,8 @@ fn test_fq_squaring() {
             0xdc05c659b4e15b27,
             0x79361e5a802c6a23,
             0x24bcbe5d51b9a6f
-        ])).unwrap()
+        ]))
+        .unwrap()
     );
 
     let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
@@ -2130,16 +2129,15 @@ fn test_fq_sqrt() {
 #[test]
 fn test_fq_from_into_repr() {
     // q + 1 should not be in the field
-    assert!(
-        Fq::from_repr(FqRepr([
-            0xb9feffffffffaaac,
-            0x1eabfffeb153ffff,
-            0x6730d2a0f6b0f624,
-            0x64774b84f38512bf,
-            0x4b1ba7b6434bacd7,
-            0x1a0111ea397fe69a
-        ])).is_err()
-    );
+    assert!(Fq::from_repr(FqRepr([
+        0xb9feffffffffaaac,
+        0x1eabfffeb153ffff,
+        0x6730d2a0f6b0f624,
+        0x64774b84f38512bf,
+        0x4b1ba7b6434bacd7,
+        0x1a0111ea397fe69a
+    ]))
+    .is_err());
 
     // q should not be in the field
     assert!(Fq::from_repr(Fq::char()).is_err());
@@ -2316,7 +2314,7 @@ fn test_fq_legendre() {
 
 #[test]
 fn test_fq_hash_to_field() {
-    use ::hash_to_field::HashToField;
+    use hash_to_field::HashToField;
 
     let mut hash_iter = HashToField::<Fq>::new("hello world", None);
     let fq_val = hash_iter.next().unwrap();

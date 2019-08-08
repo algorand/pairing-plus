@@ -4,7 +4,7 @@ use rand::{Rand, Rng, SeedableRng, XorShiftRng};
 use {CurveAffine, CurveProjective, EncodedPoint};
 
 pub fn curve_tests<G: CurveProjective>() {
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     // Negation edge case with zero.
     {
@@ -70,7 +70,7 @@ fn random_wnaf_tests<G: CurveProjective>() {
     use ff::PrimeField;
     use wnaf::*;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     {
         let mut table = vec![];
@@ -180,7 +180,7 @@ fn random_wnaf_tests<G: CurveProjective>() {
 }
 
 fn random_negation_tests<G: CurveProjective>() {
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     for _ in 0..1000 {
         let r = G::rand(&mut rng);
@@ -209,7 +209,7 @@ fn random_negation_tests<G: CurveProjective>() {
 }
 
 fn random_doubling_tests<G: CurveProjective>() {
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     for _ in 0..1000 {
         let mut a = G::rand(&mut rng);
@@ -236,7 +236,7 @@ fn random_doubling_tests<G: CurveProjective>() {
 }
 
 fn random_multiplication_tests<G: CurveProjective>() {
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     for _ in 0..1000 {
         let mut a = G::rand(&mut rng);
@@ -268,7 +268,7 @@ fn random_multiplication_tests<G: CurveProjective>() {
 }
 
 fn random_addition_tests<G: CurveProjective>() {
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     for _ in 0..1000 {
         let a = G::rand(&mut rng);
@@ -346,7 +346,7 @@ fn random_addition_tests<G: CurveProjective>() {
 }
 
 fn random_transformation_tests<G: CurveProjective>() {
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     for _ in 0..1000 {
         let g = G::rand(&mut rng);
@@ -389,7 +389,7 @@ fn random_transformation_tests<G: CurveProjective>() {
 }
 
 fn random_encoding_tests<G: CurveAffine>() {
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     assert_eq!(
         G::zero().into_uncompressed().into_affine().unwrap(),

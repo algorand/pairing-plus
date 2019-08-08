@@ -99,12 +99,10 @@ impl EncodedPoint for G1Uncompressed {
             }
 
             Ok(G1Affine {
-                x: Fq::from_repr(x).map_err(|e| {
-                    GroupDecodingError::CoordinateDecodingError("x coordinate", e)
-                })?,
-                y: Fq::from_repr(y).map_err(|e| {
-                    GroupDecodingError::CoordinateDecodingError("y coordinate", e)
-                })?,
+                x: Fq::from_repr(x)
+                    .map_err(|e| GroupDecodingError::CoordinateDecodingError("x coordinate", e))?,
+                y: Fq::from_repr(y)
+                    .map_err(|e| GroupDecodingError::CoordinateDecodingError("y coordinate", e))?,
                 infinity: false,
             })
         }
@@ -310,22 +308,26 @@ impl G1Prepared {
 }
 
 mod subgroup_check {
-    use {CurveAffine, CurveProjective, SubgroupCheck};
-    use ff::Field;
-    use super::{G1, G1Affine};
     use super::super::super::{Fq, FqRepr};
+    use super::{G1Affine, G1};
+    use ff::Field;
     #[cfg(test)]
     use rand::{thread_rng, Rand};
+    use {CurveAffine, CurveProjective, SubgroupCheck};
 
     // Endomorphism (x, y) -> (\beta x, y) where \beta is an elm of Fp of order 3.
-    fn sigma (p: &G1Affine) -> G1 {
+    fn sigma(p: &G1Affine) -> G1 {
         let (x, y) = p.as_tuple();
-        let mut ret = G1 { x: *x, y: *y, z: Fq::one() };
+        let mut ret = G1 {
+            x: *x,
+            y: *y,
+            z: Fq::one(),
+        };
         sigma_proj(&mut ret);
         ret
     }
 
-    fn sigma_proj (p: &mut G1) {
+    fn sigma_proj(p: &mut G1) {
         const BETA: Fq = Fq(FqRepr([
             0xcd03c9e48671f071u64,
             0x5dab22461fcda5d2u64,
@@ -482,14 +484,14 @@ mod subgroup_check {
 
     impl SubgroupCheck for G1Affine {
         fn in_subgroup(&self) -> bool {
-            let mut sp = sigma(self);   // sP = sigma(P)
-            let mut q = sp;             // Q =
-            q.double();                 //     2 * sP
-            sigma_proj(&mut sp);        // sP = sigma(sP)
-            q.sub_assign_mixed(self);   // Q = Q - P
-            q.sub_assign(&sp);          // Q = Q - sP
-            sigma_chain(&mut q);        // ((z^2 - 1) // 3) * Q
-            q.sub_assign(&sp);          // Q = Q - sP
+            let mut sp = sigma(self); // sP = sigma(P)
+            let mut q = sp; // Q =
+            q.double(); //     2 * sP
+            sigma_proj(&mut sp); // sP = sigma(sP)
+            q.sub_assign_mixed(self); // Q = Q - P
+            q.sub_assign(&sp); // Q = Q - sP
+            sigma_chain(&mut q); // ((z^2 - 1) // 3) * Q
+            q.sub_assign(&sp); // Q = Q - sP
 
             q.is_zero()
         }
@@ -527,7 +529,10 @@ mod subgroup_check {
 
         for _ in 0..32 {
             let p = G1::rand(&mut rng).into_affine();
-            assert_eq!(p.in_subgroup(), p.is_in_correct_subgroup_assuming_on_curve());
+            assert_eq!(
+                p.in_subgroup(),
+                p.is_in_correct_subgroup_assuming_on_curve()
+            );
 
             let mut pp = p.into_projective();
             pp.clear_h();
@@ -592,7 +597,8 @@ fn g1_test_is_valid() {
                 0x9fe83b1b4a5d648d,
                 0xf583cc5a508f6a40,
                 0xc3ad2aefde0bb13,
-            ])).unwrap(),
+            ]))
+            .unwrap(),
             y: Fq::from_repr(FqRepr([
                 0x60aa6f9552f03aae,
                 0xecd01d5181300d35,
@@ -600,7 +606,8 @@ fn g1_test_is_valid() {
                 0xe760f57922998c9d,
                 0x953703f5795a39e5,
                 0xfe3ae0922df702c,
-            ])).unwrap(),
+            ]))
+            .unwrap(),
             infinity: false,
         };
         assert!(!p.is_on_curve());
@@ -617,7 +624,8 @@ fn g1_test_is_valid() {
                 0xea034ee2928b30a8,
                 0xbd8833dc7c79a7f7,
                 0xe45c9f0c0438675,
-            ])).unwrap(),
+            ]))
+            .unwrap(),
             y: Fq::from_repr(FqRepr([
                 0x3b450eb1ab7b5dad,
                 0xa65cb81e975e8675,
@@ -625,7 +633,8 @@ fn g1_test_is_valid() {
                 0x753ddf21a2601d20,
                 0x532d0b640bd3ff8b,
                 0x118d2c543f031102,
-            ])).unwrap(),
+            ]))
+            .unwrap(),
             infinity: false,
         };
         assert!(!p.is_on_curve());
@@ -643,7 +652,8 @@ fn g1_test_is_valid() {
                 0xf35de9ce0d6b4e84,
                 0x265bddd23d1dec54,
                 0x12a8778088458308,
-            ])).unwrap(),
+            ]))
+            .unwrap(),
             y: Fq::from_repr(FqRepr([
                 0x8a22defa0d526256,
                 0xc57ca55456fcb9ae,
@@ -651,7 +661,8 @@ fn g1_test_is_valid() {
                 0x921beef89d4f29df,
                 0x5b6fda44ad85fa78,
                 0xed74ab9f302cbe0,
-            ])).unwrap(),
+            ]))
+            .unwrap(),
             infinity: false,
         };
         assert!(p.is_on_curve());
@@ -669,7 +680,8 @@ fn test_g1_addition_correctness() {
             0x485e77d50a5df10d,
             0x4c6fcac4b55fd479,
             0x86ed4d9906fb064,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         y: Fq::from_repr(FqRepr([
             0xd25ee6461538c65,
             0x9f3bbb2ecd3719b9,
@@ -677,7 +689,8 @@ fn test_g1_addition_correctness() {
             0xcefca68333c35288,
             0x570c8005f8573fa6,
             0x152ca696fe034442,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         z: Fq::one(),
     };
 
@@ -689,7 +702,8 @@ fn test_g1_addition_correctness() {
             0x5f44314ec5e3fb03,
             0x24e8538737c6e675,
             0x8abd623a594fba8,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         y: Fq::from_repr(FqRepr([
             0x6b0528f088bb7044,
             0x2fdeb5c82917ff9e,
@@ -697,7 +711,8 @@ fn test_g1_addition_correctness() {
             0xd65104c6f95a872a,
             0x1f2998a5a9c61253,
             0xe74846154a9e44,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         z: Fq::one(),
     });
 
@@ -713,7 +728,8 @@ fn test_g1_addition_correctness() {
                 0xc4f9a52a428e23bb,
                 0xd178b28dd4f407ef,
                 0x17fb8905e9183c69
-            ])).unwrap(),
+            ]))
+            .unwrap(),
             y: Fq::from_repr(FqRepr([
                 0xd0de9d65292b7710,
                 0xf6a05f2bcf1d9ca7,
@@ -721,7 +737,8 @@ fn test_g1_addition_correctness() {
                 0xeec8d1a5b7466c58,
                 0x4bc362649dce6376,
                 0x430cbdc5455b00a
-            ])).unwrap(),
+            ]))
+            .unwrap(),
             infinity: false,
         }
     );
@@ -737,7 +754,8 @@ fn test_g1_doubling_correctness() {
             0x485e77d50a5df10d,
             0x4c6fcac4b55fd479,
             0x86ed4d9906fb064,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         y: Fq::from_repr(FqRepr([
             0xd25ee6461538c65,
             0x9f3bbb2ecd3719b9,
@@ -745,7 +763,8 @@ fn test_g1_doubling_correctness() {
             0xcefca68333c35288,
             0x570c8005f8573fa6,
             0x152ca696fe034442,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         z: Fq::one(),
     };
 
@@ -763,7 +782,8 @@ fn test_g1_doubling_correctness() {
                 0x4b914c16687dcde0,
                 0x66c8baf177d20533,
                 0xaf960cff3d83833
-            ])).unwrap(),
+            ]))
+            .unwrap(),
             y: Fq::from_repr(FqRepr([
                 0x3f0675695f5177a8,
                 0x2b6d82ae178a1ba0,
@@ -771,7 +791,8 @@ fn test_g1_doubling_correctness() {
                 0x1771a65b60572f4e,
                 0x8b547c1313b27555,
                 0x135075589a687b1e
-            ])).unwrap(),
+            ]))
+            .unwrap(),
             infinity: false,
         }
     );
@@ -794,7 +815,8 @@ fn test_g1_same_y() {
             0x71ffa8021531705,
             0x7418d484386d267,
             0xd5108d8ff1fbd6,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         y: Fq::from_repr(FqRepr([
             0xa776ccbfe9981766,
             0x255632964ff40f4a,
@@ -802,7 +824,8 @@ fn test_g1_same_y() {
             0x520f74773e74c8c3,
             0x484c8fc982008f0,
             0xee2c3d922008cc6,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         infinity: false,
     };
 
@@ -814,7 +837,8 @@ fn test_g1_same_y() {
             0xc6e05201e5f83991,
             0xf7c75910816f207c,
             0x18d4043e78103106,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         y: Fq::from_repr(FqRepr([
             0xa776ccbfe9981766,
             0x255632964ff40f4a,
@@ -822,7 +846,8 @@ fn test_g1_same_y() {
             0x520f74773e74c8c3,
             0x484c8fc982008f0,
             0xee2c3d922008cc6,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         infinity: false,
     };
 
@@ -837,7 +862,8 @@ fn test_g1_same_y() {
             0x9676ff02ec39c227,
             0x4c12c15d7e55b9f3,
             0x57fd1e317db9bd,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         y: Fq::from_repr(FqRepr([
             0x1288334016679345,
             0xf955cd68615ff0b5,
@@ -845,7 +871,8 @@ fn test_g1_same_y() {
             0x1267d70db51049fb,
             0x4696deb9ab2ba3e7,
             0xb1e4e11177f59d4,
-        ])).unwrap(),
+        ]))
+        .unwrap(),
         infinity: false,
     };
 

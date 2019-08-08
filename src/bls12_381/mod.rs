@@ -13,8 +13,8 @@ mod tests;
 
 pub(crate) use self::cofactor::ClearH;
 pub use self::ec::{
-    G1, G1Affine, G1Compressed, G1Prepared, G1Uncompressed, G2, G2Affine, G2Compressed, G2Prepared,
-    G2Uncompressed,
+    G1Affine, G1Compressed, G1Prepared, G1Uncompressed, G2Affine, G2Compressed, G2Prepared,
+    G2Uncompressed, G1, G2,
 };
 pub use self::fq::{Fq, FqRepr};
 pub use self::fq12::Fq12;
@@ -25,10 +25,10 @@ pub(crate) use self::isogeny::IsogenyMap;
 pub(crate) use self::osswu_map::OSSWUMap;
 
 pub mod transmute {
-    pub use super::ec::g1::transmute_projective as g1_projective;
     pub use super::ec::g1::transmute_affine as g1_affine;
-    pub use super::ec::g2::transmute_projective as g2_projective;
+    pub use super::ec::g1::transmute_projective as g1_projective;
     pub use super::ec::g2::transmute_affine as g2_affine;
+    pub use super::ec::g2::transmute_projective as g2_projective;
     pub use super::fq::transmute as fq;
     pub use super::fr::transmute as fr;
 }

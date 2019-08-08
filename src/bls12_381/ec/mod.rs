@@ -14,11 +14,15 @@ macro_rules! curve_impl {
         pub struct $affine {
             pub(crate) x: $basefield,
             pub(crate) y: $basefield,
-            pub(crate) infinity: bool
+            pub(crate) infinity: bool,
         }
 
         pub const unsafe fn transmute_affine(x: $basefield, y: $basefield, i: bool) -> $affine {
-            $affine { x: x, y: y, infinity: i }
+            $affine {
+                x: x,
+                y: y,
+                infinity: i,
+            }
         }
 
         // set the default values for the group elements to 0s
@@ -35,8 +39,7 @@ macro_rules! curve_impl {
             }
         }
 
-        impl ::std::fmt::Display for $affine
-        {
+        impl ::std::fmt::Display for $affine {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                 if self.infinity {
                     write!(f, "{}(Infinity)", $name)
@@ -48,17 +51,20 @@ macro_rules! curve_impl {
 
         #[derive(Copy, Clone, Debug, Eq)]
         pub struct $projective {
-           pub(crate) x: $basefield,
-           pub(crate) y: $basefield,
-           pub(crate) z: $basefield
+            pub(crate) x: $basefield,
+            pub(crate) y: $basefield,
+            pub(crate) z: $basefield,
         }
 
-        pub const unsafe fn transmute_projective(x: $basefield, y: $basefield, z: $basefield) -> $projective {
+        pub const unsafe fn transmute_projective(
+            x: $basefield,
+            y: $basefield,
+            z: $basefield,
+        ) -> $projective {
             $projective { x: x, y: y, z: z }
         }
 
-        impl ::std::fmt::Display for $projective
-        {
+        impl ::std::fmt::Display for $projective {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                 write!(f, "{}", self.into_affine())
             }
@@ -111,7 +117,9 @@ macro_rules! curve_impl {
                 let mut res = $projective::zero();
                 for i in bits {
                     res.double();
-                    if i { res.add_assign_mixed(self) }
+                    if i {
+                        res.add_assign_mixed(self)
+                    }
                 }
                 res
             }
@@ -134,12 +142,8 @@ macro_rules! curve_impl {
 
                     $affine {
                         x: x,
-                        y: if (y < negy) ^ greatest {
-                            y
-                        } else {
-                            negy
-                        },
-                        infinity: false
+                        y: if (y < negy) ^ greatest { y } else { negy },
+                        infinity: false,
                     }
                 })
             }
@@ -182,7 +186,7 @@ macro_rules! curve_impl {
                 $affine {
                     x: $basefield::zero(),
                     y: $basefield::one(),
-                    infinity: true
+                    infinity: true,
                 }
             }
 
@@ -255,7 +259,7 @@ macro_rules! curve_impl {
                 $projective {
                     x: $basefield::zero(),
                     y: $basefield::one(),
-                    z: $basefield::zero()
+                    z: $basefield::zero(),
                 }
             }
 
@@ -273,8 +277,7 @@ macro_rules! curve_impl {
                 self.is_zero() || self.z == $basefield::one()
             }
 
-            fn batch_normalization(v: &mut [Self])
-            {
+            fn batch_normalization(v: &mut [Self]) {
                 // Montgomery’s Trick and Fast Implementation of Masked AES
                 // Genelle, Prouff and Quisquater
                 // Section 3.2
@@ -282,9 +285,10 @@ macro_rules! curve_impl {
                 // First pass: compute [a, ab, abc, ...]
                 let mut prod = Vec::with_capacity(v.len());
                 let mut tmp = $basefield::one();
-                for g in v.iter_mut()
-                          // Ignore normalized elements
-                          .filter(|g| !g.is_normalized())
+                for g in v
+                    .iter_mut()
+                    // Ignore normalized elements
+                    .filter(|g| !g.is_normalized())
                 {
                     tmp.mul_assign(&g.z);
                     prod.push(tmp);
@@ -294,13 +298,19 @@ macro_rules! curve_impl {
                 tmp = tmp.inverse().unwrap(); // Guaranteed to be nonzero.
 
                 // Second pass: iterate backwards to compute inverses
-                for (g, s) in v.iter_mut()
-                               // Backwards
-                               .rev()
-                               // Ignore normalized elements
-                               .filter(|g| !g.is_normalized())
-                               // Backwards, skip last element, fill in one for last term.
-                               .zip(prod.into_iter().rev().skip(1).chain(Some($basefield::one())))
+                for (g, s) in v
+                    .iter_mut()
+                    // Backwards
+                    .rev()
+                    // Ignore normalized elements
+                    .filter(|g| !g.is_normalized())
+                    // Backwards, skip last element, fill in one for last term.
+                    .zip(
+                        prod.into_iter()
+                            .rev()
+                            .skip(1)
+                            .chain(Some($basefield::one())),
+                    )
                 {
                     // tmp := tmp * g.z; g.z := tmp * s = 1/z
                     let mut newtmp = tmp;
@@ -311,9 +321,7 @@ macro_rules! curve_impl {
                 }
 
                 // Perform affine transformations
-                for g in v.iter_mut()
-                          .filter(|g| !g.is_normalized())
-                {
+                for g in v.iter_mut().filter(|g| !g.is_normalized()) {
                     let mut z = g.z; // 1/z
                     z.square(); // 1/z^2
                     g.x.mul_assign(&z); // x/z^2
@@ -566,8 +574,7 @@ macro_rules! curve_impl {
 
                 let mut found_one = false;
 
-                for i in BitIterator::new(other.into())
-                {
+                for i in BitIterator::new(other.into()) {
                     if found_one {
                         res.double();
                     } else {
@@ -598,7 +605,9 @@ macro_rules! curve_impl {
                 (&self.x, &self.y, &self.z)
             }
 
-            unsafe fn as_tuple_mut(&mut self) -> (&mut $basefield, &mut $basefield, &mut $basefield) {
+            unsafe fn as_tuple_mut(
+                &mut self,
+            ) -> (&mut $basefield, &mut $basefield, &mut $basefield) {
                 (&mut self.x, &mut self.y, &mut self.z)
             }
         }
@@ -613,7 +622,7 @@ macro_rules! curve_impl {
                     $projective {
                         x: p.x,
                         y: p.y,
-                        z: $basefield::one()
+                        z: $basefield::one(),
                     }
                 }
             }
@@ -630,7 +639,7 @@ macro_rules! curve_impl {
                     $affine {
                         x: p.x,
                         y: p.y,
-                        infinity: false
+                        infinity: false,
                     }
                 } else {
                     // Z is nonzero, so it must have an inverse in a field.
@@ -650,12 +659,12 @@ macro_rules! curve_impl {
                     $affine {
                         x: x,
                         y: y,
-                        infinity: false
+                        infinity: false,
                     }
                 }
             }
         }
-    }
+    };
 }
 
 pub mod g1;

@@ -2,9 +2,9 @@
 Cofactor clearing for G1 and G2.
 */
 
-use ::CurveProjective;
-use ff::Field;
 use bls12_381::{Fq, Fq2, FqRepr, G1, G2};
+use ff::Field;
+use CurveProjective;
 
 /* *** addchain for 15132376222941642752 *** */
 /* Bos-Coster (win=2) : 69 links, 2 variables */
@@ -74,15 +74,14 @@ impl ClearH for G2 {
 }
 
 fn qi_x(x: &mut Fq2) {
-    const K_QI_X: Fq =
-        Fq(FqRepr([
-            0x890dc9e4867545c3u64,
-            0x2af322533285a5d5u64,
-            0x50880866309b7e2cu64,
-            0xa20d1b8c7e881024u64,
-            0x14e4f04fe2db9068u64,
-            0x14e56d3f1564853au64,
-        ]));
+    const K_QI_X: Fq = Fq(FqRepr([
+        0x890dc9e4867545c3u64,
+        0x2af322533285a5d5u64,
+        0x50880866309b7e2cu64,
+        0xa20d1b8c7e881024u64,
+        0x14e4f04fe2db9068u64,
+        0x14e56d3f1564853au64,
+    ]));
 
     x.c0.mul_assign(&K_QI_X);
     x.c1.mul_assign(&K_QI_X);
@@ -90,15 +89,14 @@ fn qi_x(x: &mut Fq2) {
 }
 
 fn qi_y(y: &mut Fq2) {
-    const K_QI_Y: Fq =
-        Fq(FqRepr([
-            0x7bcfa7a25aa30fdau64,
-            0xdc17dec12a927e7cu64,
-            0x2f088dd86b4ebef1u64,
-            0xd1ca2087da74d4a7u64,
-            0x2da2596696cebc1du64,
-            0x0e2b7eedbbfd87d2u64,
-        ]));
+    const K_QI_Y: Fq = Fq(FqRepr([
+        0x7bcfa7a25aa30fdau64,
+        0xdc17dec12a927e7cu64,
+        0x2f088dd86b4ebef1u64,
+        0xd1ca2087da74d4a7u64,
+        0x2da2596696cebc1du64,
+        0x0e2b7eedbbfd87d2u64,
+    ]));
 
     let mut c0 = y.c0;
     c0.add_assign(&y.c1);
@@ -113,63 +111,60 @@ fn qi_y(y: &mut Fq2) {
 }
 
 pub(super) fn psi(pt: &mut G2) {
-    const IWSC: Fq2 =
-        Fq2 {
-            c0: Fq(FqRepr([
-                0x1804000000015554u64,
-                0x855000053ab00001u64,
-                0x633cb57c253c276fu64,
-                0x6e22d1ec31ebb502u64,
-                0xd3916126f2d14ca2u64,
-                0x17fbb8571a006596u64,
-            ])),
-            c1: Fq(FqRepr([
-                0xa1fafffffffe5557u64,
-                0x995bfff976a3fffeu64,
-                0x03f41d24d174ceb4u64,
-                0xf6547998c1995dbdu64,
-                0x778a468f507a6034u64,
-                0x020559931f7f8103u64,
-            ])),
-        };
-    const K_CX: Fq2 =
-        Fq2 {
-            c0: Fq(FqRepr([
-                0x0000000000000000u64,
-                0x0000000000000000u64,
-                0x0000000000000000u64,
-                0x0000000000000000u64,
-                0x0000000000000000u64,
-                0x0000000000000000u64,
-            ])),
-            c1: Fq(FqRepr([
-                0x890dc9e4867545c3u64,
-                0x2af322533285a5d5u64,
-                0x50880866309b7e2cu64,
-                0xa20d1b8c7e881024u64,
-                0x14e4f04fe2db9068u64,
-                0x14e56d3f1564853au64,
-            ])),
-        };
-    const K_CY: Fq2 =
-        Fq2 {
-            c0: Fq(FqRepr([
-                0x3e2f585da55c9ad1u64,
-                0x4294213d86c18183u64,
-                0x382844c88b623732u64,
-                0x92ad2afd19103e18u64,
-                0x1d794e4fac7cf0b9u64,
-                0x0bd592fc7d825ec8u64,
-            ])),
-            c1: Fq(FqRepr([
-                0x7bcfa7a25aa30fdau64,
-                0xdc17dec12a927e7cu64,
-                0x2f088dd86b4ebef1u64,
-                0xd1ca2087da74d4a7u64,
-                0x2da2596696cebc1du64,
-                0x0e2b7eedbbfd87d2u64,
-            ])),
-        };
+    const IWSC: Fq2 = Fq2 {
+        c0: Fq(FqRepr([
+            0x1804000000015554u64,
+            0x855000053ab00001u64,
+            0x633cb57c253c276fu64,
+            0x6e22d1ec31ebb502u64,
+            0xd3916126f2d14ca2u64,
+            0x17fbb8571a006596u64,
+        ])),
+        c1: Fq(FqRepr([
+            0xa1fafffffffe5557u64,
+            0x995bfff976a3fffeu64,
+            0x03f41d24d174ceb4u64,
+            0xf6547998c1995dbdu64,
+            0x778a468f507a6034u64,
+            0x020559931f7f8103u64,
+        ])),
+    };
+    const K_CX: Fq2 = Fq2 {
+        c0: Fq(FqRepr([
+            0x0000000000000000u64,
+            0x0000000000000000u64,
+            0x0000000000000000u64,
+            0x0000000000000000u64,
+            0x0000000000000000u64,
+            0x0000000000000000u64,
+        ])),
+        c1: Fq(FqRepr([
+            0x890dc9e4867545c3u64,
+            0x2af322533285a5d5u64,
+            0x50880866309b7e2cu64,
+            0xa20d1b8c7e881024u64,
+            0x14e4f04fe2db9068u64,
+            0x14e56d3f1564853au64,
+        ])),
+    };
+    const K_CY: Fq2 = Fq2 {
+        c0: Fq(FqRepr([
+            0x3e2f585da55c9ad1u64,
+            0x4294213d86c18183u64,
+            0x382844c88b623732u64,
+            0x92ad2afd19103e18u64,
+            0x1d794e4fac7cf0b9u64,
+            0x0bd592fc7d825ec8u64,
+        ])),
+        c1: Fq(FqRepr([
+            0x7bcfa7a25aa30fdau64,
+            0xdc17dec12a927e7cu64,
+            0x2f088dd86b4ebef1u64,
+            0xd1ca2087da74d4a7u64,
+            0x2da2596696cebc1du64,
+            0x0e2b7eedbbfd87d2u64,
+        ])),
+    };
 
     let (px, pz2, py, pz3) = {
         let (x, y, z) = pt.as_tuple();
@@ -208,11 +203,11 @@ pub(super) fn psi(pt: &mut G2) {
 /// Tests for cofactor clearing
 #[cfg(test)]
 mod tests {
-    use ::CurveProjective;
     use super::{psi, qi_x, qi_y, ClearH};
-    use ff::{Field, PrimeField};
     use bls12_381::{Fq, Fq2, FqRepr, FrRepr, G1, G2};
+    use ff::{Field, PrimeField};
     use rand::{thread_rng, Rand};
+    use CurveProjective;
 
     #[test]
     fn test_clear_h() {
@@ -302,7 +297,11 @@ mod tests {
         ]))
         .unwrap();
         let zi = Fq2 { c0, c1 };
-        let mut pi = G2 { x: xi, y: yi, z: zi };
+        let mut pi = G2 {
+            x: xi,
+            y: yi,
+            z: zi,
+        };
         pi.clear_h();
         let c0 = Fq::from_repr(FqRepr([
             0x2a31a2dd0fdb0639u64,
@@ -361,7 +360,11 @@ mod tests {
         ]))
         .unwrap();
         let zo = Fq2 { c0, c1 };
-        let po = G2 { x: xo, y: yo, z: zo };
+        let po = G2 {
+            x: xo,
+            y: yo,
+            z: zo,
+        };
         assert_eq!(pi, po);
 
         let c0 = Fq::from_repr(FqRepr([
@@ -421,7 +424,11 @@ mod tests {
         ]))
         .unwrap();
         let zi = Fq2 { c0, c1 };
-        let mut pi = G2 { x: xi, y: yi, z: zi };
+        let mut pi = G2 {
+            x: xi,
+            y: yi,
+            z: zi,
+        };
         pi.clear_h();
         let c0 = Fq::from_repr(FqRepr([
             0x4c8957d8d8815b9bu64,
@@ -480,7 +487,11 @@ mod tests {
         ]))
         .unwrap();
         let zo = Fq2 { c0, c1 };
-        let po = G2 { x: xo, y: yo, z: zo };
+        let po = G2 {
+            x: xo,
+            y: yo,
+            z: zo,
+        };
         assert_eq!(pi, po);
     }
 
@@ -818,7 +829,11 @@ mod tests {
     #[test]
     fn test_psi() {
         let zero = Fq2::zero();
-        let mut pi = G2 { x: zero, y: zero, z: zero };
+        let mut pi = G2 {
+            x: zero,
+            y: zero,
+            z: zero,
+        };
         psi(&mut pi);
         let (x, y, z) = pi.as_tuple();
         assert_eq!(x, &zero);
@@ -826,7 +841,11 @@ mod tests {
         assert_eq!(z, &zero);
 
         let one = Fq2::one();
-        let mut pi = G2 { x: one, y: one, z: one };
+        let mut pi = G2 {
+            x: one,
+            y: one,
+            z: one,
+        };
         psi(&mut pi);
         let (x, y, z) = pi.as_tuple();
         let c0 = Fq::from_repr(FqRepr([
@@ -947,7 +966,11 @@ mod tests {
         ]))
         .unwrap();
         let zi = Fq2 { c0, c1 };
-        let mut pi = G2 { x: xi, y: yi, z: zi };
+        let mut pi = G2 {
+            x: xi,
+            y: yi,
+            z: zi,
+        };
         psi(&mut pi);
         let (x, y, z) = pi.as_tuple();
         let c0 = Fq::from_repr(FqRepr([

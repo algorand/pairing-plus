@@ -2,11 +2,11 @@
 Tests for isogenies.
 */
 
-use ::CurveProjective;
 use super::IsogenyMap;
-use ff::{Field, PrimeField};
 use bls12_381::transmute::{g1_projective, g2_projective};
 use bls12_381::{Fq, Fq2, FqRepr};
+use ff::{Field, PrimeField};
+use CurveProjective;
 
 #[test]
 fn test_iso11() {

@@ -7,7 +7,7 @@ use pairing::bls12_381::*;
 fn bench_fq12_add_assign(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     let v: Vec<(Fq12, Fq12)> = (0..SAMPLES)
         .map(|_| (Fq12::rand(&mut rng), Fq12::rand(&mut rng)))
@@ -26,7 +26,7 @@ fn bench_fq12_add_assign(b: &mut ::test::Bencher) {
 fn bench_fq12_sub_assign(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     let v: Vec<(Fq12, Fq12)> = (0..SAMPLES)
         .map(|_| (Fq12::rand(&mut rng), Fq12::rand(&mut rng)))
@@ -45,7 +45,7 @@ fn bench_fq12_sub_assign(b: &mut ::test::Bencher) {
 fn bench_fq12_mul_assign(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     let v: Vec<(Fq12, Fq12)> = (0..SAMPLES)
         .map(|_| (Fq12::rand(&mut rng), Fq12::rand(&mut rng)))
@@ -64,7 +64,7 @@ fn bench_fq12_mul_assign(b: &mut ::test::Bencher) {
 fn bench_fq12_squaring(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     let v: Vec<Fq12> = (0..SAMPLES).map(|_| Fq12::rand(&mut rng)).collect();
 
@@ -81,7 +81,7 @@ fn bench_fq12_squaring(b: &mut ::test::Bencher) {
 fn bench_fq12_inverse(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     let v: Vec<Fq12> = (0..SAMPLES).map(|_| Fq12::rand(&mut rng)).collect();
 

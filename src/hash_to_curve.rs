@@ -1,10 +1,10 @@
 /*!
-  This module defines a hash_to_curve trait.
- */
+ This module defines a hash_to_curve trait.
+*/
 
-use ::CurveProjective;
 use bls12_381::{ClearH, IsogenyMap, OSSWUMap};
 use hash_to_field::{FromRO, HashToField};
+use CurveProjective;
 
 type CoordT<PtT> = <PtT as CurveProjective>::Base;
 

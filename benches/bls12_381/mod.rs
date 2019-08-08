@@ -13,7 +13,7 @@ use pairing::{CurveAffine, Engine};
 fn bench_pairing_g1_preparation(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     let v: Vec<G1> = (0..SAMPLES).map(|_| G1::rand(&mut rng)).collect();
 
@@ -29,7 +29,7 @@ fn bench_pairing_g1_preparation(b: &mut ::test::Bencher) {
 fn bench_pairing_g2_preparation(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     let v: Vec<G2> = (0..SAMPLES).map(|_| G2::rand(&mut rng)).collect();
 
@@ -45,7 +45,7 @@ fn bench_pairing_g2_preparation(b: &mut ::test::Bencher) {
 fn bench_pairing_miller_loop(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     let v: Vec<(G1Prepared, G2Prepared)> = (0..SAMPLES)
         .map(|_| {
@@ -68,7 +68,7 @@ fn bench_pairing_miller_loop(b: &mut ::test::Bencher) {
 fn bench_pairing_final_exponentiation(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     let v: Vec<Fq12> = (0..SAMPLES)
         .map(|_| {
@@ -92,7 +92,7 @@ fn bench_pairing_final_exponentiation(b: &mut ::test::Bencher) {
 fn bench_pairing_full(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
 
     let v: Vec<(G1, G2)> = (0..SAMPLES)
         .map(|_| (G1::rand(&mut rng), G2::rand(&mut rng)))

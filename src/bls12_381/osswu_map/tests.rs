@@ -3,8 +3,8 @@ Tests for osswu map
 */
 
 use super::OSSWUMap;
-use ff::{Field, PrimeField};
 use bls12_381::{Fq, Fq2, FqRepr, G1, G2};
+use ff::{Field, PrimeField};
 use rand::{thread_rng, Rand};
 
 /// check that the point (X : Y : Z)==(X/Z^2, Y/Z^3) is on E: y^2 = x^3 + ELLP_A * x + ELLP_B

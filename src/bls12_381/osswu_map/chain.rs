@@ -2,8 +2,8 @@
 Addition chains for computing square roots.
 */
 
-use ff::Field;
 use bls12_381::{Fq, Fq2};
+use ff::Field;
 
 #[allow(clippy::cognitive_complexity)]
 /* *** addchain for 1000602388805416848354447456433976039139220704984751971333014534031007912622709466110671907282253916009473568139946 *** */
@@ -888,8 +888,8 @@ pub fn chain_p2m9div16(tmpvar1: &mut Fq2, tmpvar0: &Fq2) {
 #[cfg(test)]
 mod tests {
     use super::{chain_p2m9div16, chain_pm3div4};
-    use ff::Field;
     use bls12_381::{Fq, Fq2};
+    use ff::Field;
     use rand::{thread_rng, Rand};
 
     #[test]
