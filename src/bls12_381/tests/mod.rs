@@ -424,7 +424,7 @@ fn test_g1_compressed_invalid_vectors() {
             x3b.mul_assign(&x);
             x3b.add_assign(&Fq::from_repr(FqRepr::from(4)).unwrap()); // TODO: perhaps expose coeff_b through API?
 
-            if let Some(_) = x3b.sqrt() {
+            if x3b.sqrt().is_some() {
                 x.add_assign(&Fq::one());
             } else {
                 x.into_repr().write_be(&mut o.as_mut()[0..]).unwrap();
@@ -449,7 +449,7 @@ fn test_g1_compressed_invalid_vectors() {
             x3b.mul_assign(&x);
             x3b.add_assign(&Fq::from_repr(FqRepr::from(4)).unwrap()); // TODO: perhaps expose coeff_b through API?
 
-            if let Some(_) = x3b.sqrt() {
+            if x3b.sqrt().is_some() {
                 // We know this is on the curve, but it's likely not going to be in the correct subgroup.
                 x.into_repr().write_be(&mut o.as_mut()[0..]).unwrap();
                 o.as_mut()[0] |= 0b1000_0000;
@@ -558,7 +558,7 @@ fn test_g2_compressed_invalid_vectors() {
                 c1: Fq::from_repr(FqRepr::from(4)).unwrap(),
             }); // TODO: perhaps expose coeff_b through API?
 
-            if let Some(_) = x3b.sqrt() {
+            if x3b.sqrt().is_some() {
                 x.add_assign(&Fq2::one());
             } else {
                 x.c1.into_repr().write_be(&mut o.as_mut()[0..]).unwrap();
@@ -590,7 +590,7 @@ fn test_g2_compressed_invalid_vectors() {
                 c1: Fq::from_repr(FqRepr::from(4)).unwrap(),
             }); // TODO: perhaps expose coeff_b through API?
 
-            if let Some(_) = x3b.sqrt() {
+            if x3b.sqrt().is_some() {
                 // We know this is on the curve, but it's likely not going to be in the correct subgroup.
                 x.c1.into_repr().write_be(&mut o.as_mut()[0..]).unwrap();
                 x.c0.into_repr().write_be(&mut o.as_mut()[48..]).unwrap();

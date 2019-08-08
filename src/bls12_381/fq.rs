@@ -1,5 +1,11 @@
 use super::fq2::Fq2;
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
+use hash_to_field::{BaseFromRO};
+use sha2::digest::generic_array::typenum::U64;
+use sha2::digest::generic_array::GenericArray;
+use signum::{Signum0, Sgn0Result};
+use std::cmp::Ordering;
+use std::io::{Cursor, Read};
 
 // B coefficient of BLS12-381 curve, 4.
 pub const B_COEFF: Fq = Fq(FqRepr([
@@ -443,14 +449,71 @@ pub const NEGATIVE_ONE: Fq = Fq(FqRepr([
     0x40ab3263eff0206,
 ]));
 
+// p-1 / 2
+#[cfg(test)]
+pub const P_M1_OVER2: Fq = Fq(FqRepr([
+    0xa1fafffffffe5557u64,
+    0x995bfff976a3fffeu64,
+    0x03f41d24d174ceb4u64,
+    0xf6547998c1995dbdu64,
+    0x778a468f507a6034u64,
+    0x020559931f7f8103u64,
+]));
+
 #[derive(PrimeField)]
 #[PrimeFieldModulus = "4002409555221667393417789825735904156556882819939007885332058136124031650490837864442687629129015664037894272559787"]
 #[PrimeFieldGenerator = "2"]
-pub struct Fq(FqRepr);
+pub struct Fq(pub(super) FqRepr);
 
-#[cfg(feature = "transmutable")]
 pub const unsafe fn transmute(r: FqRepr) -> Fq {
     Fq(r)
+}
+
+impl BaseFromRO for Fq {
+    type Length = U64;
+
+    fn from_okm(okm: &GenericArray<u8, U64>) -> Fq {
+        const F_2_256: Fq = Fq(FqRepr([
+                0x75b3cd7c5ce820fu64,
+                0x3ec6ba621c3edb0bu64,
+                0x168a13d82bff6bceu64,
+                0x87663c4bf8c449d2u64,
+                0x15f34c83ddc8d830u64,
+                0xf9628b49caa2e85u64,
+            ]));
+
+        // unwraps are safe here: we only use 32 bytes at a time, which is strictly less than p
+        let mut repr = FqRepr::default();
+        repr.read_be(Cursor::new([0; 16]).chain(Cursor::new(&okm[..32])))
+            .unwrap();
+        let mut elm = Fq::from_repr(repr).unwrap();
+        elm.mul_assign(&F_2_256);
+
+        repr.read_be(Cursor::new([0; 16]).chain(Cursor::new(&okm[32..])))
+            .unwrap();
+        let elm2 = Fq::from_repr(repr).unwrap();
+        elm.add_assign(&elm2);
+        elm
+    }
+}
+
+impl Signum0 for Fq {
+    fn sgn0(&self) -> Sgn0Result {
+        const PM1DIV2: FqRepr = FqRepr([
+            0xdcff7fffffffd555u64,
+            0x0f55ffff58a9ffffu64,
+            0xb39869507b587b12u64,
+            0xb23ba5c279c2895fu64,
+            0x258dd3db21a5d66bu64,
+            0x0d0088f51cbff34du64,
+        ]);
+
+        if self.into_repr().cmp(&PM1DIV2) == Ordering::Greater {
+            Sgn0Result::Negative
+        } else {
+            Sgn0Result::NonNegative
+        }
+    }
 }
 
 #[test]
@@ -459,6 +522,7 @@ fn test_b_coeff() {
 }
 
 #[test]
+#[allow(clippy::cognitive_complexity)]
 fn test_frob_coeffs() {
     let mut nqr = Fq::one();
     nqr.negate();
@@ -2248,4 +2312,70 @@ fn test_fq_legendre() {
         0x1d61ac6bfd5c88b,
     ]);
     assert_eq!(QuadraticResidue, Fq::from_repr(e).unwrap().legendre());
+}
+
+#[test]
+fn test_fq_hash_to_field() {
+    use ::hash_to_field::HashToField;
+
+    let mut hash_iter = HashToField::<Fq>::new("hello world", None);
+    let fq_val = hash_iter.next().unwrap();
+    let expect = FqRepr([
+        0x605979d293c88efeu64,
+        0x8cce6e2990ca245eu64,
+        0xb216c1419710b3a9u64,
+        0xeb60d0d2d54275a0u64,
+        0x354a68d7ef36672u64,
+        0x5f74a1547366cecu64,
+    ]);
+    assert_eq!(fq_val, Fq::from_repr(expect).unwrap());
+
+    let fq_val = hash_iter.with_ctr(0);
+    assert_eq!(fq_val, Fq::from_repr(expect).unwrap());
+
+    let fq_val = hash_iter.next().unwrap();
+    let expect = FqRepr([
+        0x21f37a28981adf2au64,
+        0xfcb319a0d42af630u64,
+        0xbfd027f2c55177fbu64,
+        0x66f286dd263e7609u64,
+        0xa09979be2a6ef430u64,
+        0x39b53f6f58a62fdu64,
+    ]);
+    assert_eq!(fq_val, Fq::from_repr(expect).unwrap());
+}
+
+#[test]
+fn test_fq_sgn0() {
+    assert_eq!(Fq::zero().sgn0(), Sgn0Result::NonNegative);
+    assert_eq!(Fq::one().sgn0(), Sgn0Result::NonNegative);
+    assert_eq!(P_M1_OVER2.sgn0(), Sgn0Result::NonNegative);
+
+    let p_p1_over2 = {
+        let mut tmp = P_M1_OVER2;
+        tmp.add_assign(&Fq::one());
+        tmp
+    };
+    assert_eq!(p_p1_over2.sgn0(), Sgn0Result::Negative);
+
+    let neg_p_p1_over2 = {
+        let mut tmp = p_p1_over2;
+        tmp.negate_if(Sgn0Result::Negative);
+        tmp
+    };
+    assert_eq!(neg_p_p1_over2, P_M1_OVER2);
+
+    let m1 = {
+        let mut tmp = Fq::one();
+        tmp.negate();
+        tmp
+    };
+    assert_eq!(m1.sgn0(), Sgn0Result::Negative);
+
+    let m0 = {
+        let mut tmp = Fq::zero();
+        tmp.negate();
+        tmp
+    };
+    assert_eq!(m0.sgn0(), Sgn0Result::NonNegative);
 }

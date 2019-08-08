@@ -2,7 +2,7 @@
 name = "pairing"
 
 # Remember to change version string in README.md.
-version = "0.14.3"
+version = "0.15.0"
 authors = [
     "Sean Bowe <ewillbefull@gmail.com>",
     "Jack Grigg <jack@z.cash>",
@@ -18,9 +18,8 @@ repository = "https://github.com/ebfull/pairing"
 rand = "0.4"
 byteorder = "1"
 ff = { version = "0.4", features = ["derive"] }
+hkdf = "0.8.0"
+sha2 = "0.8.0"
 
 [features]
-unstable-features = ["expose-arith"]
-expose-arith = []
-transmutable = []
 default = []

@@ -1,7 +1,7 @@
 // `clippy` is a code linting tool for improving code quality by catching
 // common mistakes or strange code patterns. If the `cargo-clippy` feature
 // is provided, all compiler warnings are prohibited.
-// #![cfg_attr(feature = "cargo-clippy", deny(warnings))]
+#![cfg_attr(feature = "cargo-clippy", deny(warnings))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::inline_always))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]
@@ -12,14 +12,18 @@
 #![deny(missing_debug_implementations)]
 
 extern crate byteorder;
-// #[macro_use]
 extern crate ff;
+extern crate hkdf;
 extern crate rand;
+extern crate sha2;
 
 #[cfg(test)]
 pub mod tests;
 
 pub mod bls12_381;
+pub mod hash_to_field;
+pub mod hash_to_curve;
+pub mod signum;
 
 mod wnaf;
 pub use self::wnaf::Wnaf;
@@ -159,6 +163,13 @@ pub trait CurveProjective:
     /// Adds an affine element to this element.
     fn add_assign_mixed(&mut self, other: &Self::Affine);
 
+    /// Subtracts an affine element from this element
+    fn sub_assign_mixed(&mut self, other: &Self::Affine) {
+        let mut tmp = *other;
+        tmp.negate();
+        self.add_assign_mixed(&tmp);
+    }
+
     /// Negates this element.
     fn negate(&mut self);
 
@@ -177,13 +188,11 @@ pub trait CurveProjective:
     fn recommended_wnaf_for_num_scalars(num_scalars: usize) -> usize;
 
     /// Borrow references to the X, Y, and Z coordinates of this point.
-    #[cfg(feature = "transmutable")]
     fn as_tuple(&self) -> (&Self::Base, &Self::Base, &Self::Base);
 
     /// Borrow mutable references to the X, Y, and Z coordinates of this point.
     /// Unsafe, because incorrectly modifying the coordinates violates the guarantee
     /// that the point must be on the curve and in the correct subgroup.
-    #[cfg(feature = "transmutable")]
     unsafe fn as_tuple_mut(&mut self) -> (&mut Self::Base, &mut Self::Base, &mut Self::Base);
 }
 
@@ -240,13 +249,11 @@ pub trait CurveAffine:
     }
 
     /// Borrow references to the X and Y coordinates of this point.
-    #[cfg(feature = "transmutable")]
     fn as_tuple(&self) -> (&Self::Base, &Self::Base);
 
     /// Borrow mutable references to the X and Y coordinates of this point.
     /// Unsafe, because incorrectly modifying the coordinates violates the guarantee
     /// that the point must be on the curve and in the correct subgroup.
-    #[cfg(feature = "transmutable")]
     unsafe fn as_tuple_mut(&mut self) -> (&mut Self::Base, &mut Self::Base);
 }
 
@@ -278,6 +285,11 @@ pub trait EncodedPoint:
     /// Creates an `EncodedPoint` from an affine point, as long as the
     /// point is not the point at infinity.
     fn from_affine(affine: Self::Affine) -> Self;
+}
+
+pub trait SubgroupCheck {
+    /// Subgroup membership check
+    fn in_subgroup(&self) -> bool;
 }
 
 /// An error that may occur when trying to decode an `EncodedPoint`.

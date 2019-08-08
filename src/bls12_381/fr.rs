@@ -1,22 +1,48 @@
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
+use hash_to_field::{BaseFromRO};
+use sha2::digest::generic_array::typenum::U48;
+use sha2::digest::generic_array::GenericArray;
+use std::io::{Cursor, Read};
 
 #[derive(PrimeField)]
 #[PrimeFieldModulus = "52435875175126190479447740508185965837690552500527637822603658699938581184513"]
 #[PrimeFieldGenerator = "7"]
 pub struct Fr(FrRepr);
 
-
-/// setup the default value for Fr to 0
-impl std::default::Default for Fr {
-
+/// set the default value for Fr to 0
+impl ::std::default::Default for Fr {
     fn default() -> Self {
         Fr::zero()
     }
 }
 
-#[cfg(feature = "transmutable")]
 pub const unsafe fn transmute(r: FrRepr) -> Fr {
     Fr(r)
+}
+
+impl BaseFromRO for Fr {
+    type Length = U48;
+
+    fn from_okm(okm: &GenericArray<u8, U48>) -> Fr {
+        const F_2_192: Fr = Fr(FrRepr([
+                0x59476ebc41b4528fu64,
+                0xc5a30cb243fcc152u64,
+                0x2b34e63940ccbd72u64,
+                0x1e179025ca247088u64,
+            ]));
+
+        // unwraps are safe here: we only use 24 bytes at a time, which is strictly less than p
+        let mut repr = FrRepr::default();
+        repr.read_be(Cursor::new([0; 8]).chain(Cursor::new(&okm[..24])))
+            .unwrap();
+        let mut elm = Fr::from_repr(repr).unwrap();
+        elm.mul_assign(&F_2_192);
+
+        repr.read_be(Cursor::new([0; 8]).chain(Cursor::new(&okm[24..])))
+            .unwrap();
+        elm.add_assign(&Fr::from_repr(repr).unwrap());
+        elm
+    }
 }
 
 #[cfg(test)]

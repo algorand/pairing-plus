@@ -61,7 +61,7 @@ fn random_shl_tests<R: PrimeFieldRepr>() {
     for _ in 0..100 {
         let r = R::rand(&mut rng);
 
-        for shift in 0..(r.num_bits() + 1) {
+        for shift in 0..=r.num_bits() {
             let mut r1 = r;
             let mut r2 = r;
 
@@ -82,7 +82,7 @@ fn random_shr_tests<R: PrimeFieldRepr>() {
     for _ in 0..100 {
         let r = R::rand(&mut rng);
 
-        for shift in 0..(r.num_bits() + 1) {
+        for shift in 0..=r.num_bits() {
             let mut r1 = r;
             let mut r2 = r;
 
