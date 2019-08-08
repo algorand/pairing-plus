@@ -24,6 +24,7 @@ pub mod bls12_381;
 pub mod hash_to_field;
 pub mod hash_to_curve;
 pub mod signum;
+pub mod serdes;
 
 mod wnaf;
 pub use self::wnaf::Wnaf;
