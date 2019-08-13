@@ -20,6 +20,25 @@ fn test_pairing_product() {
 }
 
 #[test]
+fn test_pairing_multi_product() {
+    use rand::{Rand, SeedableRng, XorShiftRng};
+    let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+    let size = 10;
+    let p:Vec<G1Affine> = (0..size).map(|_| G1::rand(&mut rng).into_affine()).collect();
+    let q:Vec<G2Affine> = (0..size).map(|_| G2::rand(&mut rng).into_affine()).collect();
+    for n in 0..size {
+        let mut t = Fq12::one();
+        for i in 0..n {
+            let p1 = G1Affine::into_projective(&p[i]);
+            let q1 = G2Affine::into_projective(&q[i]);
+            t.mul_assign(&Bls12::pairing(p1, q1));
+        }
+        assert_eq!(t, Bls12::pairing_multi_product(&p[0..n], &q[0..n]), "pairing multi product incorrect");
+    }
+}
+
+
+#[test]
 fn test_pairing_result_against_relic() {
     /*
     Sent to me from Diego Aranha (author of RELIC library):

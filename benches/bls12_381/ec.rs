@@ -440,11 +440,12 @@ mod g1 {
     #[bench]
     fn bench_conversion(b: &mut ::test::Bencher) {
         pub const SQRT_NEG_THREE: &str = "1586958781458431025242759403266842894121773480562120986020912974854563298150952611241517463240701";
-        pub const SQRT_NEG_THREE_MIN_ONE_DIV_TWO: &str="793479390729215512621379701633421447060886740281060493010456487427281649075476305620758731620350";
+        //pub const SQRT_NEG_THREE_MIN_ONE_DIV_TWO: &str="793479390729215512621379701633421447060886740281060493010456487427281649075476305620758731620350";
 
-        let mut count = 0;
+        //let mut count = 0;
         b.iter(|| {
             let sqrt_neg_three = Fq::from_str(&SQRT_NEG_THREE).unwrap();
+            sqrt_neg_three
             //count = (count + 1) % SAMPLES;
             //tmp
         });

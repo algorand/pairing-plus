@@ -557,6 +557,8 @@ macro_rules! curve_impl {
             // pre[0] becomes (2^64) * self, pre[1]  becomes (2^128) * self, and pre[2] (becomes 2^196) * self
             fn precomp_3(&self, pre: & mut [Self]) {
                 // TODO: check if pre has the right length?
+                // TODO: possible optimization: convert 3 points into affine jointly by doing a single inversion, rather than separately
+                // In fact, this function gets called multiple times, and the conversions to affine could be cheaper if done together
                 let mut p = self.into_projective();
                 for i in 0..3 {
                     for _ in 0..64 {
@@ -575,6 +577,7 @@ macro_rules! curve_impl {
                 // TODO: this is fragile, because it works only if other.into().as_ref() is exactly four 64-bits words
 
                 // Interleaved window technique: deal with each of the four words of the scalar in parallel
+                // TODO: possible optimization: maybe convert precomp to affine using a single inversion and about 16 multiplications?
 
                 let mut precomp = Vec::with_capacity(16); 
                 precomp.push(Self::Projective::zero());                 // 0000 - 0*self
@@ -618,6 +621,9 @@ macro_rules! curve_impl {
             // pre[i] becomes (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..25
             fn precomp_256(&self, pre: & mut [Self]) {
                 // TODO: check if pre has the right length?
+                // TODO: possible optimization: convert 256 points into affine jointly by doing a single inversion, rather than separately
+                // In fact, this function gets called multiple times, and the conversions to affine could be cheaper if done together
+
                 pre[0] = Self::zero();
                 let mut piece_length = 1;
                 let mut power_of_2_times_self = self.into_projective(); // power_of_2_times_self = 2^{32*piece_length} * self
@@ -678,20 +684,24 @@ macro_rules! curve_impl {
                 }
                 res
             }
-
+/*
             fn sum_of_products(points: &[Self], scalars: &[&[u64]]) -> $projective {
                 // TODO: we may decide we should clear memory, such as the old self
                 // and the precomp array.
                 // For now, none of the other functions do that, either.
                 // TODO: figure out what to do if the lengths of the two input slices don't match
                 // For now, take the minimum
+                //
+                // TODO: two possible optimizations:
+                // 1) Could convert precomp_vec to affine (using just one inversion and some number of multiplications)
+                // 2) Could scrap this approach entirely and use Pippinger's
                 let mut res = Self::Projective::zero();
                 let num_components = if points.len()<scalars.len() {points.len()} else {scalars.len()};
 
                 //  window technique: for each input point, precompute that point times 0, times 1, ..., times 15
                 let mut precomp_vec = Vec::with_capacity(num_components);
                 for point in points {
-                    let mut precomp = Vec::with_capacity(16); 
+                    let mut precomp = Vec::with_capacity(16); // TODO: would an array be better here?
                     precomp.push(Self::Projective::zero());
                     precomp.push(point.into_projective());
                     for i in 2..16 {
@@ -736,7 +746,252 @@ macro_rules! curve_impl {
                 }
                 res
             }
-            
+*/
+        /*     fn sum_of_products(points: &[Self], scalars: &[&[u64]]) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+                // TODO: figure out what to do if the lengths of the two input slices don't match
+                // For now, take the minimum
+                //
+                // TODO: possible optimizations
+                // 1) Find the optimal window size
+                // 2) Convert buckets to affine? (with one inversion)
+                let mut res = Self::Projective::zero();
+                let num_components = if points.len()<scalars.len() {points.len()} else {scalars.len()};
+                let mut buckets = [Self::Projective::zero(); 16]; 
+
+
+                // TODO: this is not needed when all scalars are exactly four words, as they seem to be
+                let mut max_len = 0usize; 
+                for i in 0..num_components {
+                    let curlen = scalars[i].len();
+                    if curlen>max_len {
+                        max_len = curlen;
+                    }
+                }
+
+                // Process all scalars four bits (=1 nibble) at a time
+                for nibble_index in (0..max_len*16).rev() {
+                    res.double();
+                    res.double();
+                    res.double();
+                    res.double();
+                    // find the i-th 4-bit chunk of the exponent
+                    let word = nibble_index>>4; // i div 16
+                    let shift = (nibble_index&15)<<2; // (i mod 16) * 4
+                    for i in 0..num_components {
+                        if word<scalars[i].len() {
+                            let index:usize = ((scalars[i][word]>>shift) & 15) as usize;
+                            if index>0 {
+                                buckets[index].add_assign_mixed(&points[i]);
+                            }
+                        }
+                    }
+                    res.add_assign(&buckets[15]);
+                    for i in (1..15).rev() {
+                        let temp = buckets[i+1]; // TODO: this is only to please the borrow checker
+                        buckets[i].add_assign(&temp); 
+                        res.add_assign(&buckets[i]);
+                        buckets[i+1] = Self::Projective::zero();
+                    }
+                    buckets[1] = Self::Projective::zero();
+                }
+                res
+             }
+ 
+             fn sum_of_products(points: &[Self], scalars: &[&[u64]]) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+                // TODO: figure out what to do if the lengths of the two input slices don't match
+                // For now, take the minimum
+                //
+                // TODO: possible optimizations
+                // 1) Find the optimal window size
+                // 2) Convert buckets to affine? (with one inversion)
+                let mut res = Self::Projective::zero();
+                let num_components = if points.len()<scalars.len() {points.len()} else {scalars.len()};
+                let mut buckets = [Self::Projective::zero(); 256]; 
+
+
+                // TODO: this is not needed when all scalars are exactly four words, as they seem to be
+                let mut max_len = 0usize; 
+                for i in 0..num_components {
+                    let curlen = scalars[i].len();
+                    if curlen>max_len {
+                        max_len = curlen;
+                    }
+                }
+
+                // Process all scalars four bits (=1 nibble) at a time
+                for nibble_index in (0..max_len*8).rev() {
+                    res.double();
+                    res.double();
+                    res.double();
+                    res.double();
+                    res.double();
+                    res.double();
+                    res.double();
+                    res.double();
+                    // find the i-th 4-bit chunk of the exponent
+                    let word = nibble_index>>3; // i div 8
+                    let shift = (nibble_index&7)<<3; // (i mod 8) * 8
+                    for i in 0..num_components {
+                        if word<scalars[i].len() {
+                            let index:usize = ((scalars[i][word]>>shift) & 255) as usize;
+                            if index>0 {
+                                buckets[index].add_assign_mixed(&points[i]);
+                            }
+                        }
+                    }
+                    res.add_assign(&buckets[255]);
+                    for i in (1..255).rev() {
+                        let temp = buckets[i+1]; // TODO: this is only to please the borrow checker
+                        buckets[i].add_assign(&temp); 
+                        res.add_assign(&buckets[i]);
+                        buckets[i+1] = Self::Projective::zero();
+                    }
+                    buckets[1] = Self::Projective::zero();
+                }
+                res
+            }*/
+ 
+              fn sum_of_products(points: &[Self], scalars: &[&[u64]]) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+                // TODO: figure out what to do if the lengths of the two input slices don't match
+                // For now, take the minimum
+                //
+                // TODO: possible optimizations
+                // 1) Find the optimal window size
+                // 2) Convert buckets to affine? (with one inversion)
+                let mut res = Self::Projective::zero();
+                let num_components = if points.len()<scalars.len() {points.len()} else {scalars.len()};
+                let w:usize = {
+                    if num_components<=100 {3} // TODO: get good values here
+                    else if num_components<=200 {4}
+                    else if num_components<=500 {5}
+                    else if num_components<=900 {6}
+                    else if num_components<=2000 {7}
+                    else {8}
+                };
+                let num_buckets = 1<<w;
+                let edge = w-1;
+                let mask = (num_buckets-1) as u64;
+                let mut buckets = vec![Self::Projective::zero(); num_buckets]; 
+
+
+                // TODO: this is not needed when all scalars are exactly four words.
+                // Are they? Contradictory evidence: on the one hand, precomp_256 code works
+                // On the other hand, if max_len == 0 line below seems necessary.
+                // Need to figure this out.
+                let mut max_len = 0usize; 
+                for i in 0..num_components {
+                    let curlen = scalars[i].len();
+                    if curlen>max_len {
+                        max_len = curlen;
+                    }
+                }
+
+                //if max_len == 0 {if num_components!=0 {println!("OOOOOPSSSS!");} return res;}
+                println!("max_len={}", max_len);
+
+                let mut bit_sequence_index = max_len * 64 - 1; // points to the top bit we need to process
+                let mut num_doubles = 0;
+                let mut a = 0;
+                let mut p = 0;
+                loop {
+                    for _ in 0..num_doubles {
+                        res.double();
+                    }
+                    let mut max_bucket = 0;
+                    let word_index = bit_sequence_index >> 6; // divide bit_sequence_index by 64 to find word_index
+                    let bit_index = bit_sequence_index & 63;  // mod bit_sequence_index by 64 to find bit_index
+                    if bit_index < edge { // we are on the edge of a word; have to look at the previous word, if it exists
+                        if word_index == 0 {
+                            // there is no word before
+                            let smaller_mask = ((1<<(bit_index+1))-1) as u64;
+                            for i in 0..num_components {
+                                if 0<scalars[i].len() {
+                                    let bucket_index:usize = (scalars[i][word_index] & smaller_mask) as usize;
+                                    if bucket_index>0 {
+                                        buckets[bucket_index].add_assign_mixed(&points[i]);
+                                        a+=1;
+                                        if bucket_index > max_bucket {max_bucket = bucket_index;}
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            // there is a word before
+                            let high_order_mask = ((1<<(bit_index+1))-1) as u64;
+                            let high_order_shift = edge-bit_index;
+                            let low_order_mask = ((1<<high_order_shift)-1) as u64;
+                            let low_order_shift = 64-high_order_shift;
+                            let prev_word_index = word_index-1;
+                            let mut bucket_index = 0usize;
+                            for i in 0..num_components {
+                                if word_index<scalars[i].len() {
+                                    bucket_index = ((scalars[i][word_index] & high_order_mask) << high_order_shift) as usize;
+                                }
+                                if prev_word_index<scalars[i].len() {
+                                    bucket_index |= ((scalars[i][prev_word_index] >> low_order_shift) & low_order_mask) as usize;
+                                }
+                                if bucket_index>0 {
+                                    buckets[bucket_index].add_assign_mixed(&points[i]);
+                                    a+=1;
+                                    if bucket_index > max_bucket {max_bucket = bucket_index;}
+
+                                }
+                            }
+                        }
+                        
+                    }
+                    else {
+                        let shift = bit_index - edge;
+                        for i in 0..num_components {
+                            if word_index<scalars[i].len() {
+                                let bucket_index:usize = ((scalars[i][word_index]>>shift) & mask) as usize;
+                                if bucket_index>0 {
+                                    buckets[bucket_index].add_assign_mixed(&points[i]);
+                                    if bucket_index > max_bucket {max_bucket = bucket_index;}
+                                    a+=1;
+
+                                }
+                            }
+                        }
+                    }
+                    if max_bucket!=num_buckets-1 {
+                        println!("max_bucket = {}", max_bucket);
+                    }
+                    res.add_assign(&buckets[max_bucket]);
+                    p+=1;
+                    for i in (1..max_bucket).rev() {
+                        let temp = buckets[i+1]; // TODO: this is necessary only to please the borrow checker
+                        buckets[i].add_assign(&temp); 
+                        res.add_assign(&buckets[i]);
+                        buckets[i+1] = Self::Projective::zero();
+                        p+=2;
+                    }
+                    print!("{} ", p);
+                    buckets[1] = Self::Projective::zero();
+                    if bit_sequence_index < w {
+                        break;
+                    }
+                    bit_sequence_index-=w;
+                    num_doubles = {
+                        if bit_sequence_index<edge {bit_sequence_index+1}
+                        else {w}
+
+                    };
+                }
+                println!("a={}, p={}", a, p);
+                res
+            }
+ 
+
             // Expects pre[j*256+i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self[j] for i in 0..256 and for each j
             // pre can be obtained by calling precomp_256
             fn sum_of_products_precomp_256(points: &[Self], scalars: &[&[u64]], pre: &[Self]) -> $projective {
@@ -751,6 +1006,8 @@ macro_rules! curve_impl {
                 // TODO: this is fragile, because it works only if other.into().as_ref() is exactly four 64-bits words and if pre is exactly the right length
 
                 // Interleaved window technique: deal with each of the 8 32-bit chunks words of each scalar in parallel
+
+                // TODO: understand how this large table will affect performance due to caching
 
                 for i in (0..32).rev() {
                     res.double();
@@ -1115,6 +1372,10 @@ macro_rules! curve_impl {
                 // and the precomp array.
                 // For now, none of the other functions do that, either.
                 // TODO: keep 0 and 1 elt of precomp?
+
+                // TODO: poassible optimizations:
+                // 1) Just switch to using wnaf
+                // 2) Convert precomputation to affine, using a single inversion of all the denominators, plus a few multiplications
 
                 let mut res = Self::zero();
                 let mut found_non_zero = false;
@@ -2066,6 +2327,38 @@ pub mod g1 {
 
 
     #[test]
+    fn length_test() {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 3;
+
+        let mut precomp = vec![G1Affine::zero(); 256*max_points];
+
+        let points:Vec<G1Affine> = (0..max_points).map(|_| G1::rand(&mut rng).into_affine()).collect(); 
+
+        for num_points in 0..max_points {
+            {
+                // test vector multiplication by 0
+                let scalars_fr_repr:Vec<FrRepr> = (0..num_points).map(|_| Fr::zero().into_repr()).collect();
+                let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
+
+                let desired_result = G1::zero();
+
+                println!("here1");
+                let res_no_precomp = G1Affine::sum_of_products(&points[0..num_points],&scalars);
+                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to all-0 vector");
+                println!("here2");
+
+                let res_precomp = G1Affine::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
+                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to all-0 vector with precomputation");
+                println!("here3");
+
+            }
+        }
+        assert!(false);
+    }
+    #[test]
     fn test_g1_sum_of_products() {
         use rand::{Rand, SeedableRng, XorShiftRng};
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
@@ -2129,10 +2422,10 @@ pub mod g1 {
                     }
                 }
                 let res_no_precomp = G1Affine::sum_of_products(&points[0..num_points],&scalars);
-                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to all-0 vector");
+                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to alternating 0/1 vector");
 
                 let res_precomp = G1Affine::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
-                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to all-0 vector with precomputation");
+                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to alternating 0/1 vector with precomputation");
             }
 
             {
@@ -2176,10 +2469,10 @@ pub mod g1 {
                 let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
 
                 let res_no_precomp = G1Affine::sum_of_products(&points[0..num_points],&scalars);
-                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to all-0 vector");
+                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to /1/short/randomvector");
 
                 let res_precomp = G1Affine::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
-                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to all-0 vector with precomputation");
+                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to 0/1/short/random with precomputation");
             }
         
             {
@@ -2201,12 +2494,13 @@ pub mod g1 {
                 let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
 
                 let res_no_precomp = G1Affine::sum_of_products(&points[0..num_points],&scalars);
-                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to all-0 vector");
+                assert_eq!(desired_result, res_no_precomp, "Failed at raising multiple points to random vector");
 
                 let res_precomp = G1Affine::sum_of_products_precomp_256(&points[0..num_points],&scalars,&precomp[0..num_points*256]);
-                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to all-0 vector with precomputation");
+                assert_eq!(desired_result, res_precomp, "Failed at raising multiple points to random vector with precomputation");
             }
         }
+        assert!(false);
     }
 
 
@@ -3337,7 +3631,7 @@ pub mod g2 {
                 },
                 infinity: false,
             }
-        );
+        );  
     }
 
     #[test]

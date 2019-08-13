@@ -116,7 +116,21 @@ pub trait Engine: ScalarEngine {
         ))
         .unwrap()
     }
+
+
+    fn pairing_multi_product(p: &[Self::G1Affine], q: &[Self::G2Affine]) -> Self::Fqk
+    {
+        let prep_p:Vec<<Self::G1Affine as CurveAffine>::Prepared> = p.iter().map(|v| v.prepare()).collect();
+        let prep_q:Vec<<Self::G2Affine as CurveAffine>::Prepared> = q.iter().map(|v| v.prepare()).collect();
+        let mut pairs = Vec::with_capacity(p.len());
+        for i in 0..p.len() {
+            pairs.push((&prep_p[i],&prep_q[i]));
+        }
+        let t = Self::miller_loop(&pairs);
+        Self::final_exponentiation(&t).unwrap()
+    }
 }
+ 
 
 /// Projective representation of an elliptic curve point guaranteed to be
 /// in the correct prime order subgroup.
