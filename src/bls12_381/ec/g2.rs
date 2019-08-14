@@ -477,7 +477,7 @@ fn g2_test_is_valid() {
             infinity: false,
         };
         assert!(!p.is_on_curve());
-        assert!(p.in_subgroup());
+        assert!(!p.in_subgroup());
     }
 
     // Reject point on a twist (b = 2 * (u + 1))
