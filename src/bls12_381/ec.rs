@@ -1580,9 +1580,8 @@ pub mod g1 {
     use super::g2::G2Affine;
     use bigint::U512;
     use bls12_381::ec::g2::G2Compressed;
-    use bls12_381::fq2::Fq2;
     use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
-    use rand::{ChaChaRng, Rand, Rng, SeedableRng};
+    use rand::{Rand, Rng};
     use sha2::Digest;
     use std::fmt;
     use std::ops::Rem;
@@ -2333,7 +2332,7 @@ pub mod g1 {
 
         let max_points = 3;
 
-        let mut precomp = vec![G1Affine::zero(); 256*max_points];
+        let precomp = vec![G1Affine::zero(); 256*max_points];
 
         let points:Vec<G1Affine> = (0..max_points).map(|_| G1::rand(&mut rng).into_affine()).collect(); 
 
@@ -2576,7 +2575,7 @@ pub mod g2 {
     use bigint::U512;
     use bls12_381::ec::g1::G1Compressed;
     use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
-    use rand::{ChaChaRng, Rand, Rng, SeedableRng};
+    use rand::{Rand, Rng};
     use sha2::Digest;
     use std::fmt;
     use std::ops::Rem;
