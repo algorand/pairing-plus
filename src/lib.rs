@@ -173,6 +173,8 @@ pub trait CurveProjective:
 
     /// Adds another element to this element.
     fn add_assign(&mut self, other: &Self);
+    /// Adds another element to this element.
+    fn add_assign_fake(&mut self, other: &Self);
 
     /// Subtracts another element from this element.
     fn sub_assign(&mut self, other: &Self) {
@@ -183,6 +185,8 @@ pub trait CurveProjective:
 
     /// Adds an affine element to this element.
     fn add_assign_mixed(&mut self, other: &Self::Affine);
+    /// Adds an affine element to this element.
+    fn add_assign_mixed_fake(&mut self, other: &Self::Affine);
 
     /// Negates this element.
     fn negate(&mut self);
@@ -318,6 +322,7 @@ pub trait CurveAffine:
     /// multiplication of many points
     /// compute s1 * p1 + ... + sn * pn simultaneously
     fn sum_of_products(bases: &[Self], scalars: &[&[u64; 4]]) -> Self::Projective;
+
     /// Find the optimal window for running Pippinger's algorithm; preprogrammed values
     fn find_pippinger_window(num_components: usize) -> usize;
     /// Find the optimal window for running Pippinger's algorithm; computed values via an estimate of running time
@@ -325,6 +330,27 @@ pub trait CurveAffine:
     /// multiplication of many points with Pippinger's algorithm of window size w
     /// compute s1 * p1 + ... + sn * pn simultaneously
     fn sum_of_products_pippinger(
+        bases: &[Self],
+        scalars: &[&[u64; 4]],
+        window: usize,
+    ) -> Self::Projective;
+    /// multiplication of many points with Pippinger's algorithm of window size w
+    /// compute s1 * p1 + ... + sn * pn simultaneously
+    fn sum_of_products_pippinger_projective_only(
+        bases: &[Self],
+        scalars: &[&[u64; 4]],
+        window: usize,
+    ) -> Self::Projective;
+    /// multiplication of many points with Pippinger's algorithm of window size w
+    /// compute s1 * p1 + ... + sn * pn simultaneously
+    fn sum_of_products_pippinger_affine_only(
+        bases: &[Self],
+        scalars: &[&[u64; 4]],
+        window: usize,
+    ) -> Self::Projective;
+    /// multiplication of many points with Pippinger's algorithm of window size w
+    /// compute s1 * p1 + ... + sn * pn simultaneously
+    fn sum_of_products_pippinger_fake_math(
         bases: &[Self],
         scalars: &[&[u64; 4]],
         window: usize,

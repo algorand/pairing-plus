@@ -755,7 +755,7 @@ macro_rules! curve_impl {
                     let expected_nonempty_nonzero_buckets =
                         (two_to_w - 1.0) * (1.0 - prob_empty_bucket);
                     affine_adds -= expected_nonempty_nonzero_buckets * (loop_iterations - 2.0);
-                    let mut _a0 = expected_nonempty_nonzero_buckets * (loop_iterations - 2.0);
+                    let mut a0 = expected_nonempty_nonzero_buckets * (loop_iterations - 2.0);
                     // first and last iteration are different.
 
                     // First iteration high-order bit is always 0,
@@ -769,7 +769,7 @@ macro_rules! curve_impl {
                         (first_iteration_max_bucket - 1.0)
                             * (1.0 - prob_empty_bucket_first_iteration);
                     affine_adds -= expected_nonempty_nonzero_buckets_first_iteration;
-                    _a0 += expected_nonempty_nonzero_buckets_first_iteration;
+                    a0 += expected_nonempty_nonzero_buckets_first_iteration;
 
                     // last iteration is the leftover bits
                     let last_iteration_bit_width = 256 - (255 / w) * w;
@@ -782,7 +782,7 @@ macro_rules! curve_impl {
                         (last_iteration_max_bucket - 1.0)
                             * (1.0 - prob_empty_bucket_last_iteration);
                     affine_adds -= expected_nonempty_nonzero_buckets_last_iteration;
-                    _a0 += expected_nonempty_nonzero_buckets_last_iteration;
+                    a0 += expected_nonempty_nonzero_buckets_last_iteration;
 
                     projective_adds = (loop_iterations - 2.0)
                         * (expected_nonempty_nonzero_buckets + two_to_w - 2.0)
@@ -792,7 +792,7 @@ macro_rules! curve_impl {
                         + last_iteration_max_bucket
                         - 2.0
                         + expected_nonempty_nonzero_buckets_last_iteration;
-                    let _p0 = (loop_iterations - 2.0)
+                    let p0 = (loop_iterations - 2.0)
                         * (two_to_w - 1.0 - expected_nonempty_nonzero_buckets)
                         + first_iteration_max_bucket
                         - expected_nonempty_nonzero_buckets_first_iteration
@@ -820,7 +820,6 @@ macro_rules! curve_impl {
                 //println!("Result: {}", w);
                 w
             }
-
             fn sum_of_products_pippinger(
                 points: &[Self],
                 scalars: &[&[u64; 4]],
@@ -829,16 +828,265 @@ macro_rules! curve_impl {
                 // TODO: we may decide we should clear memory
                 // For now, none of the other functions do that, either.
                 // TODO: is it worth it to convert buckets to affine? (with one inversion)
+
                 let mut res = Self::Projective::zero();
                 let num_components = if points.len() < scalars.len() {
                     points.len()
                 } else {
                     scalars.len()
                 };
+
                 let num_buckets = 1 << window;
                 let edge = window - 1;
                 let mask = (num_buckets - 1) as u64;
                 let mut buckets = vec![Self::Projective::zero(); num_buckets];
+
+                let mut bit_sequence_index = 255; // points to the top bit we need to process
+                let mut num_doubles = 0;
+                let mut a = 0;
+                let mut p = 0;
+                let mut a0 = 0;
+                let mut p0 = 0;
+                loop {
+                    for _ in 0..num_doubles {
+                        res.double();
+                    }
+                    let mut max_bucket = 0;
+                    let word_index = bit_sequence_index >> 6; // divide bit_sequence_index by 64 to find word_index
+                    let bit_index = bit_sequence_index & 63; // mod bit_sequence_index by 64 to find bit_index
+                    if bit_index < edge {
+                        // we are on the edge of a word; have to look at the previous word, if it exists
+                        if word_index == 0 {
+                            // there is no word before
+                            let smaller_mask = ((1 << (bit_index + 1)) - 1) as u64;
+                            for i in 0..num_components {
+                                let bucket_index: usize =
+                                    (scalars[i][word_index] & smaller_mask) as usize;
+                                if bucket_index > 0 {
+                                    if !buckets[bucket_index].is_zero() {
+                                        a += 1;
+                                    } else {
+                                        a0 += 1;
+                                    }
+                                    buckets[bucket_index].add_assign_mixed(&points[i]);
+                                    if bucket_index > max_bucket {
+                                        max_bucket = bucket_index;
+                                    }
+                                }
+                            }
+                        } else {
+                            // there is a word before
+                            let high_order_mask = ((1 << (bit_index + 1)) - 1) as u64;
+                            let high_order_shift = edge - bit_index;
+                            let low_order_mask = ((1 << high_order_shift) - 1) as u64;
+                            let low_order_shift = 64 - high_order_shift;
+                            let prev_word_index = word_index - 1;
+                            for i in 0..num_components {
+                                let mut bucket_index = ((scalars[i][word_index] & high_order_mask)
+                                    << high_order_shift)
+                                    as usize;
+                                bucket_index |= ((scalars[i][prev_word_index] >> low_order_shift)
+                                    & low_order_mask)
+                                    as usize;
+                                if bucket_index > 0 {
+                                    if !buckets[bucket_index].is_zero() {
+                                        a += 1;
+                                    } else {
+                                        a0 += 1;
+                                    }
+
+                                    buckets[bucket_index].add_assign_mixed(&points[i]);
+                                    if bucket_index > max_bucket {
+                                        max_bucket = bucket_index;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        let shift = bit_index - edge;
+                        for i in 0..num_components {
+                            let bucket_index: usize =
+                                ((scalars[i][word_index] >> shift) & mask) as usize;
+                            assert!(bit_sequence_index != 255 || scalars[i][3] >> 63 == 0);
+                            if bucket_index > 0 {
+                                if !buckets[bucket_index].is_zero() {
+                                    a += 1;
+                                } else {
+                                    a0 += 1;
+                                }
+
+                                buckets[bucket_index].add_assign_mixed(&points[i]);
+                                if bucket_index > max_bucket {
+                                    max_bucket = bucket_index;
+                                }
+                            }
+                        }
+                    }
+                    if !buckets[max_bucket].is_zero() && !res.is_zero() {
+                        p += 1;
+                    } else {
+                        p0 += 1;
+                    }
+                    res.add_assign(&buckets[max_bucket]);
+                    for i in (1..max_bucket).rev() {
+                        let temp = buckets[i + 1]; // TODO: this is necessary only to please the borrow checker
+                        if !temp.is_zero() && !buckets[i].is_zero() {
+                            p += 1;
+                        } else {
+                            p0 += 1;
+                        }
+                        buckets[i].add_assign(&temp);
+                        if !res.is_zero() && !buckets[i].is_zero() {
+                            p += 1
+                        } else {
+                            p0 += 1;
+                        }
+                        res.add_assign(&buckets[i]);
+                        buckets[i + 1] = Self::Projective::zero();
+                    }
+                    buckets[1] = Self::Projective::zero();
+                    if bit_sequence_index < window {
+                        break;
+                    }
+                    bit_sequence_index -= window;
+                    num_doubles = {
+                        if bit_sequence_index < edge {
+                            bit_sequence_index + 1
+                        } else {
+                            window
+                        }
+                    };
+                }
+                //println!("a={}, p={}, a0={}, p0={}", a, p, a0, p0);
+                res
+            }
+
+            fn sum_of_products_pippinger_projective_only(
+                points: &[Self],
+                scalars: &[&[u64; 4]],
+                window: usize,
+            ) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+                // TODO: is it worth it to convert buckets to affine? (with one inversion)
+
+                let mut res = Self::Projective::zero();
+                let num_components = if points.len() < scalars.len() {
+                    points.len()
+                } else {
+                    scalars.len()
+                };
+
+                let num_buckets = 1 << window;
+                let edge = window - 1;
+                let mask = (num_buckets - 1) as u64;
+                let mut buckets = vec![Self::Projective::zero(); num_buckets];
+
+                let mut bit_sequence_index = 255; // points to the top bit we need to process
+                let mut num_doubles = 0;
+                loop {
+                    for _ in 0..num_doubles {
+                        res.double();
+                    }
+                    let mut max_bucket = 0;
+                    let word_index = bit_sequence_index >> 6; // divide bit_sequence_index by 64 to find word_index
+                    let bit_index = bit_sequence_index & 63; // mod bit_sequence_index by 64 to find bit_index
+                    if bit_index < edge {
+                        // we are on the edge of a word; have to look at the previous word, if it exists
+                        if word_index == 0 {
+                            // there is no word before
+                            let smaller_mask = ((1 << (bit_index + 1)) - 1) as u64;
+                            for i in 0..num_components {
+                                let bucket_index: usize =
+                                    (scalars[i][word_index] & smaller_mask) as usize;
+                                if bucket_index > 0 {
+                                    buckets[bucket_index].add_assign_mixed_fake(&points[i]);
+                                    if bucket_index > max_bucket {
+                                        max_bucket = bucket_index;
+                                    }
+                                }
+                            }
+                        } else {
+                            // there is a word before
+                            let high_order_mask = ((1 << (bit_index + 1)) - 1) as u64;
+                            let high_order_shift = edge - bit_index;
+                            let low_order_mask = ((1 << high_order_shift) - 1) as u64;
+                            let low_order_shift = 64 - high_order_shift;
+                            let prev_word_index = word_index - 1;
+                            for i in 0..num_components {
+                                let mut bucket_index = ((scalars[i][word_index] & high_order_mask)
+                                    << high_order_shift)
+                                    as usize;
+                                bucket_index |= ((scalars[i][prev_word_index] >> low_order_shift)
+                                    & low_order_mask)
+                                    as usize;
+                                if bucket_index > 0 {
+                                    buckets[bucket_index].add_assign_mixed_fake(&points[i]);
+                                    if bucket_index > max_bucket {
+                                        max_bucket = bucket_index;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        let shift = bit_index - edge;
+                        for i in 0..num_components {
+                            let bucket_index: usize =
+                                ((scalars[i][word_index] >> shift) & mask) as usize;
+                            if bucket_index > 0 {
+                                buckets[bucket_index].add_assign_mixed_fake(&points[i]);
+                                if bucket_index > max_bucket {
+                                    max_bucket = bucket_index;
+                                }
+                            }
+                        }
+                    }
+                    res.add_assign(&buckets[max_bucket]);
+                    for i in (1..max_bucket).rev() {
+                        let temp = buckets[i + 1]; // TODO: this is necessary only to please the borrow checker
+                        buckets[i].add_assign(&temp);
+                        res.add_assign(&buckets[i]);
+                        buckets[i + 1] = Self::Projective::zero();
+                    }
+                    buckets[1] = Self::Projective::zero();
+                    if bit_sequence_index < window {
+                        break;
+                    }
+                    bit_sequence_index -= window;
+                    num_doubles = {
+                        if bit_sequence_index < edge {
+                            bit_sequence_index + 1
+                        } else {
+                            window
+                        }
+                    };
+                }
+                res
+            }
+
+            fn sum_of_products_pippinger_affine_only(
+                points: &[Self],
+                scalars: &[&[u64; 4]],
+                window: usize,
+            ) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+                // TODO: is it worth it to convert buckets to affine? (with one inversion)
+
+                let mut res = Self::Projective::zero();
+                let num_components = if points.len() < scalars.len() {
+                    points.len()
+                } else {
+                    scalars.len()
+                };
+
+                let num_buckets = 1 << window;
+                let edge = window - 1;
+                let mask = (num_buckets - 1) as u64;
+                let mut buckets = vec![Self::Projective::zero(); num_buckets];
+
                 let mut bit_sequence_index = 255; // points to the top bit we need to process
                 let mut num_doubles = 0;
                 loop {
@@ -890,7 +1138,6 @@ macro_rules! curve_impl {
                         for i in 0..num_components {
                             let bucket_index: usize =
                                 ((scalars[i][word_index] >> shift) & mask) as usize;
-                            assert!(bit_sequence_index != 255 || scalars[i][3] >> 63 == 0);
                             if bucket_index > 0 {
                                 buckets[bucket_index].add_assign_mixed(&points[i]);
                                 if bucket_index > max_bucket {
@@ -899,11 +1146,115 @@ macro_rules! curve_impl {
                             }
                         }
                     }
-                    res.add_assign(&buckets[max_bucket]);
+                    res.add_assign_fake(&buckets[max_bucket]);
                     for i in (1..max_bucket).rev() {
                         let temp = buckets[i + 1]; // TODO: this is necessary only to please the borrow checker
-                        buckets[i].add_assign(&temp);
-                        res.add_assign(&buckets[i]);
+                        buckets[i].add_assign_fake(&temp);
+                        res.add_assign_fake(&buckets[i]);
+                        buckets[i + 1] = Self::Projective::zero();
+                    }
+                    buckets[1] = Self::Projective::zero();
+                    if bit_sequence_index < window {
+                        break;
+                    }
+                    bit_sequence_index -= window;
+                    num_doubles = {
+                        if bit_sequence_index < edge {
+                            bit_sequence_index + 1
+                        } else {
+                            window
+                        }
+                    };
+                }
+                res
+            }
+
+            fn sum_of_products_pippinger_fake_math(
+                points: &[Self],
+                scalars: &[&[u64; 4]],
+                window: usize,
+            ) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+                // TODO: is it worth it to convert buckets to affine? (with one inversion)
+
+                let mut res = Self::Projective::zero();
+                let num_components = if points.len() < scalars.len() {
+                    points.len()
+                } else {
+                    scalars.len()
+                };
+
+                let num_buckets = 1 << window;
+                let edge = window - 1;
+                let mask = (num_buckets - 1) as u64;
+                let mut buckets = vec![Self::Projective::zero(); num_buckets];
+
+                let mut bit_sequence_index = 255; // points to the top bit we need to process
+                let mut num_doubles = 0;
+                loop {
+                    for _ in 0..num_doubles {
+                        res.double();
+                    }
+                    let mut max_bucket = 0;
+                    let word_index = bit_sequence_index >> 6; // divide bit_sequence_index by 64 to find word_index
+                    let bit_index = bit_sequence_index & 63; // mod bit_sequence_index by 64 to find bit_index
+                    if bit_index < edge {
+                        // we are on the edge of a word; have to look at the previous word, if it exists
+                        if word_index == 0 {
+                            // there is no word before
+                            let smaller_mask = ((1 << (bit_index + 1)) - 1) as u64;
+                            for i in 0..num_components {
+                                let bucket_index: usize =
+                                    (scalars[i][word_index] & smaller_mask) as usize;
+                                if bucket_index > 0 {
+                                    buckets[bucket_index].add_assign_mixed_fake(&points[i]);
+                                    if bucket_index > max_bucket {
+                                        max_bucket = bucket_index;
+                                    }
+                                }
+                            }
+                        } else {
+                            // there is a word before
+                            let high_order_mask = ((1 << (bit_index + 1)) - 1) as u64;
+                            let high_order_shift = edge - bit_index;
+                            let low_order_mask = ((1 << high_order_shift) - 1) as u64;
+                            let low_order_shift = 64 - high_order_shift;
+                            let prev_word_index = word_index - 1;
+                            for i in 0..num_components {
+                                let mut bucket_index = ((scalars[i][word_index] & high_order_mask)
+                                    << high_order_shift)
+                                    as usize;
+                                bucket_index |= ((scalars[i][prev_word_index] >> low_order_shift)
+                                    & low_order_mask)
+                                    as usize;
+                                if bucket_index > 0 {
+                                    buckets[bucket_index].add_assign_mixed_fake(&points[i]);
+                                    if bucket_index > max_bucket {
+                                        max_bucket = bucket_index;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        let shift = bit_index - edge;
+                        for i in 0..num_components {
+                            let bucket_index: usize =
+                                ((scalars[i][word_index] >> shift) & mask) as usize;
+                            if bucket_index > 0 {
+                                buckets[bucket_index].add_assign_mixed_fake(&points[i]);
+                                if bucket_index > max_bucket {
+                                    max_bucket = bucket_index;
+                                }
+                            }
+                        }
+                    }
+                    res.add_assign_fake(&buckets[max_bucket]);
+                    for i in (1..max_bucket).rev() {
+                        let temp = buckets[i + 1]; // TODO: this is necessary only to please the borrow checker
+                        buckets[i].add_assign_fake(&temp);
+                        res.add_assign_fake(&buckets[i]);
                         buckets[i + 1] = Self::Projective::zero();
                     }
                     buckets[1] = Self::Projective::zero();
@@ -942,7 +1293,6 @@ macro_rules! curve_impl {
                 };
 
                 // Interleaved window technique: deal with each of the 8 32-bit chunks words of each scalar in parallel
-
                 // TODO: understand how this large table will affect performance due to caching
 
                 for i in (0..32).rev() {
@@ -1123,6 +1473,11 @@ macro_rules! curve_impl {
                 c.double();
                 self.y.sub_assign(&c);
             }
+            fn add_assign_fake(&mut self, other: &Self) {
+                self.x.add_assign(&other.x);
+                self.y.add_assign(&other.y);
+                self.z.add_assign(&other.z);
+            }
 
             fn add_assign(&mut self, other: &Self) {
                 if self.is_zero() {
@@ -1212,6 +1567,13 @@ macro_rules! curve_impl {
                     self.z.sub_assign(&z2z2);
                     self.z.mul_assign(&h);
                 }
+            }
+            fn add_assign_mixed_fake(&mut self, other: &Self::Affine) {
+                self.x.add_assign(&$basefield::one());
+                self.y.add_assign(&$basefield::one());
+                self.z.add_assign(&$basefield::one());
+                self.x.add_assign(&other.x);
+                self.y.add_assign(&other.y);
             }
 
             fn add_assign_mixed(&mut self, other: &Self::Affine) {
@@ -1356,9 +1718,9 @@ macro_rules! curve_impl {
             }
 
             // this multiplication function always uses 255 doubling and additions
-            // TODO: we can use  window here also (and gain a factor of 2 in performance),
+            // TODO: we can use window here also (and gain a factor of 2 in performance),
             // just as in mul, but it's less clear
-            // which of the 16  window elements to use in the addition when the index is 0
+            // which of the 16 window elements to use in the addition when the index is 0
             fn mul_assign_sec<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S) {
                 let mut res = Self::zero();
                 let mut _discard = Self::zero();
@@ -2267,16 +2629,6 @@ pub mod g1 {
     }
 
     #[test]
-    fn test_pippinger_window() {
-        for i in 1..1000000 {
-            assert_eq!(
-                G1Affine::find_pippinger_window(i),
-                G1Affine::find_pippinger_window_via_estimate(i)
-            );
-        }
-    }
-
-    #[test]
     fn test_g1_sum_of_products() {
         use rand::{Rand, SeedableRng, XorShiftRng};
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
@@ -2496,6 +2848,93 @@ pub mod g1 {
             }
         }
         //assert!(false);
+    }
+
+    #[test]
+    fn print_pippinger_windows() {
+        let mut w = G1Affine::find_pippinger_window_via_estimate(1);
+        println!("1 {}", w);
+        for i in 2..1000000 {
+            let new_w = G1Affine::find_pippinger_window_via_estimate(i);
+            if new_w != w {
+                println!("{} {}", i, new_w);
+                w = new_w;
+            }
+        }
+        assert!(false);
+    }
+
+    #[test]
+    fn test_pippinger_window() {
+        for i in 1..1000000 {
+            assert_eq!(
+                G1Affine::find_pippinger_window(i),
+                G1Affine::find_pippinger_window_via_estimate(i)
+            );
+        }
+    }
+
+    #[test]
+    fn print_g1_sum_of_products_numbers() {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 100;
+        let num_points = 100;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let mut precomp = vec![G1Affine::zero(); 256 * max_points];
+        /*for i in 0..max_points {
+            points[i].precomp_256(&mut precomp[i * 256..(i + 1) * 256]);
+        }*/
+
+        // test vector multiplication by random
+        let mut scalars_fr: Vec<Fr> = Vec::with_capacity(num_points);
+
+        for _ in 0..num_points {
+            scalars_fr.push(Fr::rand(&mut rng));
+        }
+
+        let scalars_fr_repr: Vec<FrRepr> = scalars_fr.iter().map(|s| s.into_repr()).collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        G1Affine::sum_of_products(&points[0..num_points], &scalars);
+
+        let mut desired_result = G1::zero();
+        for i in 0..num_points {
+            let mut intermediate_result = points[i].into_projective();
+            intermediate_result.mul_assign(scalars_fr[i]);
+            desired_result.add_assign(&intermediate_result);
+        }
+        for window in 1..12 {
+            //println!("w= {} ", window);
+            let res_no_precomp =
+                G1Affine::sum_of_products_pippinger(&points[0..num_points], &scalars, window);
+            /* let res1 =
+                G1Affine::sum_of_products_pippinger_projective_only(&points[0..num_points], &scalars, window);
+            let res2 =
+                G1Affine::sum_of_products_pippinger_affine_only(&points[0..nfum_points], &scalars, window);
+            let res3 =
+                G1Affine::sum_of_products_pippinger_fake_math(&points[0..num_points], &scalars, window);
+            assert!(res1 != res2, "foobar");
+            assert!(res1 != res3, "foobar2");
+            assert!(res2 != res3, "foobar3");*/
+            assert_eq!(
+                desired_result, res_no_precomp,
+                "Failed at raising multiple points to random vector"
+            );
+        }
+
+        /* let res_precomp = G1Affine::sum_of_products_precomp_256(
+            &points[0..num_points],
+            &scalars,
+            &precomp[0..num_points * 256],
+        );
+        assert_eq!(
+            desired_result, res_precomp,
+            "Failed at raising multiple points to random vector with precomputation"
+        );*/
+        assert!(false);
     }
 
     #[test]
@@ -2955,7 +3394,6 @@ pub mod g2 {
         }
     }
     // TODO: these should eventually be uncommented / moved to the right place
-
     /*
         #[test]
         fn test_g2_mul() {

@@ -156,6 +156,438 @@ mod g1 {
             tmp
         });
     }
+    #[bench]
+    fn bench_find_pippinger_window_via_estimate(b: &mut ::test::Bencher) {
+        let max_points = 1000;
+        let mut i = 0;
+        b.iter(|| {
+            let w = G1Affine::find_pippinger_window_via_estimate(i);
+            i = (i + 1) % max_points;
+            w
+        });
+    }
+
+    #[bench]
+    fn bench_g1_sum_of_products_4(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger(&points, &scalars, 4));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_5(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger(&points, &scalars, 5));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_6(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger(&points, &scalars, 6));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_7(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger(&points, &scalars, 7));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_8(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger(&points, &scalars, 8));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_9(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger(&points, &scalars, 9));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_10(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger(&points, &scalars, 10));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_4a(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_projective_only(&points, &scalars, 4));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_5a(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_projective_only(&points, &scalars, 5));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_6a(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_projective_only(&points, &scalars, 6));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_7a(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_projective_only(&points, &scalars, 7));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_8a(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_projective_only(&points, &scalars, 8));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_9a(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_projective_only(&points, &scalars, 9));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_10a(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_projective_only(&points, &scalars, 10));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_4b(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_affine_only(&points, &scalars, 4));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_5b(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_affine_only(&points, &scalars, 5));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_6b(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_affine_only(&points, &scalars, 6));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_7b(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_affine_only(&points, &scalars, 7));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_8b(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_affine_only(&points, &scalars, 8));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_9b(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_affine_only(&points, &scalars, 9));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_10b(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_affine_only(&points, &scalars, 10));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_4c(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_fake_math(&points, &scalars, 4));
+    }
+
+    #[bench]
+    fn bench_g1_sum_of_products_5c(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_fake_math(&points, &scalars, 5));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_6c(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_fake_math(&points, &scalars, 6));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_7c(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_fake_math(&points, &scalars, 7));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_8c(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_fake_math(&points, &scalars, 8));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_9c(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_fake_math(&points, &scalars, 9));
+    }
+    #[bench]
+    fn bench_g1_sum_of_products_10c(b: &mut ::test::Bencher) {
+        use rand::{Rand, SeedableRng, XorShiftRng};
+        let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
+
+        let max_points = 1000;
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_pippinger_fake_math(&points, &scalars, 10));
+    }
 
     #[bench]
     fn bench_g1_sum_of_products(b: &mut ::test::Bencher) {
@@ -172,7 +604,6 @@ mod g1 {
         let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
         b.iter(|| G1Affine::sum_of_products(&points, &scalars));
     }
-
     #[bench]
     fn bench_g1_sum_of_products_precomp_256(b: &mut ::test::Bencher) {
         use rand::{Rand, SeedableRng, XorShiftRng};
