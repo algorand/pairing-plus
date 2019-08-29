@@ -12,8 +12,8 @@
 #![deny(missing_debug_implementations)]
 extern crate byteorder;
 //#[macro_use]
-extern crate ff;
 extern crate bigint;
+extern crate ff;
 extern crate rand;
 extern crate sha2;
 
@@ -117,20 +117,19 @@ pub trait Engine: ScalarEngine {
         .unwrap()
     }
 
-
-    fn pairing_multi_product(p: &[Self::G1Affine], q: &[Self::G2Affine]) -> Self::Fqk
-    {
-        let prep_p:Vec<<Self::G1Affine as CurveAffine>::Prepared> = p.iter().map(|v| v.prepare()).collect();
-        let prep_q:Vec<<Self::G2Affine as CurveAffine>::Prepared> = q.iter().map(|v| v.prepare()).collect();
+    fn pairing_multi_product(p: &[Self::G1Affine], q: &[Self::G2Affine]) -> Self::Fqk {
+        let prep_p: Vec<<Self::G1Affine as CurveAffine>::Prepared> =
+            p.iter().map(|v| v.prepare()).collect();
+        let prep_q: Vec<<Self::G2Affine as CurveAffine>::Prepared> =
+            q.iter().map(|v| v.prepare()).collect();
         let mut pairs = Vec::with_capacity(p.len());
         for i in 0..p.len() {
-            pairs.push((&prep_p[i],&prep_q[i]));
+            pairs.push((&prep_p[i], &prep_q[i]));
         }
         let t = Self::miller_loop(&pairs);
         Self::final_exponentiation(&t).unwrap()
     }
 }
- 
 
 /// Projective representation of an elliptic curve point guaranteed to be
 /// in the correct prime order subgroup.
@@ -213,9 +212,7 @@ pub trait CurveProjective:
         s1: S,
         s2: S,
     ) -> Self;
-
 }
-
 
 /// Affine representation of an elliptic curve point guaranteed to be
 /// in the correct prime order subgroup.
@@ -318,30 +315,51 @@ pub trait CurveAffine:
     // not a constant time implementation
     fn hash_to_g2(input: &[u8]) -> bls12_381::G2;
 
-    /// multiplication of many points with shamir's Trick
-    /// computer s1 * p1 + ... + sn * pn simultaneously
-    fn sum_of_products(bases: &[Self], scalars: &[&[u64]])->Self::Projective;
+    /// multiplication of many points
+    /// compute s1 * p1 + ... + sn * pn simultaneously
+    fn sum_of_products(bases: &[Self], scalars: &[&[u64; 4]]) -> Self::Projective;
+    /// Find the optimal window for running Pippinger's algorithm; preprogrammed values
+    fn find_pippinger_window(num_components: usize) -> usize;
+    /// Find the optimal window for running Pippinger's algorithm; computed values via an estimate of running time
+    fn find_pippinger_window_via_estimate(num_components: usize) -> usize;
+    /// multiplication of many points with Pippinger's algorithm of window size w
+    /// compute s1 * p1 + ... + sn * pn simultaneously
+    fn sum_of_products_pippinger(
+        bases: &[Self],
+        scalars: &[&[u64; 4]],
+        window: usize,
+    ) -> Self::Projective;
 
-    /// multiplication of many points with shamir's Trick and precompuation
-    /// computer s1 * p1 + ... + sn * pn simultaneously
+    /// multiplication of many points with precompuation
+    /// compute s1 * p1 + ... + sn * pn simultaneously
     /// assuming  pre[j*256+i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * bases[j] for each j and i in 0..256
-    fn sum_of_products_precomp_256(bases: &[Self], scalars: &[&[u64]], pre: &[Self])->Self::Projective;
+    fn sum_of_products_precomp_256(
+        bases: &[Self],
+        scalars: &[&[u64; 4]],
+        pre: &[Self],
+    ) -> Self::Projective;
 
     /// pre[0] becomes (2^64) * self, pre[1]  becomes (2^128) * self, and pre[2] (becomes 2^196) * self
-    fn precomp_3(&self, pre: & mut [Self]);
+    fn precomp_3(&self, pre: &mut [Self]);
 
-    /// Performs scalar multiplication of this element, 
+    /// Performs scalar multiplication of this element,
     /// assuming pre = [(2^64)*self, (2^128)*self, (2^192)*self]
-    fn mul_precomp_3<S: Into<<Self::Scalar as PrimeField>::Repr>>(&self, other: S, pre: &[Self])->Self::Projective;
+    fn mul_precomp_3<S: Into<<Self::Scalar as PrimeField>::Repr>>(
+        &self,
+        other: S,
+        pre: &[Self],
+    ) -> Self::Projective;
 
     /// pre[i] becomes (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..25
     fn precomp_256(&self, pre: &mut [Self]);
 
-
-    /// Performs scalar multiplication of this element, 
+    /// Performs scalar multiplication of this element,
     /// assuming  pre[i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..256
-    fn mul_precomp_256<S: Into<<Self::Scalar as PrimeField>::Repr>>(&self, other: S, pre : &[Self])->Self::Projective;
-
+    fn mul_precomp_256<S: Into<<Self::Scalar as PrimeField>::Repr>>(
+        &self,
+        other: S,
+        pre: &[Self],
+    ) -> Self::Projective;
 }
 
 /// An encoded elliptic curve point, which should essentially wrap a `[u8; N]`.

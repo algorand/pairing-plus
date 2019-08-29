@@ -4,7 +4,7 @@ mod g1 {
     use pairing::bls12_381::*;
     use pairing::CurveAffine;
     use pairing::CurveProjective;
-    use pairing::wnaf::Wnaf;
+    use pairing::Wnaf;
     use rand::{Rand, Rng, SeedableRng, XorShiftRng};
     #[bench]
     fn bench_g1_mul_shamir(b: &mut ::test::Bencher) {
@@ -67,8 +67,6 @@ mod g1 {
         });
     }
 
-
-
     #[bench]
     fn bench_g1affine_mul(b: &mut ::test::Bencher) {
         const SAMPLES: usize = 1000;
@@ -94,14 +92,12 @@ mod g1 {
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
         let v: Vec<(G1Affine, Fr, [G1Affine; 3])> = (0..SAMPLES)
-            .map(|_| 
-                {
-                    let p = G1::rand(&mut rng).into_affine();
-                    let mut pre = [G1Affine::zero(); 3];
-                    p.precomp_3(&mut pre);
-                    (p, Fr::rand(&mut rng), pre)
-                }
-            )
+            .map(|_| {
+                let p = G1::rand(&mut rng).into_affine();
+                let mut pre = [G1Affine::zero(); 3];
+                p.precomp_3(&mut pre);
+                (p, Fr::rand(&mut rng), pre)
+            })
             .collect();
 
         let mut count = 0;
@@ -118,14 +114,12 @@ mod g1 {
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
         let v: Vec<(G1Affine, Fr, [G1Affine; 256])> = (0..SAMPLES)
-            .map(|_| 
-                {
-                    let p = G1::rand(&mut rng).into_affine();
-                    let mut pre = [G1Affine::zero(); 256];
-                    p.precomp_256(&mut pre);
-                    (p, Fr::rand(&mut rng), pre)
-                }
-            )
+            .map(|_| {
+                let p = G1::rand(&mut rng).into_affine();
+                let mut pre = [G1Affine::zero(); 256];
+                p.precomp_256(&mut pre);
+                (p, Fr::rand(&mut rng), pre)
+            })
             .collect();
 
         let mut count = 0;
@@ -146,15 +140,13 @@ mod g1 {
         let mut scalar = Fr::one();
         scalar.add_assign(&Fr::one()); // == 2
         scalar.add_assign(&Fr::one()); // == 3
-        for _ in 0..6 { // square the scalar 6 times to compute 3^{2^6} = 3^64, which takes up 102 bits
+        for _ in 0..6 {
+            // square the scalar 6 times to compute 3^{2^6} = 3^64, which takes up 102 bits
             let s = scalar;
             scalar.mul_assign(&s);
         }
 
-
-        let v: Vec<G1> = (0..SAMPLES)
-            .map(|_| (G1::rand(&mut rng)))
-            .collect();
+        let v: Vec<G1> = (0..SAMPLES).map(|_| (G1::rand(&mut rng))).collect();
 
         let mut count = 0;
         b.iter(|| {
@@ -171,12 +163,14 @@ mod g1 {
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
         let max_points = 1000;
-        let points:Vec<G1Affine> = (0..max_points).map(|_| G1::rand(&mut rng).into_affine()).collect(); 
-        let scalars_fr_repr:Vec<FrRepr> = (0..max_points).map(|_| Fr::rand(&mut rng).into_repr()).collect();
-        let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
-        b.iter(|| {
-            G1Affine::sum_of_products(&points,&scalars)
-        });
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products(&points, &scalars));
     }
 
     #[bench]
@@ -185,16 +179,18 @@ mod g1 {
         let mut rng = XorShiftRng::from_seed([0x5dbe6259, 0x8d313d76, 0x3237db17, 0xe5bc0654]);
 
         let max_points = 1000;
-        let points:Vec<G1Affine> = (0..max_points).map(|_| G1::rand(&mut rng).into_affine()).collect(); 
-        let mut pre = vec![G1Affine::zero(); 256*max_points];
+        let points: Vec<G1Affine> = (0..max_points)
+            .map(|_| G1::rand(&mut rng).into_affine())
+            .collect();
+        let mut pre = vec![G1Affine::zero(); 256 * max_points];
         for i in 0..max_points {
-            points[i].precomp_256(&mut pre[i*256..(i+1)*256]);
+            points[i].precomp_256(&mut pre[i * 256..(i + 1) * 256]);
         }
-        let scalars_fr_repr:Vec<FrRepr> = (0..max_points).map(|_| Fr::rand(&mut rng).into_repr()).collect();
-        let scalars:Vec<&[u64]> = scalars_fr_repr.iter().map(|s| s.as_ref()).collect();
-        b.iter(|| {
-            G1Affine::sum_of_products_precomp_256(&points,&scalars, &pre)
-        });
+        let scalars_fr_repr: Vec<FrRepr> = (0..max_points)
+            .map(|_| Fr::rand(&mut rng).into_repr())
+            .collect();
+        let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+        b.iter(|| G1Affine::sum_of_products_precomp_256(&points, &scalars, &pre));
     }
 
     #[bench]
