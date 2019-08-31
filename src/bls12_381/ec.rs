@@ -202,6 +202,7 @@ macro_rules! curve_impl {
                 // and the precomp array.
                 // For now, none of the other functions do that, either.
                 // TODO: keep 0 and 1 elt of precomp?
+                // TODO: switch to wnaf?
                 let mut res = Self::Projective::zero();
                 let mut found_non_zero = false;
 
@@ -1308,9 +1309,7 @@ macro_rules! curve_impl {
                 // For now, none of the other functions do that, either.
                 // TODO: keep 0 and 1 elt of precomp?
 
-                // TODO: poassible optimizations:
-                // 1) Just switch to using wnaf
-                // 2) Convert precomputation to affine, using a single inversion of all the denominators, plus a few multiplications
+                // TODO: possible optimizations: Just switch to using wnaf
 
                 let mut res = Self::zero();
                 let mut found_non_zero = false;

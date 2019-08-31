@@ -4,7 +4,7 @@ mod g1 {
     use pairing::bls12_381::*;
     use pairing::CurveAffine;
     use pairing::CurveProjective;
-    use pairing::Wnaf;
+    use pairing::Wnaf::*;
     use rand::{Rand, Rng, SeedableRng, XorShiftRng};
     #[bench]
     fn bench_g1_mul_shamir(b: &mut ::test::Bencher) {
