@@ -9,7 +9,7 @@ before_script:
 
 script:
   - cargo clippy --all-targets --all-features -- -D warnings
-  - travis_wait 360 cargo test
-  - travis_wait 360 cargo test -- --ignored
-  - travis_wait 360 cargo test --release
-  - travis_wait 360 cargo test --release -- --ignored
+  - cargo test
+  - cargo test -- --ignored
+  - cargo test --release
+  - cargo test --release -- --ignored
