@@ -354,6 +354,9 @@ mod subgroup_check {
 
     impl SubgroupCheck for G2Affine {
         fn in_subgroup_bowe19(&self) -> bool {
+            if !self.is_on_curve() {
+                return false;
+            }
             let mut pp = self.into_projective();
             let mut q = pp;
             psi(&mut pp); // pp = psi(P)

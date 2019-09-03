@@ -484,6 +484,10 @@ mod subgroup_check {
 
     impl SubgroupCheck for G1Affine {
         fn in_subgroup_bowe19(&self) -> bool {
+            if !self.is_on_curve() {
+                return false;
+            }
+
             let mut sp = sigma(self); // sP = sigma(P)
             let mut q = sp; // Q =
             q.double(); //     2 * sP
@@ -615,7 +619,8 @@ fn g1_test_is_valid() {
             infinity: false,
         };
         assert!(!p.is_on_curve());
-        assert!(p.in_subgroup());
+        assert!(!p.in_subgroup_bowe19());
+        assert!(p.in_subgroup_bowe19() == p.in_subgroup());
     }
 
     // Reject point on a twist (b = 3)
