@@ -483,7 +483,7 @@ mod subgroup_check {
     }
 
     impl SubgroupCheck for G1Affine {
-        fn in_subgroup(&self) -> bool {
+        fn in_subgroup_bowe19(&self) -> bool {
             let mut sp = sigma(self); // sP = sigma(P)
             let mut q = sp; // Q =
             q.double(); //     2 * sP
@@ -494,6 +494,10 @@ mod subgroup_check {
             q.sub_assign(&sp); // Q = Q - sP
 
             q.is_zero()
+        }
+
+        fn in_subgroup(&self) -> bool {
+            self.is_on_curve() && self.is_in_correct_subgroup_assuming_on_curve()
         }
     }
 

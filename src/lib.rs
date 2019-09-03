@@ -286,7 +286,13 @@ pub trait EncodedPoint:
 }
 
 pub trait SubgroupCheck {
-    /// Subgroup membership check
+    /// Subgroup membership check using Sean Bowe's algorithm
+    /// https://eprint.iacr.org/2019/814
+    fn in_subgroup_bowe19(&self) -> bool;
+
+
+    /// subgroup membership check using classical method:
+    /// i.e., raise to the power of group order
     fn in_subgroup(&self) -> bool;
 }
 

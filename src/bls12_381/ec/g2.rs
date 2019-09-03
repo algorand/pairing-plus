@@ -353,7 +353,7 @@ mod subgroup_check {
     use {CurveAffine, CurveProjective, SubgroupCheck};
 
     impl SubgroupCheck for G2Affine {
-        fn in_subgroup(&self) -> bool {
+        fn in_subgroup_bowe19(&self) -> bool {
             let mut pp = self.into_projective();
             let mut q = pp;
             psi(&mut pp); // pp = psi(P)
@@ -364,6 +364,9 @@ mod subgroup_check {
             chain_z(&mut pp, &tmp); // pp = -z * pp
             q.sub_assign(&pp); // Q = Q - pp
             q.is_zero()
+        }
+        fn in_subgroup(&self) -> bool {
+            self.is_on_curve() && self.is_in_correct_subgroup_assuming_on_curve()
         }
     }
 
@@ -477,7 +480,8 @@ fn g2_test_is_valid() {
             infinity: false,
         };
         assert!(!p.is_on_curve());
-        assert!(!p.in_subgroup());
+        assert!(!p.in_subgroup_bowe19());
+        assert!(p.in_subgroup_bowe19() == p.in_subgroup());
     }
 
     // Reject point on a twist (b = 2 * (u + 1))
@@ -527,6 +531,7 @@ fn g2_test_is_valid() {
         };
         assert!(!p.is_on_curve());
         assert!(!p.in_subgroup());
+        assert!(p.in_subgroup_bowe19() == p.in_subgroup());
     }
 
     // Reject point in an invalid subgroup

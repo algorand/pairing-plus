@@ -165,7 +165,6 @@ macro_rules! curve_impl {
                 }
             }
 
-            #[cfg(test)]
             fn is_in_correct_subgroup_assuming_on_curve(&self) -> bool {
                 self.mul($scalarfield::char()).is_zero()
             }
