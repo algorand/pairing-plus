@@ -1,5 +1,6 @@
 /*!
 Optimized Simplified SWU maps for G1 and G2
+see: https://eprint.iacr.org/2019/403
 */
 
 mod chain;

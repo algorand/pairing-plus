@@ -1,5 +1,7 @@
 /*!
 Addition chains for computing square roots.
+* chain_pm3div4: input x, output x^((p-3)//4).
+* chain_p2m9div16: input x, output x^((p**2 - 9) // 16).
 */
 
 use bls12_381::{Fq, Fq2};

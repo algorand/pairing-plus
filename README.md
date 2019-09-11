@@ -1,7 +1,6 @@
 # pairing
 
-[![Crates.io](https://img.shields.io/crates/v/pairing.svg)](https://crates.io/crates/pairing) #
-
+[![Crates.io](https://img.shields.io/crates/v/pairing.svg)](https://crates.io/crates/pairing)
 [![Build Status](https://travis-ci.com/algorand/pairing-fork.svg?branch=master)](https://travis-ci.com/algorand/pairing-fork)
 
 This is a Rust crate for using pairing-friendly elliptic curves. Currently, only the [BLS12-381](https://z.cash/blog/new-snark-curve.html) construction is implemented.

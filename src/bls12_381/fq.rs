@@ -472,6 +472,9 @@ pub const unsafe fn transmute(r: FqRepr) -> Fq {
 impl BaseFromRO for Fq {
     type Length = U64;
 
+    // ZZ note: Convert an output keying material to an Fq element
+    // the input generic array is gauranteed to have 64 bytes
+    // TODO: length checks and safeguards on the wrappers?
     fn from_okm(okm: &GenericArray<u8, U64>) -> Fq {
         const F_2_256: Fq = Fq(FqRepr([
             0x75b3cd7c5ce820fu64,
@@ -498,7 +501,9 @@ impl BaseFromRO for Fq {
 }
 
 impl Signum0 for Fq {
+    // returns the sign of a center lifted element over the integer ring
     fn sgn0(&self) -> Sgn0Result {
+        // (group_order - 1)/2
         const PM1DIV2: FqRepr = FqRepr([
             0xdcff7fffffffd555u64,
             0x0f55ffff58a9ffffu64,

@@ -2,6 +2,15 @@
 Cofactor clearing for G1 and G2.
 */
 
+// Section 7 of https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-04#page-31
+// the clear_h method here is to multiply the point $P$ with a scaler $h_ell$
+// the $h_ell$ is defined in section 8.7 of the same draft
+// where $h_ell = 0xd201000000010001u64$ for G1 and
+// $h_ell = 0xbc69f08f2ee75b3584c6a0ea91b352888e2a8e9145ad7689986ff0315
+//          08ffe1329c2f178731db956d82bf015d1212b02ec0ec69d7477c1ae954cbc06689
+//          f6a359894c0adebbf6b4e8020005aaa95551,$ for G2
+// this will be faster than multiplying by the co-factor h
+
 use bls12_381::{Fq, Fq2, FqRepr, G1, G2};
 use ff::Field;
 use CurveProjective;
@@ -9,6 +18,7 @@ use CurveProjective;
 /* *** addchain for 15132376222941642752 *** */
 /* Bos-Coster (win=2) : 69 links, 2 variables */
 /// Addition chain implementing exponentiation by -z = 0xd201000000010000
+/// input a point p, output p^{-z}
 pub(super) fn chain_z<PtT: CurveProjective>(tmpvar1: &mut PtT, tmpvar0: &PtT) {
     *tmpvar1 = *tmpvar0;
     tmpvar1.double(); /*    0 : 2 */
@@ -41,6 +51,8 @@ pub trait ClearH: CurveProjective {
 }
 
 impl ClearH for G1 {
+    // h_ell = 1 - z, therefore
+    // out = in * chain_z(in)
     fn clear_h(&mut self) {
         let pt_in = *self;
         chain_z(self, &pt_in);
@@ -49,6 +61,8 @@ impl ClearH for G1 {
 }
 
 impl ClearH for G2 {
+    // this function uses Budroni-Pintore method
+    // see section 4.1, equation 12 of https://eprint.iacr.org/2017/419.pdf
     fn clear_h(&mut self) {
         let mut work = G2::zero();
         chain_z(&mut work, self);
@@ -73,6 +87,8 @@ impl ClearH for G2 {
     }
 }
 
+// helper function for endomorphism
+// input x, output (k_qi_x * x[0],  - k_qi_x * x[1])
 fn qi_x(x: &mut Fq2) {
     const K_QI_X: Fq = Fq(FqRepr([
         0x890dc9e4867545c3u64,
@@ -88,6 +104,8 @@ fn qi_x(x: &mut Fq2) {
     x.c1.negate();
 }
 
+// helper function for endomorphism
+// input y, outputs k_qi_y * (y[0] + y[1]), k_qi_y * (y[0] - y[1])
 fn qi_y(y: &mut Fq2) {
     const K_QI_Y: Fq = Fq(FqRepr([
         0x7bcfa7a25aa30fdau64,
@@ -110,6 +128,7 @@ fn qi_y(y: &mut Fq2) {
     y.c1 = c1;
 }
 
+/// compute the group endomorphisim psi for G2
 pub(super) fn psi(pt: &mut G2) {
     const IWSC: Fq2 = Fq2 {
         c0: Fq(FqRepr([
