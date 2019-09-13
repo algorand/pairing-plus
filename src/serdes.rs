@@ -1,4 +1,5 @@
 use bls12_381::{self, *};
+use ff::{PrimeField, PrimeFieldRepr};
 use std::io::{Error, ErrorKind, Read, Result, Write};
 use CurveAffine;
 use CurveProjective;
@@ -13,6 +14,21 @@ pub trait SerDes: Sized {
     /// Deserialize a struct; also returns a flag
     /// if the element was compressed or not.
     fn deserialize<R: Read>(reader: &mut R) -> Result<(Self, Compressed)>;
+}
+
+impl SerDes for Fr {
+    fn serialize<W: Write>(&self, writer: &mut W, _compressed: Compressed) -> Result<()> {
+        self.into_repr().write_be(writer)
+    }
+
+    fn deserialize<R: Read>(reader: &mut R) -> Result<(Self, Compressed)> {
+        let mut r = FrRepr::default();
+        r.read_be(reader)?;
+        match Fr::from_repr(r) {
+            Err(e) => Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => Ok((p, true)),
+        }
+    }
 }
 
 impl SerDes for G1 {
@@ -147,6 +163,9 @@ mod serdes_test {
     use super::*;
     #[test]
     fn test_g1_serialization_rand() {
+        use rand::Rand;
+        let mut rng = rand::thread_rng();
+
         // G1::zero, compressed
         let g1_zero = G1::zero();
         let mut buf: Vec<u8> = vec![];
@@ -167,6 +186,16 @@ mod serdes_test {
         assert_eq!(compressed, true);
         assert_eq!(g1_one, g1_one_recover);
 
+        // G1::rand, compressed
+        let g1_rand = G1::rand(&mut rng);
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(g1_rand.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 48, "length of blob is incorrect");
+        let (g1_rand_recover, compressed) = G1::deserialize(&mut buf[..].as_ref()).unwrap();
+        assert_eq!(compressed, true);
+        assert_eq!(g1_rand, g1_rand_recover);
+
         // G1::zero, uncompressed
         let mut buf: Vec<u8> = vec![];
         // serialize a G1 element into buffer
@@ -184,10 +213,22 @@ mod serdes_test {
         let (g1_one_recover, compressed) = G1::deserialize(&mut buf[..].as_ref()).unwrap();
         assert_eq!(compressed, false);
         assert_eq!(g1_one, g1_one_recover);
+
+        // G1::rand, uncompressed
+        let g1_rand = G1::rand(&mut rng);
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(g1_rand.serialize(&mut buf, false).is_ok());
+        assert_eq!(buf.len(), 96, "length of blob is incorrect");
+        let (g1_rand_recover, compressed) = G1::deserialize(&mut buf[..].as_ref()).unwrap();
+        assert_eq!(compressed, false);
+        assert_eq!(g1_rand, g1_rand_recover);
     }
 
     #[test]
     fn test_g2_serialization_rand() {
+        use rand::Rand;
+        let mut rng = rand::thread_rng();
         // G2::zero, compressed
         let g2_zero = G2::zero();
         let mut buf: Vec<u8> = vec![];
@@ -208,6 +249,16 @@ mod serdes_test {
         assert_eq!(compressed, true);
         assert_eq!(g2_one, g2_one_recover);
 
+        // G2::rand, compressed
+        let g2_rand = G2::rand(&mut rng);
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G2 element into buffer
+        assert!(g2_rand.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 96, "length of blob is incorrect");
+        let (g2_rand_recover, compressed) = G2::deserialize(&mut buf[..].as_ref()).unwrap();
+        assert_eq!(compressed, true);
+        assert_eq!(g2_rand, g2_rand_recover);
+
         // G2::zero, uncompressed
         let mut buf: Vec<u8> = vec![];
         // serialize a G2 element into buffer
@@ -226,5 +277,52 @@ mod serdes_test {
 
         assert_eq!(compressed, false);
         assert_eq!(g2_one, g2_one_recover);
+
+        // G2::rand uncompressed
+        let g2_rand = G2::rand(&mut rng);
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G2 element into buffer
+        assert!(g2_rand.serialize(&mut buf, false).is_ok());
+        assert_eq!(buf.len(), 192, "length of blob is incorrect");
+        let (g2_rand_recover, compressed) = G2::deserialize(&mut buf[..].as_ref()).unwrap();
+        assert_eq!(compressed, false);
+        assert_eq!(g2_rand, g2_rand_recover);
     }
+
+    #[test]
+    fn test_fr_serialization_rand() {
+        use ff::Field;
+        use rand::Rand;
+        let mut rng = rand::thread_rng();
+        // fr::zero
+        let fr_zero = Fr::zero();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(fr_zero.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 32, "length of blob is incorrect");
+        let (fr_zero_recover, compressed) = Fr::deserialize(&mut buf[..].as_ref()).unwrap();
+        assert_eq!(compressed, true);
+        assert_eq!(fr_zero, fr_zero_recover);
+
+        // fr::one
+        let fr_one = Fr::one();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(fr_one.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 32, "length of blob is incorrect");
+        let (fr_one_recover, compressed) = Fr::deserialize(&mut buf[..].as_ref()).unwrap();
+        assert_eq!(compressed, true);
+        assert_eq!(fr_one, fr_one_recover);
+
+        // fr::rand
+        let fr_rand = Fr::rand(&mut rng);
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(fr_rand.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 32, "length of blob is incorrect");
+        let (fr_rand_recover, compressed) = Fr::deserialize(&mut buf[..].as_ref()).unwrap();
+        assert_eq!(compressed, true);
+        assert_eq!(fr_rand, fr_rand_recover);
+    }
+
 }
