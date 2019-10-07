@@ -227,6 +227,417 @@ macro_rules! curve_impl {
             unsafe fn as_tuple_mut(&mut self) -> (&mut $basefield, &mut $basefield) {
                 (&mut self.x, &mut self.y)
             }
+
+            // pre[0] becomes (2^64) * self, pre[1]  becomes (2^128) * self, and pre[2] (becomes 2^196) * self
+            fn precomp_3(&self, pre: &mut [Self]) {
+                // TODO: check if pre has the right length?
+                // TODO: possible optimization: convert 3 points into affine jointly by doing a single inversion, rather than separately
+                // In fact, this function gets called multiple times, and the conversions to affine could be cheaper if done together
+                let mut p = self.into_projective();
+                for i in 0..3 {
+                    for _ in 0..64 {
+                        p.double();
+                    }
+                    pre[i] = p.into_affine();
+                }
+            }
+
+            // Expects pre[0] = (2^64) * self, pre[1] = (2^128) * self, pre[2] = (2^192) * self
+            fn mul_precomp_3<S: Into<<Self::Scalar as PrimeField>::Repr>>(
+                &self,
+                other: S,
+                pre: &[Self],
+            ) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+
+                // Interleaved window technique: deal with each of the four words of the scalar in parallel
+                // TODO: possible optimization: maybe convert precomp to affine using a single inversion and about 16 multiplications?
+
+                let mut precomp = Vec::with_capacity(16);
+                precomp.push(Self::Projective::zero()); // 0000 - 0*self
+                precomp.push(self.into_projective()); // 0001 - 1*self
+                precomp.push(pre[0].into_projective()); // 0010 - (2^64)*self
+                precomp.push(precomp[2]);
+                precomp[3].add_assign_mixed(self); // 0011 - (2^64+1)*self
+                precomp.push(pre[1].into_projective()); // 0100 - (2^128)*self
+                precomp.push(precomp[4]);
+                precomp[5].add_assign_mixed(self); // 0101 - (2^128+1)*self
+                precomp.push(precomp[2]);
+                precomp[6].add_assign_mixed(&pre[1]); // 0110 - (2^128+2^64)*self
+                precomp.push(precomp[6]);
+                precomp[7].add_assign_mixed(self); // 0111 - (2^128+2^64+1)*self
+                precomp.push(pre[2].into_projective()); // 1000  - (2^192)*self
+                for i in 9..16 {
+                    precomp.push(precomp[i - 8]);
+                    precomp[i].add_assign_mixed(&pre[2]); // 1001 trough 1111 -- 2^192*self + ...
+                }
+
+                let repr = other.into();
+                let bits: &[u64; 4] = &repr.0;
+                let mut nibble = (bits[3] >> 60) & 8;
+                nibble |= (bits[2] >> 61) & 4;
+                nibble |= (bits[1] >> 62) & 2;
+                nibble |= (bits[0] >> 63) & 1;
+                let mut res = precomp[nibble as usize];
+
+                for i in (0..63).rev() {
+                    res.double();
+                    nibble = ((bits[3] >> i) << 3) & 8; // can't shift by i-3 because it can be negative
+                    nibble |= ((bits[2] >> i) << 2) & 4;
+                    nibble |= ((bits[1] >> i) << 1) & 2;
+                    nibble |= (bits[0] >> i) & 1;
+                    res.add_assign(&precomp[nibble as usize]);
+                }
+                res
+            }
+
+            // pre[i] becomes (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..25
+            fn precomp_256(&self, pre: &mut [Self]) {
+                // TODO: check if pre has the right length?
+                // TODO: possible optimization: convert 256 points into affine jointly by doing a single inversion, rather than separately
+                // In fact, this function gets called multiple times, and the conversions to affine could be cheaper if done together
+
+                pre[0] = Self::zero();
+                let mut piece_length = 1;
+                let mut power_of_2_times_self = self.into_projective(); // power_of_2_times_self = 2^{32*piece_length} * self
+                while piece_length <= 128 {
+                    // operate in pieces of length 1, 2, 4, 8, 16, 32, 64, 128
+                    pre[piece_length] = power_of_2_times_self.into_affine();
+                    for i in 1..piece_length {
+                        pre[i + piece_length] = pre[i];
+                        let mut temp = pre[i].into_projective();
+                        temp.add_assign_mixed(&pre[piece_length]);
+                        pre[i + piece_length] = temp.into_affine();
+                    }
+                    if piece_length < 128 {
+                        for _ in 0..32 {
+                            power_of_2_times_self.double();
+                        }
+                    }
+                    piece_length *= 2;
+                }
+            }
+
+            // Expects pre[i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..256
+            // pre can be obtained by calling precomp_256
+            fn mul_precomp_256<S: Into<<Self::Scalar as PrimeField>::Repr>>(
+                &self,
+                other: S,
+                pre: &[Self],
+            ) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+
+                // Interleaved window technique: deal with each of the 8 32-bit chunks words of the scalar in parallel
+                let repr = other.into();
+                let bits: &[u64; 4] = &repr.0; // Not using as_ref here, to ensure a compile-time error if repr not [u64; 4]
+
+                let mut byte = (bits[3] >> 56) & 128;
+                byte |= (bits[3] >> 25) & 64;
+                byte |= (bits[2] >> 58) & 32;
+                byte |= (bits[2] >> 27) & 16;
+                byte |= (bits[1] >> 60) & 8;
+                byte |= (bits[1] >> 29) & 4;
+                byte |= (bits[0] >> 62) & 2;
+                byte |= (bits[0] >> 31) & 1;
+                let mut res = pre[byte as usize].into_projective();
+
+                for i in (0..31).rev() {
+                    res.double();
+                    byte = (bits[3] >> (i + 25)) & 128;
+                    byte |= ((bits[3] >> i) << 6) & 64; // can't shift by i-6 because it can be negative
+                    byte |= (bits[2] >> (i + 27)) & 32;
+                    byte |= ((bits[2] >> i) << 4) & 16;
+                    byte |= (bits[1] >> (i + 29)) & 8;
+                    byte |= ((bits[1] >> i) << 2) & 4;
+                    byte |= (bits[0] >> (i + 31)) & 2;
+                    byte |= (bits[0] >> i) & 1;
+                    res.add_assign_mixed(&pre[byte as usize]);
+                }
+                res
+            }
+
+            // TODO: may want to look at http://cacr.uwaterloo.ca/techreports/2001/corr2001-41.ps;
+            // TODO: may want to look at algorithms in Relic https://github.com/relic-toolkit/relic
+
+            fn sum_of_products(points: &[Self], scalars: &[&[u64; 4]]) -> $projective {
+                // TODO: figure out what to do if the lengths of the two input slices don't match
+                // For now, take the minimum
+                let num_components = if points.len() < scalars.len() {
+                    points.len()
+                } else {
+                    scalars.len()
+                };
+                Self::sum_of_products_pippinger(
+                    points,
+                    scalars,
+                    Self::find_pippinger_window(num_components),
+                )
+            }
+
+            fn find_pippinger_window(num_components: usize) -> usize {
+                // (20, 3), (43, 3) means that if 20 <= num_components < 43, you should use w=3
+                // These were obtained from find_pippinger_window_via_estimate
+                let boundaries = [
+                    (1, 1),
+                    (2, 2),
+                    (20, 3),
+                    (43, 4),
+                    (105, 5),
+                    (239, 6),
+                    (578, 7),
+                    (1258, 8),
+                    (3464, 9),
+                    (6492, 10),
+                    (17146, 11),
+                    (33676, 12),
+                    (60319, 13),
+                    (218189, 14),
+                    (303280, 15),
+                    (543651, 16),
+                ];
+                for i in 1..boundaries.len() {
+                    if boundaries[i].0 > num_components {
+                        return boundaries[i - 1].1;
+                    }
+                }
+                boundaries[boundaries.len() - 1].1
+            }
+
+            // This function estimates the number of mixed (projective+affine) and projective additions
+            // to well within 1%, and overall running time for G1 to within 3%, at least on one particular machine
+            // for num_components < 10000.
+            fn find_pippinger_window_via_estimate(num_components: usize) -> usize {
+                let n_components = num_components as f64;
+                let affine_time = 768.0; // This is from emprirical time (in ns) for a G1 mixed addition
+                let projective_time = 1043.0; // This is from empirical time (in ns) for a G1 projective addition
+                let mut w = 1;
+                let mut two_to_w = 2.0;
+                let mut affine_adds = 127.0 * n_components;
+                let mut projective_adds = 256.0;
+                let mut old_total_cost =
+                    affine_adds * affine_time + projective_adds * projective_time;
+                while w < 63 {
+                    w += 1;
+                    two_to_w *= 2.0;
+                    let loop_iterations = (255 / w + 1) as f64; // 256/w with rounding up
+                    affine_adds =
+                        (loop_iterations - 2.0) * n_components * (two_to_w - 1.0) / two_to_w; // The (two_to_w-1))/two_to_w is to account for 0 buckets
+                                                                                              // First addition to each bucket is quick, because the bucket is 0. So
+                                                                                              // we need to subtract the number of nonempty buckets times the number of loop iterations
+                    let prob_empty_bucket = (1.0 - 1.0 / two_to_w).powf(n_components);
+                    let expected_nonempty_nonzero_buckets =
+                        (two_to_w - 1.0) * (1.0 - prob_empty_bucket);
+                    affine_adds -= expected_nonempty_nonzero_buckets * (loop_iterations - 2.0);
+                    let mut _a0 = expected_nonempty_nonzero_buckets * (loop_iterations - 2.0);
+                    // first and last iteration are different.
+
+                    // First iteration high-order bit is always 0,
+                    // because the prime r is close to 2^255
+                    let first_iteration_max_bucket = two_to_w / 2.0;
+                    affine_adds += n_components * (first_iteration_max_bucket - 1.0)
+                        / first_iteration_max_bucket; // The (two_to_w-1))/two_to_w is to account for 0 buckets
+                    let prob_empty_bucket_first_iteration =
+                        (1.0 - 1.0 / first_iteration_max_bucket).powf(n_components);
+                    let expected_nonempty_nonzero_buckets_first_iteration =
+                        (first_iteration_max_bucket - 1.0)
+                            * (1.0 - prob_empty_bucket_first_iteration);
+                    affine_adds -= expected_nonempty_nonzero_buckets_first_iteration;
+                    _a0 += expected_nonempty_nonzero_buckets_first_iteration;
+
+                    // last iteration is the leftover bits
+                    let last_iteration_bit_width = 256 - (255 / w) * w;
+                    let last_iteration_max_bucket = (1u64 << last_iteration_bit_width) as f64;
+                    affine_adds += n_components * (last_iteration_max_bucket - 1.0)
+                        / last_iteration_max_bucket;
+                    let prob_empty_bucket_last_iteration =
+                        (1.0 - 1.0 / last_iteration_max_bucket).powf(n_components);
+                    let expected_nonempty_nonzero_buckets_last_iteration =
+                        (last_iteration_max_bucket - 1.0)
+                            * (1.0 - prob_empty_bucket_last_iteration);
+                    affine_adds -= expected_nonempty_nonzero_buckets_last_iteration;
+                    _a0 += expected_nonempty_nonzero_buckets_last_iteration;
+
+                    projective_adds = (loop_iterations - 2.0)
+                        * (expected_nonempty_nonzero_buckets + two_to_w - 2.0)
+                        + first_iteration_max_bucket
+                        - 2.0
+                        + expected_nonempty_nonzero_buckets_first_iteration
+                        + last_iteration_max_bucket
+                        - 2.0
+                        + expected_nonempty_nonzero_buckets_last_iteration;
+                    let _p0 = (loop_iterations - 2.0)
+                        * (two_to_w - 1.0 - expected_nonempty_nonzero_buckets)
+                        + first_iteration_max_bucket
+                        - expected_nonempty_nonzero_buckets_first_iteration
+                        + last_iteration_max_bucket
+                        - expected_nonempty_nonzero_buckets_last_iteration
+                        - 2.0;
+                    let new_total_cost =
+                        affine_adds * affine_time + projective_adds * projective_time;
+                    /*print!("w = {}, total_cost = {} ", w, new_total_cost);
+                    println!(
+                        "a={}, p={}, a0={}, p0={}, ne={}, pe={}",
+                        affine_adds,
+                        projective_adds,
+                        a0,
+                        p0,
+                        expected_nonempty_nonzero_buckets,
+                        prob_empty_bucket
+                    );*/
+                    if new_total_cost > old_total_cost {
+                        w -= 1;
+                        break;
+                    }
+                    old_total_cost = new_total_cost;
+                }
+                //println!("Result: {}", w);
+                w
+            }
+
+            fn sum_of_products_pippinger(
+                points: &[Self],
+                scalars: &[&[u64; 4]],
+                window: usize,
+            ) -> $projective {
+                // TODO: we may decide we should clear memory
+                // For now, none of the other functions do that, either.
+                // TODO: is it worth it to convert buckets to affine? (with one inversion)
+                let mut res = Self::Projective::zero();
+                let num_components = if points.len() < scalars.len() {
+                    points.len()
+                } else {
+                    scalars.len()
+                };
+                let num_buckets = 1 << window;
+                let edge = window - 1;
+                let mask = (num_buckets - 1) as u64;
+                let mut buckets = vec![Self::Projective::zero(); num_buckets];
+                let mut bit_sequence_index = 255; // points to the top bit we need to process
+                let mut num_doubles = 0;
+                loop {
+                    for _ in 0..num_doubles {
+                        res.double();
+                    }
+                    let mut max_bucket = 0;
+                    let word_index = bit_sequence_index >> 6; // divide bit_sequence_index by 64 to find word_index
+                    let bit_index = bit_sequence_index & 63; // mod bit_sequence_index by 64 to find bit_index
+                    if bit_index < edge {
+                        // we are on the edge of a word; have to look at the previous word, if it exists
+                        if word_index == 0 {
+                            // there is no word before
+                            let smaller_mask = ((1 << (bit_index + 1)) - 1) as u64;
+                            for i in 0..num_components {
+                                let bucket_index: usize =
+                                    (scalars[i][word_index] & smaller_mask) as usize;
+                                if bucket_index > 0 {
+                                    buckets[bucket_index].add_assign_mixed(&points[i]);
+                                    if bucket_index > max_bucket {
+                                        max_bucket = bucket_index;
+                                    }
+                                }
+                            }
+                        } else {
+                            // there is a word before
+                            let high_order_mask = ((1 << (bit_index + 1)) - 1) as u64;
+                            let high_order_shift = edge - bit_index;
+                            let low_order_mask = ((1 << high_order_shift) - 1) as u64;
+                            let low_order_shift = 64 - high_order_shift;
+                            let prev_word_index = word_index - 1;
+                            for i in 0..num_components {
+                                let mut bucket_index = ((scalars[i][word_index] & high_order_mask)
+                                    << high_order_shift)
+                                    as usize;
+                                bucket_index |= ((scalars[i][prev_word_index] >> low_order_shift)
+                                    & low_order_mask)
+                                    as usize;
+                                if bucket_index > 0 {
+                                    buckets[bucket_index].add_assign_mixed(&points[i]);
+                                    if bucket_index > max_bucket {
+                                        max_bucket = bucket_index;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        let shift = bit_index - edge;
+                        for i in 0..num_components {
+                            let bucket_index: usize =
+                                ((scalars[i][word_index] >> shift) & mask) as usize;
+                            assert!(bit_sequence_index != 255 || scalars[i][3] >> 63 == 0);
+                            if bucket_index > 0 {
+                                buckets[bucket_index].add_assign_mixed(&points[i]);
+                                if bucket_index > max_bucket {
+                                    max_bucket = bucket_index;
+                                }
+                            }
+                        }
+                    }
+                    res.add_assign(&buckets[max_bucket]);
+                    for i in (1..max_bucket).rev() {
+                        let temp = buckets[i + 1]; // TODO: this is necessary only to please the borrow checker
+                        buckets[i].add_assign(&temp);
+                        res.add_assign(&buckets[i]);
+                        buckets[i + 1] = Self::Projective::zero();
+                    }
+                    buckets[1] = Self::Projective::zero();
+                    if bit_sequence_index < window {
+                        break;
+                    }
+                    bit_sequence_index -= window;
+                    num_doubles = {
+                        if bit_sequence_index < edge {
+                            bit_sequence_index + 1
+                        } else {
+                            window
+                        }
+                    };
+                }
+                res
+            }
+
+            // Expects pre[j*256+i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self[j] for i in 0..256 and for each j
+            // pre can be obtained by calling precomp_256
+            fn sum_of_products_precomp_256(
+                points: &[Self],
+                scalars: &[&[u64; 4]],
+                pre: &[Self],
+            ) -> $projective {
+                // TODO: we may decide we should clear memory, such as the old self
+                // and the precomp array.
+                // For now, none of the other functions do that, either.
+                // TODO: figure out what to do if the lengths of the two input slices don't match
+                // For now, take the minimum
+                let mut res = Self::Projective::zero();
+                let num_components = if points.len() < scalars.len() {
+                    points.len()
+                } else {
+                    scalars.len()
+                };
+
+                // Interleaved window technique: deal with each of the 8 32-bit chunks words of each scalar in parallel
+
+                // TODO: understand how this large table will affect performance due to caching
+
+                for i in (0..32).rev() {
+                    res.double();
+                    for j in 0..num_components {
+                        let mut byte = (scalars[j][3] >> (i + 25)) & 128;
+                        byte |= ((scalars[j][3] >> i) << 6) & 64; // can't shift by i-6 because it can be negative
+                        byte |= (scalars[j][2] >> (i + 27)) & 32;
+                        byte |= ((scalars[j][2] >> i) << 4) & 16;
+                        byte |= (scalars[j][1] >> (i + 29)) & 8;
+                        byte |= ((scalars[j][1] >> i) << 2) & 4;
+                        byte |= (scalars[j][0] >> (i + 31)) & 2;
+                        byte |= (scalars[j][0] >> i) & 1;
+                        res.add_assign_mixed(&pre[(j << 8) + byte as usize]);
+                    }
+                }
+                res
+            }
         }
 
         impl Rand for $projective {

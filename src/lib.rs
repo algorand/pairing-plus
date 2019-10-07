@@ -38,12 +38,8 @@ use std::fmt;
 /// of prime order `r`, and are equipped with a bilinear pairing function.
 pub trait Engine: ScalarEngine {
     /// The projective representation of an element in G1.
-    type G1: CurveProjective<
-            Engine = Self,
-            Base = Self::Fq,
-            Scalar = Self::Fr,
-            Affine = Self::G1Affine,
-        > + From<Self::G1Affine>;
+    type G1: CurveProjective<Engine = Self, Base = Self::Fq, Scalar = Self::Fr, Affine = Self::G1Affine>
+        + From<Self::G1Affine>;
 
     /// The affine representation of an element in G1.
     type G1Affine: CurveAffine<
@@ -56,12 +52,8 @@ pub trait Engine: ScalarEngine {
         > + From<Self::G1>;
 
     /// The projective representation of an element in G2.
-    type G2: CurveProjective<
-            Engine = Self,
-            Base = Self::Fqe,
-            Scalar = Self::Fr,
-            Affine = Self::G2Affine,
-        > + From<Self::G2Affine>;
+    type G2: CurveProjective<Engine = Self, Base = Self::Fqe, Scalar = Self::Fr, Affine = Self::G2Affine>
+        + From<Self::G2Affine>;
 
     /// The affine representation of an element in G2.
     type G2Affine: CurveAffine<
@@ -105,6 +97,36 @@ pub trait Engine: ScalarEngine {
             [(&(p.into().prepare()), &(q.into().prepare()))].iter(),
         ))
         .unwrap()
+    }
+
+    /// performs a pairing product operation with a single "final exponentiation"
+    fn pairing_product<G1, G2>(p1: G1, q1: G2, p2: G1, q2: G2) -> Self::Fqk
+    where
+        G1: Into<Self::G1Affine>,
+        G2: Into<Self::G2Affine>,
+    {
+        Self::final_exponentiation(&Self::miller_loop(
+            [
+                (&(p1.into().prepare()), &(q1.into().prepare())),
+                (&(p2.into().prepare()), &(q2.into().prepare())),
+            ]
+            .into_iter(),
+        ))
+        .unwrap()
+    }
+
+    /// performs a multi-pairing product operation with a single "final exponentiation"
+    fn pairing_multi_product(p: &[Self::G1Affine], q: &[Self::G2Affine]) -> Self::Fqk {
+        let prep_p: Vec<<Self::G1Affine as CurveAffine>::Prepared> =
+            p.iter().map(|v| v.prepare()).collect();
+        let prep_q: Vec<<Self::G2Affine as CurveAffine>::Prepared> =
+            q.iter().map(|v| v.prepare()).collect();
+        let mut pairs = Vec::with_capacity(p.len());
+        for i in 0..p.len() {
+            pairs.push((&prep_p[i], &prep_q[i]));
+        }
+        let t = Self::miller_loop(&pairs);
+        Self::final_exponentiation(&t).unwrap()
     }
 }
 
@@ -192,6 +214,15 @@ pub trait CurveProjective:
     /// Unsafe, because incorrectly modifying the coordinates violates the guarantee
     /// that the point must be on the curve and in the correct subgroup.
     unsafe fn as_tuple_mut(&mut self) -> (&mut Self::Base, &mut Self::Base, &mut Self::Base);
+
+    // /// multiplication with shamir's Trick
+    // /// compute s1 * p1 + s2 * p2 simultaneously
+    // fn mul_shamir<S: Into<<Self::Scalar as PrimeField>::Repr>>(
+    //     p1: Self,
+    //     p2: Self,
+    //     s1: S,
+    //     s2: S,
+    // ) -> Self;
 }
 
 /// Affine representation of an elliptic curve point guaranteed to be
@@ -253,6 +284,58 @@ pub trait CurveAffine:
     /// Unsafe, because incorrectly modifying the coordinates violates the guarantee
     /// that the point must be on the curve and in the correct subgroup.
     unsafe fn as_tuple_mut(&mut self) -> (&mut Self::Base, &mut Self::Base);
+
+    /// given x, compute x^3+b
+    //    fn rhs_g1(x: &bls12_381::Fq) -> bls12_381::Fq;
+
+    /// multiplication of many points
+    /// compute s1 * p1 + ... + sn * pn simultaneously
+    fn sum_of_products(bases: &[Self], scalars: &[&[u64; 4]]) -> Self::Projective;
+
+    /// Find the optimal window for running Pippinger's algorithm; preprogrammed values
+    fn find_pippinger_window(num_components: usize) -> usize;
+
+    /// Find the optimal window for running Pippinger's algorithm; computed values via an estimate of running time
+    fn find_pippinger_window_via_estimate(num_components: usize) -> usize;
+
+    /// multiplication of many points with Pippinger's algorithm of window size w
+    /// compute s1 * p1 + ... + sn * pn simultaneously
+    fn sum_of_products_pippinger(
+        bases: &[Self],
+        scalars: &[&[u64; 4]],
+        window: usize,
+    ) -> Self::Projective;
+
+    /// multiplication of many points with precompuation
+    /// compute s1 * p1 + ... + sn * pn simultaneously
+    /// assuming  pre[j*256+i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * bases[j] for each j and i in 0..256
+    fn sum_of_products_precomp_256(
+        bases: &[Self],
+        scalars: &[&[u64; 4]],
+        pre: &[Self],
+    ) -> Self::Projective;
+
+    /// pre[0] becomes (2^64) * self, pre[1]  becomes (2^128) * self, and pre[2] (becomes 2^196) * self
+    fn precomp_3(&self, pre: &mut [Self]);
+
+    /// Performs scalar multiplication of this element,
+    /// assuming pre = [(2^64)*self, (2^128)*self, (2^192)*self]
+    fn mul_precomp_3<S: Into<<Self::Scalar as PrimeField>::Repr>>(
+        &self,
+        other: S,
+        pre: &[Self],
+    ) -> Self::Projective;
+
+    /// pre[i] becomes (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..25
+    fn precomp_256(&self, pre: &mut [Self]);
+
+    /// Performs scalar multiplication of this element,
+    /// assuming  pre[i] = (\sum_{b such that bth bit of i is 1} 2^{32i}) * self for i in 0..256
+    fn mul_precomp_256<S: Into<<Self::Scalar as PrimeField>::Repr>>(
+        &self,
+        other: S,
+        pre: &[Self],
+    ) -> Self::Projective;
 }
 
 /// An encoded elliptic curve point, which should essentially wrap a `[u8; N]`.
