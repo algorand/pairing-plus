@@ -16,6 +16,7 @@ impl ::std::default::Default for Fr {
     }
 }
 
+/// # Safety
 pub const unsafe fn transmute(r: FrRepr) -> Fr {
     Fr(r)
 }

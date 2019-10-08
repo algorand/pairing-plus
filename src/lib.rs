@@ -110,7 +110,7 @@ pub trait Engine: ScalarEngine {
                 (&(p1.into().prepare()), &(q1.into().prepare())),
                 (&(p2.into().prepare()), &(q2.into().prepare())),
             ]
-            .into_iter(),
+            .iter(),
         ))
         .unwrap()
     }

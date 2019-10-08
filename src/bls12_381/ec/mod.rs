@@ -17,6 +17,7 @@ macro_rules! curve_impl {
             pub(crate) infinity: bool,
         }
 
+        /// # Safety
         pub const unsafe fn transmute_affine(x: $basefield, y: $basefield, i: bool) -> $affine {
             $affine {
                 x: x,
@@ -56,6 +57,8 @@ macro_rules! curve_impl {
             pub(crate) z: $basefield,
         }
 
+        /// placeholder
+        /// # Safety
         pub const unsafe fn transmute_projective(
             x: $basefield,
             y: $basefield,
