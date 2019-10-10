@@ -324,5 +324,4 @@ mod serdes_test {
         assert_eq!(compressed, true);
         assert_eq!(fr_rand, fr_rand_recover);
     }
-
 }

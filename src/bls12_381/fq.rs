@@ -465,6 +465,7 @@ pub const P_M1_OVER2: Fq = Fq(FqRepr([
 #[PrimeFieldGenerator = "2"]
 pub struct Fq(pub(super) FqRepr);
 
+/// # Safety
 pub const unsafe fn transmute(r: FqRepr) -> Fq {
     Fq(r)
 }
