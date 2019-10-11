@@ -33,6 +33,146 @@ impl SerDes for Fr {
     }
 }
 
+impl SerDes for Fq12 {
+    /// The compressed parameter has no effect since Fr element will always be compressed.
+    fn serialize<W: Write>(&self, writer: &mut W, _compressed: Compressed) -> Result<()> {
+        let mut buf: Vec<u8> = vec![];
+
+        match self.c0.c0.c0.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+        match self.c0.c0.c1.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+        match self.c0.c1.c0.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+        match self.c0.c1.c1.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+        match self.c0.c2.c0.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+        match self.c0.c2.c1.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+        match self.c1.c0.c0.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+
+        match self.c1.c0.c1.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+        match self.c1.c1.c0.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+        match self.c1.c1.c1.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+        match self.c1.c2.c0.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+        match self.c1.c2.c1.into_repr().write_be(&mut buf) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(p) => p,
+        };
+        writer.write_all(&buf)?;
+        Ok(())
+    }
+
+    /// The compressed parameter has no effect since Fr element will always be compressed.
+    fn deserialize<R: Read>(mut reader: &mut R, _compressed: Compressed) -> Result<Self> {
+        let mut q = FqRepr::default();
+        q.read_be(&mut reader)?;
+        let c000 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        q.read_be(&mut reader)?;
+        let c001 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        q.read_be(&mut reader)?;
+        let c010 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        q.read_be(&mut reader)?;
+        let c011 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        q.read_be(&mut reader)?;
+        let c020 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        q.read_be(&mut reader)?;
+        let c021 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        q.read_be(&mut reader)?;
+        let c100 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        q.read_be(&mut reader)?;
+        let c101 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        q.read_be(&mut reader)?;
+        let c110 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        q.read_be(&mut reader)?;
+        let c111 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        q.read_be(&mut reader)?;
+        let c120 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        q.read_be(&mut reader)?;
+        let c121 = match Fq::from_repr(q) {
+            Err(e) => return Err(Error::new(ErrorKind::Other, e)),
+            Ok(q) => q,
+        };
+        Ok(Fq12 {
+            c0: Fq6 {
+                c0: Fq2 { c0: c000, c1: c001 },
+
+                c1: Fq2 { c0: c010, c1: c011 },
+
+                c2: Fq2 { c0: c020, c1: c021 },
+            },
+            c1: Fq6 {
+                c0: Fq2 { c0: c100, c1: c101 },
+
+                c1: Fq2 { c0: c110, c1: c111 },
+
+                c2: Fq2 { c0: c120, c1: c121 },
+            },
+        })
+    }
+}
+
 impl SerDes for G1 {
     /// Convert a G1 point to a blob.
     fn serialize<W: Write>(&self, writer: &mut W, compressed: Compressed) -> Result<()> {
@@ -546,5 +686,38 @@ mod serdes_test {
         assert_eq!(buf.len(), 32, "length of blob is incorrect");
         let fr_rand_recover = Fr::deserialize(&mut buf[..].as_ref(), true).unwrap();
         assert_eq!(fr_rand, fr_rand_recover);
+    }
+
+    #[test]
+    fn test_fq12_serialization_rand() {
+        use ff::Field;
+        use rand::Rand;
+        let mut rng = rand::thread_rng();
+        // fq12::zero
+        let fq12_zero = Fq12::zero();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(fq12_zero.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 48 * 12, "length of blob is incorrect");
+        let fq12_zero_recover = Fq12::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(fq12_zero, fq12_zero_recover);
+
+        // fq12::one
+        let fq12_one = Fq12::one();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(fq12_one.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 48 * 12, "length of blob is incorrect");
+        let fq12_one_recover = Fq12::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(fq12_one, fq12_one_recover);
+
+        // fr::rand
+        let fq12_rand = Fq12::rand(&mut rng);
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(fq12_rand.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 48 * 12, "length of blob is incorrect");
+        let fq12_rand_recover = Fq12::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(fq12_rand, fq12_rand_recover);
     }
 }
