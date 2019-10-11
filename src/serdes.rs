@@ -158,6 +158,128 @@ impl SerDes for G2 {
     }
 }
 
+impl SerDes for G1Affine {
+    /// Convert a G1 point to a blob.
+    fn serialize<W: Write>(&self, writer: &mut W, compressed: Compressed) -> Result<()> {
+        // convert element into an (un)compressed byte string
+        let buf = {
+            if compressed {
+                let tmp = bls12_381::G1Compressed::from_affine(*self);
+                tmp.as_ref().to_vec()
+            } else {
+                let tmp = bls12_381::G1Uncompressed::from_affine(*self);
+                tmp.as_ref().to_vec()
+            }
+        };
+
+        // format the output
+        writer.write_all(&buf)?;
+        Ok(())
+    }
+
+    /// Deserialize a G1 element from a blob.
+    /// Returns an error if deserialization fails.
+    fn deserialize<R: Read>(reader: &mut R, compressed: Compressed) -> Result<Self> {
+        // read into buf of compressed size
+        let mut buf = vec![0u8; G1Compressed::size()];
+        reader.read_exact(&mut buf)?;
+
+        // check the first bit of buf[0] to decide if the point is compressed
+        // or not
+        // first bit is 1 => compressed mode
+        // first bit is 0 => uncompressed mode
+        if ((buf[0] & 0x80) == 0x80) != compressed {
+            return Err(Error::new(ErrorKind::InvalidData, "Invalid compressness"));
+        }
+
+        if compressed {
+            // convert the blob into a group element
+            let mut g_buf = G1Compressed::empty();
+            g_buf.as_mut().copy_from_slice(&buf);
+            let g = match g_buf.into_affine() {
+                Ok(p) => p,
+                Err(e) => return Err(Error::new(ErrorKind::InvalidData, e)),
+            };
+            Ok(g)
+        } else {
+            // read the next uncompressed - compressed size
+            let mut buf2 = vec![0u8; G1Uncompressed::size() - G1Compressed::size()];
+            reader.read_exact(&mut buf2)?;
+            // now buf holds the whole uncompressed bytes
+            buf.append(&mut buf2);
+            // convert the buf into a group element
+            let mut g_buf = G1Uncompressed::empty();
+            g_buf.as_mut().copy_from_slice(&buf);
+            let g = match g_buf.into_affine() {
+                Ok(p) => p,
+                Err(e) => return Err(Error::new(ErrorKind::InvalidData, e)),
+            };
+            Ok(g)
+        }
+    }
+}
+
+impl SerDes for G2Affine {
+    /// Convert a G2 point to a blob.
+    fn serialize<W: Write>(&self, writer: &mut W, compressed: Compressed) -> Result<()> {
+        // convert element into an (un)compressed byte string
+        let buf = {
+            if compressed {
+                let tmp = bls12_381::G2Compressed::from_affine(*self);
+                tmp.as_ref().to_vec()
+            } else {
+                let tmp = bls12_381::G2Uncompressed::from_affine(*self);
+                tmp.as_ref().to_vec()
+            }
+        };
+
+        // format the output
+        writer.write_all(&buf)?;
+        Ok(())
+    }
+
+    /// Deserialize a G2 element from a blob.
+    /// Returns an error if deserialization fails.
+    fn deserialize<R: Read>(reader: &mut R, compressed: Compressed) -> Result<Self> {
+        // read into buf of compressed size
+        let mut buf = vec![0u8; G2Compressed::size()];
+        reader.read_exact(&mut buf)?;
+
+        // check the first bit of buf[0] to decide if the point is compressed
+        // or not
+        // first bit is 1 => compressed mode
+        // first bit is 0 => uncompressed mode
+        if ((buf[0] & 0x80) == 0x80) != compressed {
+            return Err(Error::new(ErrorKind::InvalidData, "Invalid compressness"));
+        }
+
+        if compressed {
+            // convert the buf into a group element
+            let mut g_buf = G2Compressed::empty();
+            g_buf.as_mut().copy_from_slice(&buf);
+            let g = match g_buf.into_affine() {
+                Ok(p) => p,
+                Err(e) => return Err(Error::new(ErrorKind::InvalidData, e)),
+            };
+            Ok(g)
+        } else {
+            // read the next uncompressed - compressed size
+            let mut buf2 = vec![0u8; G2Uncompressed::size() - G2Compressed::size()];
+            reader.read_exact(&mut buf2)?;
+            // now buf holds the whole uncompressed bytes
+            buf.append(&mut buf2);
+            // convert the buf into a group element
+            let mut g_buf = G2Uncompressed::empty();
+            g_buf.as_mut().copy_from_slice(&buf);
+            let g = match g_buf.into_affine() {
+                Ok(p) => p,
+                Err(e) => return Err(Error::new(ErrorKind::InvalidData, e)),
+            };
+            Ok(g)
+        }
+    }
+}
+
 #[cfg(test)]
 mod serdes_test {
     use super::*;
@@ -274,6 +396,122 @@ mod serdes_test {
         assert!(g2_rand.serialize(&mut buf, false).is_ok());
         assert_eq!(buf.len(), 192, "length of blob is incorrect");
         let g2_rand_recover = G2::deserialize(&mut buf[..].as_ref(), false).unwrap();
+        assert_eq!(g2_rand, g2_rand_recover);
+    }
+
+    #[test]
+    fn test_g1affine_serialization_rand() {
+        use rand::Rand;
+        let mut rng = rand::thread_rng();
+
+        // G1::zero, compressed
+        let g1_zero = G1::zero().into_affine();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(g1_zero.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 48, "length of blob is incorrect");
+        let g1_zero_recover = G1Affine::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(g1_zero, g1_zero_recover);
+
+        // G1::one, compressed
+        let g1_one = G1::one().into_affine();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(g1_one.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 48, "length of blob is incorrect");
+        let g1_one_recover = G1Affine::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(g1_one, g1_one_recover);
+
+        // G1::rand, compressed
+        let g1_rand = G1::rand(&mut rng).into_affine();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(g1_rand.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 48, "length of blob is incorrect");
+        let g1_rand_recover = G1Affine::deserialize(&mut buf[..].as_ref(), true).unwrap();
+
+        assert_eq!(g1_rand, g1_rand_recover);
+
+        // G1::zero, uncompressed
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(g1_zero.serialize(&mut buf, false).is_ok());
+        assert_eq!(buf.len(), 96, "length of blob is incorrect");
+        let g1_zero_recover = G1Affine::deserialize(&mut buf[..].as_ref(), false).unwrap();
+        assert_eq!(g1_zero, g1_zero_recover);
+
+        // G1::one, uncompressed
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(g1_one.serialize(&mut buf, false).is_ok());
+        assert_eq!(buf.len(), 96, "length of blob is incorrect");
+        let g1_one_recover = G1Affine::deserialize(&mut buf[..].as_ref(), false).unwrap();
+        assert_eq!(g1_one, g1_one_recover);
+
+        // G1::rand, uncompressed
+        let g1_rand = G1::rand(&mut rng).into_affine();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G1 element into buffer
+        assert!(g1_rand.serialize(&mut buf, false).is_ok());
+        assert_eq!(buf.len(), 96, "length of blob is incorrect");
+        let g1_rand_recover = G1Affine::deserialize(&mut buf[..].as_ref(), false).unwrap();
+        assert_eq!(g1_rand, g1_rand_recover);
+    }
+
+    #[test]
+    fn test_g2affine_serialization_rand() {
+        use rand::Rand;
+        let mut rng = rand::thread_rng();
+        // G2::zero, compressed
+        let g2_zero = G2::zero().into_affine();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G2 element into buffer
+        assert!(g2_zero.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 96, "length of blob is incorrect");
+        let g2_zero_recover = G2Affine::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(g2_zero, g2_zero_recover);
+
+        // G2::one, compressed
+        let g2_one = G2::one().into_affine();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G2 element into buffer
+        assert!(g2_one.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 96, "length of blob is incorrect");
+        let g2_one_recover = G2Affine::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(g2_one, g2_one_recover);
+
+        // G2::rand, compressed
+        let g2_rand = G2::rand(&mut rng).into_affine();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G2 element into buffer
+        assert!(g2_rand.serialize(&mut buf, true).is_ok());
+        assert_eq!(buf.len(), 96, "length of blob is incorrect");
+        let g2_rand_recover = G2Affine::deserialize(&mut buf[..].as_ref(), true).unwrap();
+        assert_eq!(g2_rand, g2_rand_recover);
+
+        // G2::zero, uncompressed
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G2 element into buffer
+        assert!(g2_zero.serialize(&mut buf, false).is_ok());
+        assert_eq!(buf.len(), 192, "length of blob is incorrect");
+        let g2_zero_recover = G2Affine::deserialize(&mut buf[..].as_ref(), false).unwrap();
+        assert_eq!(g2_zero, g2_zero_recover);
+
+        // G2::one, uncompressed
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G2 element into buffer
+        assert!(g2_one.serialize(&mut buf, false).is_ok());
+        assert_eq!(buf.len(), 192, "length of blob is incorrect");
+        let g2_one_recover = G2Affine::deserialize(&mut buf[..].as_ref(), false).unwrap();
+        assert_eq!(g2_one, g2_one_recover);
+
+        // G2::rand uncompressed
+        let g2_rand = G2::rand(&mut rng).into_affine();
+        let mut buf: Vec<u8> = vec![];
+        // serialize a G2 element into buffer
+        assert!(g2_rand.serialize(&mut buf, false).is_ok());
+        assert_eq!(buf.len(), 192, "length of blob is incorrect");
+        let g2_rand_recover = G2Affine::deserialize(&mut buf[..].as_ref(), false).unwrap();
         assert_eq!(g2_rand, g2_rand_recover);
     }
 
