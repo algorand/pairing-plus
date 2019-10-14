@@ -4,11 +4,12 @@ name = "pairing-fork"
 # Remember to change version string in README.md.
 version = "0.17.0"
 authors = [
-    # authors of the pairing library
+    # authors of the original pairing library
     "Sean Bowe <ewillbefull@gmail.com>",
     "Jack Grigg <jack@z.cash>",
     # maintainers of this pairing-fork library
-    "tbd <tbd@tbd.tbd>"
+    "Riad S. Wahby <kwantam@gmail.com>",
+    "Zhenfei Zhang <zhenfei@algorand.com>"
 ]
 license = "MIT/Apache-2.0"
 
