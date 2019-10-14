@@ -12,7 +12,7 @@ use std::marker::PhantomData;
 /// A struct that handles hashing a message to one or more values of T.
 #[derive(Debug)]
 pub struct HashToField<T> {
-    msg_hashed: GenericArray<u8, <sha2::Sha256 as Digest>::OutputSize>,
+    msg_hashed: GenericArray<u8, <Sha256 as Digest>::OutputSize>,
     ctr: u8,
     phantom: PhantomData<T>,
 }
@@ -20,8 +20,13 @@ pub struct HashToField<T> {
 impl<T: FromRO> HashToField<T> {
     /// Create a new struct given a message and ciphersuite.
     pub fn new<B: AsRef<[u8]>>(msg: B, dst: Option<&[u8]>) -> HashToField<T> {
+        HashToField::from_hash(Sha256::digest(msg.as_ref()), dst)
+    }
+
+    /// Create a new struct given a message already hashed with SHA-256
+    pub fn from_hash(msg_hash: GenericArray<u8, <Sha256 as Digest>::OutputSize>, dst: Option<&[u8]>) -> HashToField<T> {
         HashToField::<T> {
-            msg_hashed: Hkdf::<Sha256>::extract(dst, msg.as_ref()).0,
+            msg_hashed: Hkdf::<Sha256>::extract(dst, msg_hash.as_ref()).0,
             ctr: 0,
             phantom: PhantomData::<T>,
         }
