@@ -308,225 +308,18 @@ impl G1Prepared {
 }
 
 mod subgroup_check {
-    use super::super::super::{Fq, FqRepr};
-    use super::{G1Affine, G1};
-    use ff::Field;
+    use super::G1Affine;
+    #[cfg(test)]
+    use super::G1;
     #[cfg(test)]
     use rand::{thread_rng, Rand};
-    use {CurveAffine, CurveProjective, SubgroupCheck};
-
-    // Endomorphism (x, y) -> (\beta x, y) where \beta is an elm of Fp of order 3.
-    fn sigma(p: &G1Affine) -> G1 {
-        let (x, y) = p.as_tuple();
-        let mut ret = G1 {
-            x: *x,
-            y: *y,
-            z: Fq::one(),
-        };
-        sigma_proj(&mut ret);
-        ret
-    }
-
-    fn sigma_proj(p: &mut G1) {
-        const BETA: Fq = Fq(FqRepr([
-            0xcd03c9e48671f071u64,
-            0x5dab22461fcda5d2u64,
-            0x587042afd3851b95u64,
-            0x8eb60ebe01bacb9eu64,
-            0x3f97d6e83d050d2u64,
-            0x18f0206554638741u64,
-        ]));
-
-        let G1 { x, .. } = p;
-        x.mul_assign(&BETA);
-    }
-
-    /* *** addchain for 76329603384216526021617858986798044501 *** */
-    /* Bos-Coster (win=7) : 145 links, 8 variables */
-    fn sigma_chain(tmpvar1: &mut G1) {
-        let tmpvar0 = *tmpvar1;
-        tmpvar1.double();
-        /*    0 : 2 */
-
-        let mut tmpvar6 = *tmpvar1;
-        tmpvar6.add_assign(&tmpvar0);
-        /*    1 : 3 */
-
-        tmpvar1.double();
-        /*    2 : 4 */
-
-        let mut tmpvar4 = *tmpvar1;
-        tmpvar4.double();
-        /*    3 : 8 */
-
-        let mut tmpvar2 = tmpvar4;
-        tmpvar2.add_assign(&tmpvar6);
-        /*    4 : 11 */
-
-        let mut tmpvar7 = tmpvar2;
-        tmpvar7.add_assign(tmpvar1);
-        /*    5 : 15 */
-
-        let mut tmpvar5 = tmpvar4;
-        tmpvar5.double();
-        /*    6 : 16 */
-
-        *tmpvar1 = tmpvar5;
-        tmpvar1.double();
-        /*    7 : 32 */
-
-        let mut tmpvar3 = *tmpvar1;
-        tmpvar3.add_assign(&tmpvar2);
-        /*    8 : 43 */
-
-        *tmpvar1 = tmpvar3;
-        tmpvar1.add_assign(&tmpvar7);
-        /*    9 : 58 */
-
-        tmpvar5.add_assign(tmpvar1);
-        /*   10 : 74 */
-
-        tmpvar2.add_assign(&tmpvar5);
-        /*   11 : 85 */
-
-        tmpvar7.add_assign(&tmpvar5);
-        /*   12 : 89 */
-
-        tmpvar4.add_assign(&tmpvar7);
-        /*   13 : 97 */
-
-        tmpvar5.add_assign(&tmpvar4);
-        /*   14 : 171 */
-
-        tmpvar1.add_assign(&tmpvar5);
-        /*   15 : 229 */
-
-        for _ in 0..7 {
-            tmpvar1.double();
-        }
-        /*   16 : 29312 */
-
-        tmpvar1.add_assign(&tmpvar7);
-        /*   23 : 29401 */
-
-        for _ in 0..5 {
-            tmpvar1.double();
-        }
-        /*   24 : 940832 */
-
-        tmpvar1.add_assign(&tmpvar6);
-        /*   29 : 940835 */
-
-        for _ in 0..18 {
-            tmpvar1.double();
-        }
-        /*   30 : 246634250240 */
-
-        tmpvar1.add_assign(&tmpvar2);
-        /*   48 : 246634250325 */
-
-        for _ in 0..9 {
-            tmpvar1.double();
-        }
-        /*   49 : 126276736166400 */
-
-        tmpvar1.add_assign(&tmpvar5);
-        /*   58 : 126276736166571 */
-
-        for _ in 0..7 {
-            tmpvar1.double();
-        }
-        /*   59 : 16163422229321088 */
-
-        tmpvar1.add_assign(&tmpvar4);
-        /*   66 : 16163422229321185 */
-
-        for _ in 0..7 {
-            tmpvar1.double();
-        }
-        /*   67 : 2068918045353111680 */
-
-        tmpvar1.add_assign(&tmpvar3);
-        /*   74 : 2068918045353111723 */
-
-        for _ in 0..41 {
-            tmpvar1.double();
-        }
-        /*   75 : 4549598895562680126525036036096 */
-
-        tmpvar1.add_assign(&tmpvar2);
-        /*  116 : 4549598895562680126525036036181 */
-
-        for _ in 0..8 {
-            tmpvar1.double();
-        }
-        /*  117 : 1164697317264046112390409225262336 */
-
-        tmpvar1.add_assign(&tmpvar2);
-        /*  125 : 1164697317264046112390409225262421 */
-
-        for _ in 0..8 {
-            tmpvar1.double();
-        }
-        /*  126 : 298162513219595804771944761667179776 */
-
-        tmpvar1.add_assign(&tmpvar2);
-        /*  134 : 298162513219595804771944761667179861 */
-
-        for _ in 0..8 {
-            tmpvar1.double();
-        }
-        /*  135 : 76329603384216526021617858986798044416 */
-
-        tmpvar1.add_assign(&tmpvar2);
-        /*  143 : 76329603384216526021617858986798044501 */
-    }
+    use SubgroupCheck;
+    #[cfg(test)]
+    use {CurveAffine, CurveProjective};
 
     impl SubgroupCheck for G1Affine {
-        fn in_subgroup_bowe19(&self) -> bool {
-            if !self.is_on_curve() {
-                return false;
-            }
-
-            let mut sp = sigma(self); // sP = sigma(P)
-            let mut q = sp; // Q =
-            q.double(); //     2 * sP
-            sigma_proj(&mut sp); // sP = sigma(sP)
-            q.sub_assign_mixed(self); // Q = Q - P
-            q.sub_assign(&sp); // Q = Q - sP
-            sigma_chain(&mut q); // ((z^2 - 1) // 3) * Q
-            q.sub_assign(&sp); // Q = Q - sP
-
-            q.is_zero()
-        }
-
         fn in_subgroup(&self) -> bool {
             self.is_on_curve() && self.is_in_correct_subgroup_assuming_on_curve()
-        }
-    }
-
-    #[test]
-    fn test_g1_sigma() {
-        use CurveProjective;
-        let mut rng = thread_rng();
-
-        for _ in 0..32 {
-            let pp = G1::rand(&mut rng);
-            let p = pp.into_affine();
-            let sp = sigma(&p);
-
-            let G1Affine { x: xi, .. } = &p;
-            let G1 { x: xo, .. } = &sp;
-
-            let mut t1 = *xi;
-            t1.square();
-            t1.mul_assign(xi);
-
-            let mut t2 = *xo;
-            t2.square();
-            t2.mul_assign(xo);
-
-            assert_eq!(t1, t2);
         }
     }
 
@@ -619,8 +412,6 @@ fn g1_test_is_valid() {
             infinity: false,
         };
         assert!(!p.is_on_curve());
-        assert!(!p.in_subgroup_bowe19());
-        assert!(p.in_subgroup_bowe19() == p.in_subgroup());
     }
 
     // Reject point on a twist (b = 3)
