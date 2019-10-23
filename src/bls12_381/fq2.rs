@@ -993,20 +993,20 @@ fn test_fq2_hash_to_field() {
     let mut hash_iter = HashToField::<Fq2>::new("hello world", None);
     let fq2_val = hash_iter.next().unwrap();
     let expect_c0 = FqRepr([
-        0x605979d293c88efeu64,
-        0x8cce6e2990ca245eu64,
-        0xb216c1419710b3a9u64,
-        0xeb60d0d2d54275a0u64,
-        0x354a68d7ef36672u64,
-        0x5f74a1547366cecu64,
+        0x47137dbe0aab2c73u64,
+        0x203a41a517b34d1cu64,
+        0x55d019e5914e11c1u64,
+        0xc106ddc4af8ffa5du64,
+        0x1ff762c5f1bfd8b4u64,
+        0x19f78b0bb3eba06au64,
     ]);
     let expect_c1 = FqRepr([
-        0x5091f4f73bc1b5f8u64,
-        0xe24885242fa3a122u64,
-        0x4b5e051202bcf75du64,
-        0xb78b75eaaaa87832u64,
-        0x35940e11b7f7cb9au64,
-        0x162c4cd4f9023db6u64,
+        0x3cabacb8389463acu64,
+        0x58d6edc60b79a74u64,
+        0xa9281e1d30c69193u64,
+        0x671968378855db46u64,
+        0x873a64d8f4ebc763u64,
+        0xa2bac9b17355499u64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(expect_c0).unwrap(),
@@ -1016,20 +1016,20 @@ fn test_fq2_hash_to_field() {
 
     let fq2_val = hash_iter.next().unwrap();
     let expect_c0 = FqRepr([
-        0x21f37a28981adf2au64,
-        0xfcb319a0d42af630u64,
-        0xbfd027f2c55177fbu64,
-        0x66f286dd263e7609u64,
-        0xa09979be2a6ef430u64,
-        0x39b53f6f58a62fdu64,
+        0x1a29a8209c6f3d2fu64,
+        0x4a6be9dbcd5dd3ebu64,
+        0xbe4a8d4259350048u64,
+        0xdf453be6214f7ddcu64,
+        0x699c40affb0d1314u64,
+        0xcfecc5419b505ffu64,
     ]);
     let expect_c1 = FqRepr([
-        0x5b4a356b86dc3740u64,
-        0xa50eaa39af36389eu64,
-        0x35f2042b81ea5999u64,
-        0x5dd5cde1b8c03f75u64,
-        0x3e2f80c1855be51fu64,
-        0x1827c0f181cac0a1u64,
+        0x7e6f1837dcd928b2u64,
+        0xebccabee6ad6c2c7u64,
+        0xcead509d4cbd55dbu64,
+        0x6e3b8a2cdc185d5bu64,
+        0x6bd81e0e63c25643u64,
+        0x6b62a5a37510870u64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(expect_c0).unwrap(),
