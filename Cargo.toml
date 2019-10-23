@@ -1,5 +1,5 @@
 [package]
-name = "pairing-fork"
+name = "pairing-plus"
 
 # Remember to change version string in README.md.
 version = "0.17.0"
@@ -18,17 +18,17 @@ description = "Pairing-friendly elliptic curve library"
 # original documentation
 #   documentation = "https://docs.rs/pairing/"
 # documentation for this fork
-documentation = "https://docs.rs/pairing-fork/"
+documentation = "https://docs.rs/pairing-plus/"
 
 # original homepage
 #   homepage = "https://github.com/ebfull/pairing"
 # homepage for this fork
-homepage = "https://github.com/algorand/pairing-fork"
+homepage = "https://github.com/algorand/pairing-plus"
 
 # original repo
 #   repository = "https://github.com/ebfull/pairing"
 # repo for this fork
-repository = "https://github.com/algorand/pairing-fork"
+repository = "https://github.com/algorand/pairing-plus"
 
 [dependencies]
 rand = "0.4"
