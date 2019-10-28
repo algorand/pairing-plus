@@ -314,59 +314,59 @@ fn test_osswu_g1() {
 #[test]
 fn test_osswu_g2() {
     let c0 = Fq::from_repr(FqRepr([
-        0xb9fefffffff8412bu64,
+        0xb1e40u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+    ]))
+    .unwrap();
+    let c1 = Fq::from_repr(FqRepr([
+        0xb9fefffffffbf5ebu64,
         0x1eabfffeb153ffffu64,
         0x6730d2a0f6b0f624u64,
         0x64774b84f38512bfu64,
         0x4b1ba7b6434bacd7u64,
         0x1a0111ea397fe69au64,
-    ]))
-    .unwrap();
-    let c1 = Fq::from_repr(FqRepr([
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
     ]))
     .unwrap();
     let xo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0x1bbe3a0d7831b22du64,
-        0x57d06f44dc428a47u64,
-        0x5f2c8926e75ab5b9u64,
-        0x950d9410caa33cf3u64,
-        0x76f86a9f629c9333u64,
-        0x1109ddf9a05fe2c7u64,
+        0x28d6c99ea4383807u64,
+        0x59cc5836c91ef30fu64,
+        0xa87d216900801408u64,
+        0x2610ff4c3c3f9eb1u64,
+        0x4f4b3ea32be995fcu64,
+        0xdc6721ebe6be37u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0x42344d91d4b86b64u64,
-        0xb6664db1979e52e6u64,
-        0x1db9054108eda6f2u64,
-        0xf5714ec6406123e6u64,
-        0x8adfb4a7ca0f35e2u64,
-        0x1289554b02b22083u64,
+        0x60e0254afc5ba93bu64,
+        0x407c6124b57df4cu64,
+        0xf8f3c1f44b0f8c7au64,
+        0xb96a3df0badd28fau64,
+        0x3d04c58bb5e6260u64,
+        0x12b21ca35569a3eeu64,
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0xb9feffffffffa9bbu64,
+        0xf0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+    ]))
+    .unwrap();
+    let c1 = Fq::from_repr(FqRepr([
+        0xb9feffffffffa8cbu64,
         0x1eabfffeb153ffffu64,
         0x6730d2a0f6b0f624u64,
         0x64774b84f38512bfu64,
         0x4b1ba7b6434bacd7u64,
         0x1a0111ea397fe69au64,
-    ]))
-    .unwrap();
-    let c1 = Fq::from_repr(FqRepr([
-        0x00000000000000f0u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
     ]))
     .unwrap();
     let zo = Fq2 { c0, c1 };
@@ -375,23 +375,24 @@ fn test_osswu_g2() {
     assert_eq!(x, &xo);
     assert_eq!(y, &yo);
     assert_eq!(z, &zo);
+    check_g2_prime(x, y, z);
 
     let c0 = Fq::from_repr(FqRepr([
-        0x0000000000076980u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
+        0x76980u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0x00000000003b4c00u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
+        0x3b4c00u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
     ]))
     .unwrap();
     let xo = Fq2 { c0, c1 };
@@ -401,26 +402,26 @@ fn test_osswu_g2() {
         0xf16d677192b7b78au64,
         0xab1dd12189c47c0eu64,
         0xc30f74ce786d38e9u64,
-        0x0cc49de633f05c98u64,
+        0xcc49de633f05c98u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
         0x936dda4aedcab1e1u64,
-        0x08261a18f1038bdbu64,
-        0x0c08dea79dde085du64,
+        0x8261a18f1038bdbu64,
+        0xc08dea79dde085du64,
         0x9002d76a3ed1ffd2u64,
         0x185ab763985ff885u64,
-        0x00bab7cc25639665u64,
+        0xbab7cc25639665u64,
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0x00000000000002d0u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
+        0x2d0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
+        0x0u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
@@ -438,149 +439,98 @@ fn test_osswu_g2() {
     assert_eq!(x, &xo);
     assert_eq!(y, &yo);
     assert_eq!(z, &zo);
+    check_g2_prime(x, y, z);
 
     let m1 = {
         let mut tmp = Fq2::one();
         tmp.negate();
         tmp
     };
-    let c0 = Fq::from_repr(FqRepr([
-        0x0000000000076980u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-    ]))
-    .unwrap();
-    let c1 = Fq::from_repr(FqRepr([
-        0x00000000003b4c00u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-    ]))
-    .unwrap();
-    let xo = Fq2 { c0, c1 };
-    let c0 = Fq::from_repr(FqRepr([
-        0xd7b355f5767462cbu64,
-        0x8bfc4e46234a37b2u64,
-        0x75c36b2f63f93e99u64,
-        0xb9597a6369c096b0u64,
-        0x880c32e7cade73edu64,
-        0x0d3c7404058f8a01u64,
-    ]))
-    .unwrap();
-    let c1 = Fq::from_repr(FqRepr([
-        0x269125b51234f8cau64,
-        0x1685e5e5c0507424u64,
-        0x5b27f3f958d2edc7u64,
-        0xd474741ab4b312edu64,
-        0x32c0f052aaebb451u64,
-        0x19465a1e141c5035u64,
-    ]))
-    .unwrap();
-    let yo = Fq2 { c0, c1 };
-    let c0 = Fq::from_repr(FqRepr([
-        0x00000000000002d0u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-        0x0000000000000000u64,
-    ]))
-    .unwrap();
-    let c1 = Fq::from_repr(FqRepr([
-        0xb9feffffffffa9bbu64,
-        0x1eabfffeb153ffffu64,
-        0x6730d2a0f6b0f624u64,
-        0x64774b84f38512bfu64,
-        0x4b1ba7b6434bacd7u64,
-        0x1a0111ea397fe69au64,
-    ]))
-    .unwrap();
-    let zo = Fq2 { c0, c1 };
     let p = G2::osswu_map(&m1);
+    let myo = {
+        let mut tmp = yo;
+        tmp.negate();
+        tmp
+    };
     let G2 { x, y, z } = &p;
     assert_eq!(x, &xo);
-    assert_eq!(y, &yo);
+    assert_eq!(y, &myo);
     assert_eq!(z, &zo);
+    check_g2_prime(x, y, z);
 
-    let u = Fq2 {
-        c0: Fq::from_repr(FqRepr([
-            0xab85e284be119b06u64,
-            0xd66a22e1357a0a78u64,
-            0xb2b1eebb23f4f1beu64,
-            0x86b44d0ab7ba6c3cu64,
-            0x074fb6220dae0f91u64,
-            0x15a020c28c99d05cu64,
-        ]))
-        .unwrap(),
-        c1: Fq::from_repr(FqRepr([
-            0x7b66fff074efe46eu64,
-            0xa06efb36880a24b7u64,
-            0x7e29eca1f704feafu64,
-            0xe059e38b408dd4ceu64,
-            0x85d3318e078dfebau64,
-            0x198bfdcafe694646u64,
-        ]))
-        .unwrap(),
-    };
     let c0 = Fq::from_repr(FqRepr([
-        0xd4076d7c0779c5e9u64,
-        0x69512cb25235be96u64,
-        0xd4528ddb1ae277cau64,
-        0x9178b403ff1b0d02u64,
-        0x2a9cf07eafb075c8u64,
-        0x0cc5413d19d7ee31u64,
+        0xd4e2aa3bbf9a8255u64,
+        0xa79f2ece3390978cu64,
+        0x48c1a8fdff541ebau64,
+        0x2b17303f8af1ec82u64,
+        0x86657cd3fc3d08b5u64,
+        0x14f05da1ad4eddc8u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0x1723c70ff5d8e43eu64,
-        0x950084d6c95e0298u64,
-        0x4c4e713218054a18u64,
-        0x706ec7cb756425e2u64,
-        0xa1688a3096f0ce29u64,
-        0x1244bfa13bb40cddu64,
+        0x472f6df27fe7c94du64,
+        0xea72d4e6f4f06693u64,
+        0xd1a89c5e84e6d193u64,
+        0xab80a6a3842df525u64,
+        0x46e112ac0a450ea4u64,
+        0x171441a6d04ca8a9u64,
+    ]))
+    .unwrap();
+    let u = Fq2 { c0, c1 };
+    let c0 = Fq::from_repr(FqRepr([
+        0x19399d7e6e728efau64,
+        0x9223ea49b3a6685bu64,
+        0xb0535eeb3e0be8eeu64,
+        0xccdd7c2ed7a70c2du64,
+        0x192ab8f31b9bb432u64,
+        0xc0b207783a7fe8au64,
+    ]))
+    .unwrap();
+    let c1 = Fq::from_repr(FqRepr([
+        0xc65c4431a6496c30u64,
+        0x8542454973283f10u64,
+        0xa7808bb40eebf6b9u64,
+        0x683e0aad6e74a5a0u64,
+        0x2076b05de214ef02u64,
+        0xe039ae7c29d2022u64,
     ]))
     .unwrap();
     let xo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0x2b9e65c5a45f6284u64,
-        0x562dfe86dc588870u64,
-        0x8a69c4278050e9acu64,
-        0x434de6b4c66f904bu64,
-        0x421528f4e98f1a9fu64,
-        0x0497daba05b79191u64,
+        0xcb28446e62179d9eu64,
+        0xa280a992df73998eu64,
+        0x2d5291422919d305u64,
+        0x418c865e205bc0c6u64,
+        0xf8d1e5e8c38550acu64,
+        0xee2df0d5e07448fu64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0xf69322eda18d7fabu64,
-        0x1abf30aa6936363cu64,
-        0x6c85ce4cf4e4ad4bu64,
-        0x7fe4e86d8ed16fa9u64,
-        0xd7c622658b988b3au64,
-        0x054fd4cc6a4e6375u64,
+        0xaa7c2684fe2fcc6eu64,
+        0x99a983385cb3106fu64,
+        0x37ad3280cb8a1519u64,
+        0x5a4308b2de7f901du64,
+        0xf2f74d4b44fadc7cu64,
+        0x6ac1c85e32f4edcu64,
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0x0aa387c68cf7be7cu64,
-        0xc03089a5cc09a4e6u64,
-        0xe5edbccff2482a38u64,
-        0xe3d6eb25462de571u64,
-        0x4e335fdb1f778f4cu64,
-        0x0971c6b317c83ef8u64,
+        0x9e31b14df8456862u64,
+        0xb09d54057305d0eau64,
+        0x7d4ec28cf63bbd66u64,
+        0x1817c2139c736f55u64,
+        0x7fd9f027c2ed4347u64,
+        0x18d33c46e9efe1f7u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0xa6f4d7ba451b0f2fu64,
-        0x72ef6cd1ab5147ecu64,
-        0x41d4017d111ec2f5u64,
-        0xe2e1ff096b87f7a0u64,
-        0xa03be00ec98045c5u64,
-        0x0794934ff7688600u64,
+        0x4da85b1219f0aa69u64,
+        0x9eb5f7883c8356b6u64,
+        0x9d27373105a8522fu64,
+        0x5be18ff40be45f19u64,
+        0x9b693bc483f0f59fu64,
+        0x922c5bef1fc118cu64,
     ]))
     .unwrap();
     let zo = Fq2 { c0, c1 };
@@ -589,81 +539,81 @@ fn test_osswu_g2() {
     assert_eq!(x, &xo);
     assert_eq!(y, &yo);
     assert_eq!(z, &zo);
+    check_g2_prime(x, y, z);
 
-    let u = Fq2 {
-        c0: Fq::from_repr(FqRepr([
-            0xb1bd962564b60ec9u64,
-            0x6356bf7e70c57bb2u64,
-            0xc71fb10d9c9a5fa5u64,
-            0x5c008d651ae8136eu64,
-            0xfddca0c49bee1c3du64,
-            0x037d15e2364d56f6u64,
-        ]))
-        .unwrap(),
-        c1: Fq::from_repr(FqRepr([
-            0xaccaa54b876c3ce5u64,
-            0x391251fcd979c2dbu64,
-            0x97b8b673a62e9cd5u64,
-            0xd51248d4a164d299u64,
-            0x6452efcd734f861eu64,
-            0x0a73a64e9a0e3483u64,
-        ]))
-        .unwrap(),
-    };
     let c0 = Fq::from_repr(FqRepr([
-        0xc4ce89448e0f4fffu64,
-        0x9a0035a789cfef4du64,
-        0x4f48e1ff0d7132aeu64,
-        0x07e84e66e9de7ef0u64,
-        0x2102e039cb42c6b8u64,
-        0x06fecf2041672340u64,
+        0xdfad7422a0bab889u64,
+        0x4a70b9f85b2c6f5au64,
+        0xc042f72ce88d22f5u64,
+        0x5be4f1d4b77bef62u64,
+        0x99207c0238d7ab04u64,
+        0x6135a609e9aad26u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0xe69438ef448ad850u64,
-        0x954c0d297661fc82u64,
-        0xbf358e867c59336fu64,
-        0xfac3601dcbf862eau64,
-        0xd9aceaf887525cdbu64,
-        0x0e51b74f813dfd6au64,
+        0x34f124763e7deb00u64,
+        0xa285e8e52a9cf5f5u64,
+        0x3463f5943127700cu64,
+        0xeea0ef2a7244c951u64,
+        0xeeedf7205412c6a4u64,
+        0x3ac7d4da624f424u64,
+    ]))
+    .unwrap();
+    let u = Fq2 { c0, c1 };
+    let c0 = Fq::from_repr(FqRepr([
+        0x470a0eb4c6ea41dau64,
+        0x38fc102a7ac96c4bu64,
+        0xf12cc75f43f16fau64,
+        0x1ae7110401d2bf60u64,
+        0xabcdd7ccae9a680au64,
+        0x7a6102bf5d97c9cu64,
+    ]))
+    .unwrap();
+    let c1 = Fq::from_repr(FqRepr([
+        0x184b0324bbf4ec25u64,
+        0x14e6a614c88543ebu64,
+        0x11b6dadcb855c02eu64,
+        0x45d1bc1a7b21bf38u64,
+        0x6e9811b7292cbe35u64,
+        0x20c43c3e504b49du64,
     ]))
     .unwrap();
     let xo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0x59cd709b1b3b8072u64,
-        0xe7443d98c2842710u64,
-        0x534e94af70924cc7u64,
-        0x60145fe41820a6dcu64,
-        0x4a55bb8953ef1f50u64,
-        0x0a2f5fead4ee6a5au64,
+        0x6c3bf81fbed884beu64,
+        0xc9913eda07951808u64,
+        0x74fe400d891f0d2fu64,
+        0x66459536249908u64,
+        0xc6dd9a1dd87e2749u64,
+        0x15ab62367cef7a16u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0xa265d8fea6249f2au64,
-        0xa272322d41e8e6c2u64,
-        0xefdf5789af18c2f7u64,
-        0x5481e012dc9ab6c2u64,
-        0xd5109fb7200322abu64,
-        0x023a35721ac1dbe8u64,
+        0xf0f9b256ffd9ffd0u64,
+        0xc481edd39780ca8fu64,
+        0x5ea12e0601bcb0adu64,
+        0x92ffe49990fd9032u64,
+        0xacc33c14b83593a7u64,
+        0x5048b4e608e7595u64,
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0xfa45c82ffbf31d6au64,
-        0xfff4cd0628e44310u64,
-        0x8065e297b5fca25fu64,
-        0xe0ecec0fca950701u64,
-        0x172acf37d5768b2fu64,
-        0x156e2906d93e57b2u64,
+        0x85e0d5489736e2b4u64,
+        0x6c5118e2091d88f0u64,
+        0x8b41f404e6916df1u64,
+        0xda99a9546f39acf9u64,
+        0x57587e3b4ed7340du64,
+        0x170ef6f0827380fcu64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0xb8f2155d6d22d679u64,
-        0xdcebf94b00ad9a1fu64,
-        0x7af62548d12dcbfau64,
-        0xbfd083985de108aau64,
-        0xa9f2c47b9121ae28u64,
-        0x0fc0cfaf7e05cae4u64,
+        0xdd61a360bf21c990u64,
+        0xe87c9a8fbef8edfeu64,
+        0x674f970b3d82e9b8u64,
+        0xb3f831e1eabbf03bu64,
+        0xcee9367de3ca318u64,
+        0x160a61c5ad6a3ff3u64,
     ]))
     .unwrap();
     let zo = Fq2 { c0, c1 };
@@ -672,81 +622,81 @@ fn test_osswu_g2() {
     assert_eq!(x, &xo);
     assert_eq!(y, &yo);
     assert_eq!(z, &zo);
+    check_g2_prime(x, y, z);
 
-    let u = Fq2 {
-        c0: Fq::from_repr(FqRepr([
-            0x3c3f2e8bf79d6585u64,
-            0x4ab24c9d117c5d0au64,
-            0x72dee8ec987fc836u64,
-            0xc2d2114b8268d659u64,
-            0xa2c21bf1bff581bdu64,
-            0x0cd12e27b03be553u64,
-        ]))
-        .unwrap(),
-        c1: Fq::from_repr(FqRepr([
-            0xf3d78b949ecf9984u64,
-            0xb782934b8b8e9a5bu64,
-            0x038e927090ae25ecu64,
-            0xbb732a7b2a94725bu64,
-            0x5963aa64cdf7cf76u64,
-            0x0476e812529bea48u64,
-        ]))
-        .unwrap(),
-    };
     let c0 = Fq::from_repr(FqRepr([
-        0xe3b587b17b1189eeu64,
-        0x5dcd7a9fa7d313bcu64,
-        0x4a69ab196b196b08u64,
-        0xaf7800d84621add2u64,
-        0xe23e0d36f4e250e6u64,
-        0x03da0f83f05e669bu64,
+        0xaf50b546edfc358au64,
+        0x3f1897a2f38a122eu64,
+        0xdad7bf8fa9eb51beu64,
+        0x34c9f03ed6c4ba66u64,
+        0x9ee6db517906e388u64,
+        0x1097781715e5c672u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0x2a4d0ce4472b5853u64,
-        0x681b53be33dfe404u64,
-        0x0726bf58ac3ac4e7u64,
-        0xcfd610a249430aa8u64,
-        0x92b6b223335d7cbeu64,
-        0x0ab192613fc39903u64,
+        0x9c0ae60f939506a8u64,
+        0xa4ef9b76946849beu64,
+        0x2d7708869060ff0cu64,
+        0xbd6d915e7952a21du64,
+        0xbfa926b829513c7eu64,
+        0x1732337eace2d016u64,
+    ]))
+    .unwrap();
+    let u = Fq2 { c0, c1 };
+    let c0 = Fq::from_repr(FqRepr([
+        0x80330decf209c0f9u64,
+        0x9c3c443d2148943cu64,
+        0x7b012833fbb8d302u64,
+        0xc46b5c5bdffaf903u64,
+        0xdc32da48bd881df2u64,
+        0xf7a0d745e96ee8cu64,
+    ]))
+    .unwrap();
+    let c1 = Fq::from_repr(FqRepr([
+        0x1f77ac75a53cb01du64,
+        0x331ccd087fe7e20u64,
+        0xc798a6624c5c2657u64,
+        0x318fdef5c6a03aaeu64,
+        0x75d649c08a4329b5u64,
+        0xd8461734f2b818du64,
     ]))
     .unwrap();
     let xo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0xee225d0910042c8du64,
-        0xf2300b82cfc678d6u64,
-        0xd9e86a46843133f4u64,
-        0x55096f7659be0913u64,
-        0xf45f04fe8542b01cu64,
-        0x12df415bff83ceadu64,
+        0x979dcacafe864046u64,
+        0x58d5a8feda1b9c68u64,
+        0x2dc7fe64d491eb67u64,
+        0x1e4eda823cf7dd15u64,
+        0x307aa36319482608u64,
+        0x2251c003acfa5u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0x07617e62c58173d3u64,
-        0x8abb5a736f18e25eu64,
-        0x710536695390588du64,
-        0x074b734430b0fca7u64,
-        0xd7e7f015840b6c0eu64,
-        0x02671c2426b1ab44u64,
+        0x71eae2c9a83ace48u64,
+        0x94e7e90db7f89c6eu64,
+        0xeb1f1e2094f14b12u64,
+        0x4c44debec0dd26f4u64,
+        0x78fd720e9efd3821u64,
+        0x145c52e57606ffa5u64,
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0x9f6b2cf30df6aec1u64,
-        0x890ad07b8473fd9cu64,
-        0x8cf00156bc32fc39u64,
-        0x3878473de1ad29b6u64,
-        0x1afd0d4ee306d7a6u64,
-        0x06844c10fc7fd08au64,
+        0x9b1eaa292b0b8d6cu64,
+        0xf3556f782b80156au64,
+        0x7232a60dfcf45578u64,
+        0xda283bc794f1c552u64,
+        0x72e449993919e49au64,
+        0xdd03753cbb62029u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0xbc91c4acf76320fbu64,
-        0x2e6116dfcb361845u64,
-        0x247c90216d613d76u64,
-        0x4a1e607efc18c456u64,
-        0x5237c926a44662d3u64,
-        0x133fab21ff4f228fu64,
+        0x5e1300be109addd0u64,
+        0xf9a438110153ac6fu64,
+        0x3f16da21234b7dfeu64,
+        0x668a29f291c491ccu64,
+        0xb007536e7f23b656u64,
+        0x1435472d4037af40u64,
     ]))
     .unwrap();
     let zo = Fq2 { c0, c1 };
@@ -755,81 +705,81 @@ fn test_osswu_g2() {
     assert_eq!(x, &xo);
     assert_eq!(y, &yo);
     assert_eq!(z, &zo);
+    check_g2_prime(x, y, z);
 
-    let u = Fq2 {
-        c0: Fq::from_repr(FqRepr([
-            0x24ca8a83e995a3eau64,
-            0x872b72d96f8346a8u64,
-            0x7821255f7b61bea4u64,
-            0x55cec1fd89d1e8d1u64,
-            0x33114ee21773f115u64,
-            0x01cd4733f8d1813cu64,
-        ]))
-        .unwrap(),
-        c1: Fq::from_repr(FqRepr([
-            0xc2a59c091a5fd6e0u64,
-            0xda2b2811c76dc106u64,
-            0xa6fb05a057525206u64,
-            0x9715325bc1ff013au64,
-            0x006ec8a9da0659c8u64,
-            0x088855bf8353b4c7u64,
-        ]))
-        .unwrap(),
-    };
     let c0 = Fq::from_repr(FqRepr([
-        0x159fbfd21f8014f8u64,
-        0xde6623e7dad77114u64,
-        0x64d66f8f65b8ce6fu64,
-        0x9fa138196080ad3eu64,
-        0xaa3ff37e7c6626b9u64,
-        0x03e68e6ff72199a8u64,
+        0xea84b00658419fc4u64,
+        0xdc23cabb1c5bedd0u64,
+        0x51b2c9560f33a8d5u64,
+        0xdce76c736ec4a3d3u64,
+        0xaed02316b6641449u64,
+        0x17c2c631ba5d8bebu64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0xec8440c8f359b118u64,
-        0xc3b8a1e3b95f49b2u64,
-        0x5fbc945a4c2f4cffu64,
-        0xb02af47182709e7eu64,
-        0x090a35d95de5079fu64,
-        0x10d838cb45cbff85u64,
+        0xb2577499ede5f632u64,
+        0xca3d6ab753b878fu64,
+        0x1833b9b48c4d08cdu64,
+        0x9df66243f1e33375u64,
+        0xeecbfb9b9c09d227u64,
+        0x7a4a6b660e99b12u64,
+    ]))
+    .unwrap();
+    let u = Fq2 { c0, c1 };
+    let c0 = Fq::from_repr(FqRepr([
+        0x9b719651c4c746e6u64,
+        0xbd438453f89d2adcu64,
+        0x22116768f501742eu64,
+        0x51174b39ab6bc2cu64,
+        0xe1c665b1e5c63de6u64,
+        0x1842adaf28baae5u64,
+    ]))
+    .unwrap();
+    let c1 = Fq::from_repr(FqRepr([
+        0x6b54949d6f96dbcfu64,
+        0xa915298df9efc27au64,
+        0x3439428ca0b987e5u64,
+        0x61ea03ec041d8965u64,
+        0x86c6f8125dc0bbc2u64,
+        0xddb31de92a06828u64,
     ]))
     .unwrap();
     let xo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0x2f602386c64c5820u64,
-        0x0a453b197e9ad9a7u64,
-        0xe1af19735c34a642u64,
-        0xfb8943c756999f3fu64,
-        0xa9bc72de80dcdc15u64,
-        0x119a58b809dad83fu64,
+        0x4b0f0747efbfaa2bu64,
+        0xf5501541912d865bu64,
+        0x977c499198af07aau64,
+        0xd446b9a7fad8f3b9u64,
+        0x4badb10ce5e47e33u64,
+        0x907aa22e7410129u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0x413ac6090656fd6au64,
-        0xbf9a6d121c92b812u64,
-        0x8fac010cb96c3dacu64,
-        0xef7318cc80616a9du64,
-        0x9d5de9c237dd356fu64,
-        0x0d732bfd0e8c702bu64,
+        0xdd46de8193ef06f6u64,
+        0x4cce40b2f67a7123u64,
+        0xd843215fe615c9b4u64,
+        0x8d839820983c4b41u64,
+        0x16042cc81ac4edddu64,
+        0x7eff2aeb396734au64,
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0x62c5768f4975c6d6u64,
-        0xbc5fb7b66dba95e6u64,
-        0x539bcb35920ec1c9u64,
-        0x4d90263bef559ad1u64,
-        0x2464bf59a471c752u64,
-        0x009207a5c9d0d734u64,
+        0x23f96d2a1601cb7u64,
+        0x6a074b0a3175cbfcu64,
+        0x28a4ab30815e16a1u64,
+        0x1030979d8436dd2eu64,
+        0xb43ad04879add9d4u64,
+        0x522b59175626baau64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0xb916632d76be2983u64,
-        0x4b01c074b64687fcu64,
-        0x4e46bfdc0809abc7u64,
-        0x86d345d9e596f5a1u64,
-        0x03e64d0fcc4e7edbu64,
-        0x1802bf2004793570u64,
+        0x6992705ff971d0dau64,
+        0x295c53f6b1faaa69u64,
+        0xe07009934bc1022eu64,
+        0x47e2a110d26f261u64,
+        0x1721f26639694182u64,
+        0x15dba187573a86c3u64,
     ]))
     .unwrap();
     let zo = Fq2 { c0, c1 };
@@ -838,6 +788,7 @@ fn test_osswu_g2() {
     assert_eq!(x, &xo);
     assert_eq!(y, &yo);
     assert_eq!(z, &zo);
+    check_g2_prime(x, y, z);
 
     let mut rng = thread_rng();
     for _ in 0..32 {
