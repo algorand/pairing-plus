@@ -313,15 +313,7 @@ fn test_osswu_g1() {
 
 #[test]
 fn test_osswu_g2() {
-    let c0 = Fq::from_repr(FqRepr([
-        0xb1e40u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-    ]))
-    .unwrap();
+    let c0 = Fq::from_repr(FqRepr([0xb1e40u64, 0x0u64, 0x0u64, 0x0u64, 0x0u64, 0x0u64])).unwrap();
     let c1 = Fq::from_repr(FqRepr([
         0xb9fefffffffbf5ebu64,
         0x1eabfffeb153ffffu64,
@@ -351,15 +343,7 @@ fn test_osswu_g2() {
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };
-    let c0 = Fq::from_repr(FqRepr([
-        0xf0u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-    ]))
-    .unwrap();
+    let c0 = Fq::from_repr(FqRepr([0xf0u64, 0x0u64, 0x0u64, 0x0u64, 0x0u64, 0x0u64])).unwrap();
     let c1 = Fq::from_repr(FqRepr([
         0xb9feffffffffa8cbu64,
         0x1eabfffeb153ffffu64,
@@ -377,15 +361,7 @@ fn test_osswu_g2() {
     assert_eq!(z, &zo);
     check_g2_prime(x, y, z);
 
-    let c0 = Fq::from_repr(FqRepr([
-        0x76980u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-    ]))
-    .unwrap();
+    let c0 = Fq::from_repr(FqRepr([0x76980u64, 0x0u64, 0x0u64, 0x0u64, 0x0u64, 0x0u64])).unwrap();
     let c1 = Fq::from_repr(FqRepr([
         0x3b4c00u64,
         0x0u64,
@@ -415,15 +391,7 @@ fn test_osswu_g2() {
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };
-    let c0 = Fq::from_repr(FqRepr([
-        0x2d0u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-        0x0u64,
-    ]))
-    .unwrap();
+    let c0 = Fq::from_repr(FqRepr([0x2d0u64, 0x0u64, 0x0u64, 0x0u64, 0x0u64, 0x0u64])).unwrap();
     let c1 = Fq::from_repr(FqRepr([
         0xb9feffffffffa9bbu64,
         0x1eabfffeb153ffffu64,
