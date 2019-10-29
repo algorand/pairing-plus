@@ -8,7 +8,7 @@ before_script:
   - rustup component add clippy
 
 script:
-  - cargo clippy --all-targets --all-features -- -D warnings
+  - cargo clippy -- -D warnings
   - travis_wait 360 cargo test
   - travis_wait 360 cargo test -- --ignored
   - travis_wait 360 cargo test --release
