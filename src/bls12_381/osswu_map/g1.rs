@@ -27,12 +27,21 @@ pub(super) const ELLP_B: Fq = Fq(FqRepr([
 ]));
 
 const XI: Fq = Fq(FqRepr([
-    0x43f5fffffffcaaaeu64,
-    0x32b7fff2ed47fffdu64,
-    0x07e83a49a2e99d69u64,
-    0xeca8f3318332bb7au64,
-    0xef148d1ea0f4c069u64,
-    0x040ab3263eff0206u64,
+    0x886c00000023ffdcu64,
+    0xf70008d3090001du64,
+    0x77672417ed5828c3u64,
+    0x9dac23e943dc1740u64,
+    0x50553f1b9c131521u64,
+    0x78c712fbe0ab6e8u64,
+]));
+
+const SQRT_M_XI_CUBED: Fq = Fq(FqRepr([
+    0x43b571cad3215f1fu64,
+    0xccb460ef1c702dc2u64,
+    0x742d884f4f97100bu64,
+    0xdb2c3e3238a3382bu64,
+    0xe40f3fa13fce8f88u64,
+    0x73a2af9892a2ffu64,
 ]));
 
 impl OSSWUMap for G1 {
@@ -64,9 +73,10 @@ impl OSSWUMap for G1 {
             } else {
                 let mut x1_num = x0_num; // g(x1) is square
                 x1_num.mul_assign(&xi_usq); // x1 = xi u^2 g(x0)
-                let mut y1 = usq; // y1 = u^3 g(x0) ^ ((p - 1) // 4)
+                let mut y1 = usq; // y1 = sqrt(-xi**3) * u^3 g(x0) ^ ((p - 1) // 4)
                 y1.mul_assign(&u);
                 y1.mul_assign(&sqrt_candidate);
+                y1.mul_assign(&SQRT_M_XI_CUBED);
                 (x1_num, y1)
             }
         };
