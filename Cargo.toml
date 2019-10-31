@@ -11,7 +11,7 @@ authors = [
     "Riad S. Wahby <kwantam@gmail.com>",
     "Zhenfei Zhang <zhenfei@algorand.com>"
 ]
-license = "MIT/Apache-2.0"
+license = "MIT"
 
 description = "Pairing-friendly elliptic curve library"
 
