@@ -2325,12 +2325,12 @@ fn test_fq_hash_to_field() {
     let mut hash_iter = HashToField::<Fq>::new("hello world", None);
     let fq_val = hash_iter.next().unwrap();
     let expect = FqRepr([
-        0x47137dbe0aab2c73u64,
-        0x203a41a517b34d1cu64,
-        0x55d019e5914e11c1u64,
-        0xc106ddc4af8ffa5du64,
-        0x1ff762c5f1bfd8b4u64,
-        0x19f78b0bb3eba06au64,
+        0xdfccf585f3c3abu64,
+        0x817786f85a6977d5u64,
+        0x4878057839c2eeb9u64,
+        0xdf824d0b3cacd45cu64,
+        0xac77eef7ea711095u64,
+        0x2457b5ea0140614u64,
     ]);
     assert_eq!(fq_val, Fq::from_repr(expect).unwrap());
 
@@ -2339,12 +2339,12 @@ fn test_fq_hash_to_field() {
 
     let fq_val = hash_iter.next().unwrap();
     let expect = FqRepr([
-        0x1a29a8209c6f3d2fu64,
-        0x4a6be9dbcd5dd3ebu64,
-        0xbe4a8d4259350048u64,
-        0xdf453be6214f7ddcu64,
-        0x699c40affb0d1314u64,
-        0xcfecc5419b505ffu64,
+        0xe60a4d2be306281eu64,
+        0xf431b0bb0218acdu64,
+        0x2591ca592c870e9cu64,
+        0xd53fc832b7a3eae4u64,
+        0x9d4cbbb85780e0f4u64,
+        0x6ed9a29b5a2f831u64,
     ]);
     assert_eq!(fq_val, Fq::from_repr(expect).unwrap());
 }

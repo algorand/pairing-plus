@@ -1,14 +1,11 @@
-Copyrights in the "pairing" library are retained by their contributors. No
-copyright assignment is required to contribute to the "pairing" library.
+Copyrights in the "pairing-plus" library are retained by their contributors. No
+copyright assignment is required to contribute to the "pairing-plus" library.
 
-The "pairing" library is licensed under either of
+The "pairing-plus" library is licensed under
 
- * Apache License, Version 2.0, (see ./LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0)
- * MIT license (see ./LICENSE-MIT or http://opensource.org/licenses/MIT)
-
-at your option.
+  * MIT license (see ./LICENSE-MIT or http://opensource.org/licenses/MIT)
 
 Unless you explicitly state otherwise, any contribution intentionally
-submitted for inclusion in the work by you, as defined in the Apache-2.0
-license, shall be dual licensed as above, without any additional terms or
+submitted for inclusion in the work by you, as defined in the MIT
+license, shall be licensed as above, without any additional terms or
 conditions.

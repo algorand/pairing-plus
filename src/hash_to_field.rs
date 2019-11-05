@@ -20,13 +20,18 @@ pub struct HashToField<T> {
 impl<T: FromRO> HashToField<T> {
     /// Create a new struct given a message and ciphersuite.
     pub fn new<B: AsRef<[u8]>>(msg: B, dst: Option<&[u8]>) -> HashToField<T> {
-        HashToField::from_hash(Sha256::digest(msg.as_ref()), dst)
+        // Unfortunately, Hkdf requires a &[u8]; not obvious to me how to avoid copying.
+        // Would be nicer if Hkdf operated on an Iterator over u8 instead...
+        let mut msg_padded = Vec::<u8>::with_capacity(msg.as_ref().len() + 1);
+        msg_padded.extend_from_slice(msg.as_ref());
+        msg_padded.push(0u8);
+        HashToField::from_padded(&msg_padded[..], dst)
     }
 
-    /// Create a new struct given a message already hashed with SHA-256
-    pub fn from_hash(msg_hash: GenericArray<u8, <Sha256 as Digest>::OutputSize>, dst: Option<&[u8]>) -> HashToField<T> {
+    /// Create a new struct given a message already padded with a single 0x00 byte
+    pub fn from_padded<B: AsRef<[u8]>>(msg_padded: B, dst: Option<&[u8]>) -> HashToField<T> {
         HashToField::<T> {
-            msg_hashed: Hkdf::<Sha256>::extract(dst, msg_hash.as_ref()).0,
+            msg_hashed: Hkdf::<Sha256>::extract(dst, msg_padded.as_ref()).0,
             ctr: 0,
             phantom: PhantomData::<T>,
         }
