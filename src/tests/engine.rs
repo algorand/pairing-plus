@@ -1,13 +1,14 @@
-use rand::{Rand, SeedableRng, XorShiftRng};
-
+use rand_core::SeedableRng;
 use {CurveAffine, CurveProjective, Engine, Field, PrimeField};
 
 pub fn engine_tests<E: Engine>() {
-    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
-
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
     for _ in 0..10 {
-        let a = E::G1::rand(&mut rng).into_affine();
-        let b = E::G2::rand(&mut rng).into_affine();
+        let a = E::G1::random(&mut rng).into_affine();
+        let b = E::G2::random(&mut rng).into_affine();
 
         assert!(a.pairing_with(&b) == b.pairing_with(&a));
         assert!(a.pairing_with(&b) == E::pairing(a, b));
@@ -17,10 +18,10 @@ pub fn engine_tests<E: Engine>() {
         let z1 = E::G1Affine::zero().prepare();
         let z2 = E::G2Affine::zero().prepare();
 
-        let a = E::G1::rand(&mut rng).into_affine().prepare();
-        let b = E::G2::rand(&mut rng).into_affine().prepare();
-        let c = E::G1::rand(&mut rng).into_affine().prepare();
-        let d = E::G2::rand(&mut rng).into_affine().prepare();
+        let a = E::G1::random(&mut rng).into_affine().prepare();
+        let b = E::G2::random(&mut rng).into_affine().prepare();
+        let c = E::G1::random(&mut rng).into_affine().prepare();
+        let d = E::G2::random(&mut rng).into_affine().prepare();
 
         assert_eq!(
             E::Fqk::one(),
@@ -48,12 +49,14 @@ pub fn engine_tests<E: Engine>() {
 }
 
 fn random_miller_loop_tests<E: Engine>() {
-    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
-
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
     // Exercise the miller loop for a reduced pairing
     for _ in 0..1000 {
-        let a = E::G1::rand(&mut rng);
-        let b = E::G2::rand(&mut rng);
+        let a = E::G1::random(&mut rng);
+        let b = E::G2::random(&mut rng);
 
         let p2 = E::pairing(a, b);
 
@@ -67,10 +70,10 @@ fn random_miller_loop_tests<E: Engine>() {
 
     // Exercise a double miller loop
     for _ in 0..1000 {
-        let a = E::G1::rand(&mut rng);
-        let b = E::G2::rand(&mut rng);
-        let c = E::G1::rand(&mut rng);
-        let d = E::G2::rand(&mut rng);
+        let a = E::G1::random(&mut rng);
+        let b = E::G2::random(&mut rng);
+        let c = E::G1::random(&mut rng);
+        let d = E::G2::random(&mut rng);
 
         let ab = E::pairing(a, b);
         let cd = E::pairing(c, d);
@@ -91,14 +94,16 @@ fn random_miller_loop_tests<E: Engine>() {
 }
 
 fn random_bilinearity_tests<E: Engine>() {
-    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
-
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
     for _ in 0..1000 {
-        let a = E::G1::rand(&mut rng);
-        let b = E::G2::rand(&mut rng);
+        let a = E::G1::random(&mut rng);
+        let b = E::G2::random(&mut rng);
 
-        let c = E::Fr::rand(&mut rng);
-        let d = E::Fr::rand(&mut rng);
+        let c = E::Fr::random(&mut rng);
+        let d = E::Fr::random(&mut rng);
 
         let mut ac = a;
         ac.mul_assign(c);

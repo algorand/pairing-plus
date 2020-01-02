@@ -13,11 +13,14 @@
 // Force public structures to implement Debug
 #![deny(missing_debug_implementations)]
 
-extern crate byteorder;
 extern crate ff;
 extern crate hkdf;
-extern crate rand;
+extern crate rand_core;
+extern crate rand_xorshift;
 extern crate sha2;
+
+#[macro_use]
+extern crate zeroize;
 
 #[cfg(test)]
 pub mod tests;
@@ -144,13 +147,16 @@ pub trait CurveProjective:
     + Sync
     + fmt::Debug
     + fmt::Display
-    + rand::Rand
+//    + rand::Rand
     + 'static
 {
     type Engine: Engine<Fr = Self::Scalar>;
     type Scalar: PrimeField + SqrtField;
     type Base: SqrtField;
     type Affine: CurveAffine<Projective = Self, Scalar = Self::Scalar>;
+
+    /// Generate a random curve point.
+    fn random<R: rand_core::RngCore>(rng: &mut R)-> Self;
 
     /// Returns the additive identity.
     fn zero() -> Self;

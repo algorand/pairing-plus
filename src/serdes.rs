@@ -423,10 +423,13 @@ impl SerDes for G2Affine {
 #[cfg(test)]
 mod serdes_test {
     use super::*;
+    use rand_core::SeedableRng;
     #[test]
     fn test_g1_serialization_rand() {
-        use rand::Rand;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand_xorshift::XorShiftRng::from_seed([
+            0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
+            0xbc, 0xe5,
+        ]);
 
         // G1::zero, compressed
         let g1_zero = G1::zero();
@@ -447,7 +450,7 @@ mod serdes_test {
         assert_eq!(g1_one, g1_one_recover);
 
         // G1::rand, compressed
-        let g1_rand = G1::rand(&mut rng);
+        let g1_rand = G1::random(&mut rng);
         let mut buf: Vec<u8> = vec![];
         // serialize a G1 element into buffer
         assert!(g1_rand.serialize(&mut buf, true).is_ok());
@@ -473,7 +476,7 @@ mod serdes_test {
         assert_eq!(g1_one, g1_one_recover);
 
         // G1::rand, uncompressed
-        let g1_rand = G1::rand(&mut rng);
+        let g1_rand = G1::random(&mut rng);
         let mut buf: Vec<u8> = vec![];
         // serialize a G1 element into buffer
         assert!(g1_rand.serialize(&mut buf, false).is_ok());
@@ -484,8 +487,10 @@ mod serdes_test {
 
     #[test]
     fn test_g2_serialization_rand() {
-        use rand::Rand;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand_xorshift::XorShiftRng::from_seed([
+            0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
+            0xbc, 0xe5,
+        ]);
         // G2::zero, compressed
         let g2_zero = G2::zero();
         let mut buf: Vec<u8> = vec![];
@@ -505,7 +510,7 @@ mod serdes_test {
         assert_eq!(g2_one, g2_one_recover);
 
         // G2::rand, compressed
-        let g2_rand = G2::rand(&mut rng);
+        let g2_rand = G2::random(&mut rng);
         let mut buf: Vec<u8> = vec![];
         // serialize a G2 element into buffer
         assert!(g2_rand.serialize(&mut buf, true).is_ok());
@@ -530,7 +535,7 @@ mod serdes_test {
         assert_eq!(g2_one, g2_one_recover);
 
         // G2::rand uncompressed
-        let g2_rand = G2::rand(&mut rng);
+        let g2_rand = G2::random(&mut rng);
         let mut buf: Vec<u8> = vec![];
         // serialize a G2 element into buffer
         assert!(g2_rand.serialize(&mut buf, false).is_ok());
@@ -541,8 +546,10 @@ mod serdes_test {
 
     #[test]
     fn test_g1affine_serialization_rand() {
-        use rand::Rand;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand_xorshift::XorShiftRng::from_seed([
+            0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
+            0xbc, 0xe5,
+        ]);
 
         // G1::zero, compressed
         let g1_zero = G1::zero().into_affine();
@@ -563,7 +570,7 @@ mod serdes_test {
         assert_eq!(g1_one, g1_one_recover);
 
         // G1::rand, compressed
-        let g1_rand = G1::rand(&mut rng).into_affine();
+        let g1_rand = G1::random(&mut rng).into_affine();
         let mut buf: Vec<u8> = vec![];
         // serialize a G1 element into buffer
         assert!(g1_rand.serialize(&mut buf, true).is_ok());
@@ -589,7 +596,7 @@ mod serdes_test {
         assert_eq!(g1_one, g1_one_recover);
 
         // G1::rand, uncompressed
-        let g1_rand = G1::rand(&mut rng).into_affine();
+        let g1_rand = G1::random(&mut rng).into_affine();
         let mut buf: Vec<u8> = vec![];
         // serialize a G1 element into buffer
         assert!(g1_rand.serialize(&mut buf, false).is_ok());
@@ -600,8 +607,10 @@ mod serdes_test {
 
     #[test]
     fn test_g2affine_serialization_rand() {
-        use rand::Rand;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand_xorshift::XorShiftRng::from_seed([
+            0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
+            0xbc, 0xe5,
+        ]);
         // G2::zero, compressed
         let g2_zero = G2::zero().into_affine();
         let mut buf: Vec<u8> = vec![];
@@ -621,7 +630,7 @@ mod serdes_test {
         assert_eq!(g2_one, g2_one_recover);
 
         // G2::rand, compressed
-        let g2_rand = G2::rand(&mut rng).into_affine();
+        let g2_rand = G2::random(&mut rng).into_affine();
         let mut buf: Vec<u8> = vec![];
         // serialize a G2 element into buffer
         assert!(g2_rand.serialize(&mut buf, true).is_ok());
@@ -646,7 +655,7 @@ mod serdes_test {
         assert_eq!(g2_one, g2_one_recover);
 
         // G2::rand uncompressed
-        let g2_rand = G2::rand(&mut rng).into_affine();
+        let g2_rand = G2::random(&mut rng).into_affine();
         let mut buf: Vec<u8> = vec![];
         // serialize a G2 element into buffer
         assert!(g2_rand.serialize(&mut buf, false).is_ok());
@@ -658,8 +667,10 @@ mod serdes_test {
     #[test]
     fn test_fr_serialization_rand() {
         use ff::Field;
-        use rand::Rand;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand_xorshift::XorShiftRng::from_seed([
+            0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
+            0xbc, 0xe5,
+        ]);
         // fr::zero
         let fr_zero = Fr::zero();
         let mut buf: Vec<u8> = vec![];
@@ -679,7 +690,7 @@ mod serdes_test {
         assert_eq!(fr_one, fr_one_recover);
 
         // fr::rand
-        let fr_rand = Fr::rand(&mut rng);
+        let fr_rand = Fr::random(&mut rng);
         let mut buf: Vec<u8> = vec![];
         // serialize a G1 element into buffer
         assert!(fr_rand.serialize(&mut buf, true).is_ok());
@@ -691,8 +702,10 @@ mod serdes_test {
     #[test]
     fn test_fq12_serialization_rand() {
         use ff::Field;
-        use rand::Rand;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand_xorshift::XorShiftRng::from_seed([
+            0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
+            0xbc, 0xe5,
+        ]);
         // fq12::zero
         let fq12_zero = Fq12::zero();
         let mut buf: Vec<u8> = vec![];
@@ -712,7 +725,7 @@ mod serdes_test {
         assert_eq!(fq12_one, fq12_one_recover);
 
         // fr::rand
-        let fq12_rand = Fq12::rand(&mut rng);
+        let fq12_rand = Fq12::random(&mut rng);
         let mut buf: Vec<u8> = vec![];
         // serialize a G1 element into buffer
         assert!(fq12_rand.serialize(&mut buf, true).is_ok());
