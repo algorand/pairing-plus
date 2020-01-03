@@ -265,7 +265,7 @@ fn test_fr_repr_sub_noborrow() {
     );
 
     for _ in 0..1000 {
-        let mut a = FrRepr::random(&mut rng);
+        let mut a = Fr::random(&mut rng).into_repr();
         a.0[3] >>= 30;
         let mut b = a;
         for _ in 0..10 {
@@ -368,9 +368,9 @@ fn test_fr_repr_add_nocarry() {
 
     // Test for the associativity of addition.
     for _ in 0..1000 {
-        let mut a = FrRepr::random(&mut rng);
-        let mut b = FrRepr::random(&mut rng);
-        let mut c = FrRepr::random(&mut rng);
+        let mut a = Fr::random(&mut rng).into_repr();
+        let mut b = Fr::random(&mut rng).into_repr();
+        let mut c = Fr::random(&mut rng).into_repr();
 
         // Unset the first few bits, so that overflow won't occur.
         a.0[3] >>= 3;
@@ -1045,5 +1045,5 @@ fn fr_field_tests() {
 
 #[test]
 fn fr_repr_tests() {
-    ::tests::repr::random_repr_tests::<FrRepr>();
+    ::tests::repr::random_repr_tests::<Fr, FrRepr>();
 }

@@ -1504,7 +1504,7 @@ fn test_fq_repr_sub_noborrow() {
     );
 
     for _ in 0..1000 {
-        let mut a = FqRepr::random(&mut rng);
+        let mut a = Fq::random(&mut rng).into_repr();
         a.0[5] >>= 30;
         let mut b = a;
         for _ in 0..10 {
@@ -1594,9 +1594,9 @@ fn test_fq_repr_add_nocarry() {
 
     // Test for the associativity of addition.
     for _ in 0..1000 {
-        let mut a = FqRepr::random(&mut rng);
-        let mut b = FqRepr::random(&mut rng);
-        let mut c = FqRepr::random(&mut rng);
+        let mut a = Fq::random(&mut rng).into_repr();
+        let mut b = Fq::random(&mut rng).into_repr();
+        let mut c = Fq::random(&mut rng).into_repr();
 
         // Unset the first few bits, so that overflow won't occur.
         a.0[5] >>= 3;
@@ -2300,7 +2300,7 @@ fn test_fq_ordering() {
 
 #[test]
 fn fq_repr_tests() {
-    ::tests::repr::random_repr_tests::<FqRepr>();
+    ::tests::repr::random_repr_tests::<Fq, FqRepr>();
 }
 
 #[test]

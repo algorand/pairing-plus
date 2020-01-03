@@ -310,8 +310,8 @@ mod subgroup_check {
     use super::G1Affine;
     #[cfg(test)]
     use super::G1;
-    // #[cfg(test)]
-    // use rand::{thread_rng, Rand};
+    #[cfg(test)]
+    use rand_core::SeedableRng;
     use SubgroupCheck;
     #[cfg(test)]
     use {CurveAffine, CurveProjective};

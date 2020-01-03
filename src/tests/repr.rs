@@ -1,19 +1,19 @@
-use ff::PrimeFieldRepr;
+use ff::{PrimeField, PrimeFieldRepr};
 use rand_core::SeedableRng;
 
-pub fn random_repr_tests<R: PrimeFieldRepr>() {
-    random_encoding_tests::<R>();
-    random_shl_tests::<R>();
-    random_shr_tests::<R>();
+pub fn random_repr_tests<F: PrimeField, R: PrimeFieldRepr>() {
+    random_encoding_tests::<F, R>();
+    random_shl_tests::<F>();
+    random_shr_tests::<F>();
 }
 
-fn random_encoding_tests<R: PrimeFieldRepr>() {
+fn random_encoding_tests<F: PrimeField, R: PrimeFieldRepr>() {
     let mut rng = rand_xorshift::XorShiftRng::from_seed([
         0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
         0xe5,
     ]);
     for _ in 0..1000 {
-        let r = R::random(&mut rng);
+        let r = F::random(&mut rng).into_repr();
 
         // Big endian
         {
@@ -23,7 +23,7 @@ fn random_encoding_tests<R: PrimeFieldRepr>() {
             r.write_be(&mut v).unwrap();
             rdecoded.read_be(&v[0..]).unwrap();
 
-            assert_eq!(r, rdecoded);
+            assert_eq!(r.as_ref(), rdecoded.as_ref());
         }
 
         // Little endian
@@ -34,7 +34,7 @@ fn random_encoding_tests<R: PrimeFieldRepr>() {
             r.write_le(&mut v).unwrap();
             rdecoded.read_le(&v[0..]).unwrap();
 
-            assert_eq!(r, rdecoded);
+            assert_eq!(r.as_ref(), rdecoded.as_ref());
         }
 
         {
@@ -57,13 +57,13 @@ fn random_encoding_tests<R: PrimeFieldRepr>() {
     }
 }
 
-fn random_shl_tests<R: PrimeFieldRepr>() {
+fn random_shl_tests<F: PrimeField>() {
     let mut rng = rand_xorshift::XorShiftRng::from_seed([
         0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
         0xe5,
     ]);
     for _ in 0..100 {
-        let r = R::random(&mut rng);
+        let r = F::random(&mut rng).into_repr();
 
         for shift in 0..=r.num_bits() {
             let mut r1 = r;
@@ -80,13 +80,13 @@ fn random_shl_tests<R: PrimeFieldRepr>() {
     }
 }
 
-fn random_shr_tests<R: PrimeFieldRepr>() {
+fn random_shr_tests<F: PrimeField>() {
     let mut rng = rand_xorshift::XorShiftRng::from_seed([
         0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
         0xe5,
     ]);
     for _ in 0..100 {
-        let r = R::random(&mut rng);
+        let r = F::random(&mut rng).into_repr();
 
         for shift in 0..=r.num_bits() {
             let mut r1 = r;
