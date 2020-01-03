@@ -5,7 +5,8 @@ Tests for osswu map
 use super::OSSWUMap;
 use bls12_381::{Fq, Fq2, FqRepr, G1, G2};
 use ff::{Field, PrimeField};
-use rand::{thread_rng, Rand};
+use rand_core::SeedableRng;
+//use rand::{thread_rng, Rand};
 
 /// check that the point (X : Y : Z)==(X/Z^2, Y/Z^3) is on E: y^2 = x^3 + ELLP_A * x + ELLP_B
 fn check_g_prime<F: Field>(x: &F, y: &F, z: &F, a: &F, b: &F) {
@@ -302,9 +303,12 @@ fn test_osswu_g1() {
     assert_eq!(z, &zo);
     check_g1_prime(x, y, z);
 
-    let mut rng = thread_rng();
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
     for _ in 0..32 {
-        let input = Fq::rand(&mut rng);
+        let input = Fq::random(&mut rng);
         let p = G1::osswu_map(&input);
         let G1 { x, y, z } = &p;
         check_g1_prime(x, y, z);
@@ -758,9 +762,12 @@ fn test_osswu_g2() {
     assert_eq!(z, &zo);
     check_g2_prime(x, y, z);
 
-    let mut rng = thread_rng();
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
     for _ in 0..32 {
-        let input = Fq2::rand(&mut rng);
+        let input = Fq2::random(&mut rng);
         let p = G2::osswu_map(&input);
         let G2 { x, y, z } = &p;
         check_g2_prime(x, y, z);

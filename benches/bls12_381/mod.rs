@@ -4,18 +4,21 @@ mod fq12;
 mod fq2;
 mod fr;
 
-use rand::{Rand, SeedableRng, XorShiftRng};
-
 use pairing::bls12_381::*;
-use pairing::{CurveAffine, Engine};
+use pairing::{CurveAffine, CurveProjective, Engine};
+use rand_core::SeedableRng;
+use rand_xorshift::XorShiftRng;
 
 #[bench]
 fn bench_pairing_g1_preparation(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
+    let mut rng = XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
 
-    let v: Vec<G1> = (0..SAMPLES).map(|_| G1::rand(&mut rng)).collect();
+    let v: Vec<G1> = (0..SAMPLES).map(|_| G1::random(&mut rng)).collect();
 
     let mut count = 0;
     b.iter(|| {
@@ -29,9 +32,12 @@ fn bench_pairing_g1_preparation(b: &mut ::test::Bencher) {
 fn bench_pairing_g2_preparation(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
+    let mut rng = XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
 
-    let v: Vec<G2> = (0..SAMPLES).map(|_| G2::rand(&mut rng)).collect();
+    let v: Vec<G2> = (0..SAMPLES).map(|_| G2::random(&mut rng)).collect();
 
     let mut count = 0;
     b.iter(|| {
@@ -45,13 +51,15 @@ fn bench_pairing_g2_preparation(b: &mut ::test::Bencher) {
 fn bench_pairing_miller_loop(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
-
+    let mut rng = XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
     let v: Vec<(G1Prepared, G2Prepared)> = (0..SAMPLES)
         .map(|_| {
             (
-                G1Affine::from(G1::rand(&mut rng)).prepare(),
-                G2Affine::from(G2::rand(&mut rng)).prepare(),
+                G1Affine::from(G1::random(&mut rng)).prepare(),
+                G2Affine::from(G2::random(&mut rng)).prepare(),
             )
         })
         .collect();
@@ -68,13 +76,16 @@ fn bench_pairing_miller_loop(b: &mut ::test::Bencher) {
 fn bench_pairing_final_exponentiation(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
+    let mut rng = XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
 
     let v: Vec<Fq12> = (0..SAMPLES)
         .map(|_| {
             (
-                G1Affine::from(G1::rand(&mut rng)).prepare(),
-                G2Affine::from(G2::rand(&mut rng)).prepare(),
+                G1Affine::from(G1::random(&mut rng)).prepare(),
+                G2Affine::from(G2::random(&mut rng)).prepare(),
             )
         })
         .map(|(ref p, ref q)| Bls12::miller_loop(&[(p, q)]))
@@ -92,10 +103,12 @@ fn bench_pairing_final_exponentiation(b: &mut ::test::Bencher) {
 fn bench_pairing_full(b: &mut ::test::Bencher) {
     const SAMPLES: usize = 1000;
 
-    let mut rng = XorShiftRng::from_seed([0x5dbe_6259, 0x8d31_3d76, 0x3237_db17, 0xe5bc_0654]);
-
+    let mut rng = XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
     let v: Vec<(G1, G2)> = (0..SAMPLES)
-        .map(|_| (G1::rand(&mut rng), G2::rand(&mut rng)))
+        .map(|_| (G1::random(&mut rng), G2::random(&mut rng)))
         .collect();
 
     let mut count = 0;

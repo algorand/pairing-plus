@@ -473,14 +473,17 @@ mod tests {
     use super::ClearH;
     use bls12_381::{Fq, Fq2, FqRepr, FrRepr, G1, G2};
     use ff::PrimeField;
-    use rand::{thread_rng, Rand};
+    //    use rand::{thread_rng, Rand};
+    use rand_core::SeedableRng;
     use CurveProjective;
-
     #[test]
     fn test_clear_h() {
-        let mut rng = thread_rng();
+        let mut rng = rand_xorshift::XorShiftRng::from_seed([
+            0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
+            0xbc, 0xe5,
+        ]);
         for _ in 0..32 {
-            let mut input = G1::rand(&mut rng);
+            let mut input = G1::random(&mut rng);
             let mut result = input;
             result.clear_h();
             input.mul_assign(0xd201000000010001u64);
@@ -490,11 +493,14 @@ mod tests {
 
     #[test]
     fn test_clear_h2() {
-        let mut rng = thread_rng();
+        let mut rng = rand_xorshift::XorShiftRng::from_seed([
+            0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
+            0xbc, 0xe5,
+        ]);
 
         // kinda sorta test
         for _ in 0..32 {
-            let mut input = G2::rand(&mut rng);
+            let mut input = G2::random(&mut rng);
             let mut result = input;
             result.clear_h();
             input.mul_assign(FrRepr([

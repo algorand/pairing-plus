@@ -1,7 +1,6 @@
 use super::super::{Bls12, Fq, Fq12, Fq2, FqRepr, Fr, FrRepr};
 use super::g1::G1Affine;
 use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
-use rand::{Rand, Rng};
 use std::fmt;
 use {CurveAffine, CurveProjective, EncodedPoint, Engine, GroupDecodingError, SubgroupCheck};
 
@@ -348,7 +347,7 @@ pub struct G2Prepared {
 mod subgroup_check {
     use super::G2Affine;
     #[cfg(test)]
-    use rand::{thread_rng, Rand};
+    use rand_core::SeedableRng;
     #[cfg(test)]
     use CurveAffine;
     use SubgroupCheck;
@@ -363,10 +362,13 @@ mod subgroup_check {
     fn test_g2_subgroup_check() {
         use bls12_381::{ClearH, G2};
         use CurveProjective;
-        let mut rng = thread_rng();
+        let mut rng = rand_xorshift::XorShiftRng::from_seed([
+            0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
+            0xbc, 0xe5,
+        ]);
 
         for _ in 0..32 {
-            let p = G2::rand(&mut rng).into_affine();
+            let p = G2::random(&mut rng).into_affine();
             assert_eq!(
                 p.in_subgroup(),
                 p.is_in_correct_subgroup_assuming_on_curve()
