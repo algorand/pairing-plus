@@ -17,8 +17,6 @@ impl ::std::fmt::Display for Fq6 {
     }
 }
 
-// impl Random for Fq6 {}
-
 impl Fq6 {
     /// Multiply by quadratic nonresidue v.
     pub fn mul_by_nonresidue(&mut self) {
@@ -102,7 +100,7 @@ impl Fq6 {
 }
 
 impl Field for Fq6 {
-    fn random<R: RngCore>(rng: &mut R) -> Self {
+    fn random<R: RngCore + ?std::marker::Sized>(rng: &mut R) -> Self {
         Fq6 {
             c0: Fq2::random(rng),
             c1: Fq2::random(rng),
