@@ -8,7 +8,7 @@
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::many_single_char_names))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::new_without_default))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::write_literal))]
-// #![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_safety_doc))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::missing_safety_doc))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::cognitive_complexity))]
 // Force public structures to implement Debug
 #![deny(missing_debug_implementations)]
