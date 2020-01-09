@@ -820,7 +820,7 @@ fn test_g1_sum_of_products() {
 
 #[test]
 fn test_g2_mul() {
-    // const ZERO_ONE_TESTS: usize = 10;
+    const ZERO_ONE_TESTS: usize = 10;
     const SAMPLES: usize = 100;
     let mut rng = rand_xorshift::XorShiftRng::from_seed([
         0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
@@ -829,94 +829,96 @@ fn test_g2_mul() {
 
     let mut pre_3 = [G2Affine::zero(); 3];
     let mut pre_256 = [G2Affine::zero(); 256];
-    // for _ in 0..ZERO_ONE_TESTS {
-    //     // test multiplication by 0 and by 1
-    //     let test_point = G2::random(&mut rng);
-    //     let affine_test_point = test_point.into_affine();
-    //     let affine_zero = G2::zero().into_affine();
-    //     affine_test_point.precomp_3(&mut pre_3);
-    //     affine_test_point.precomp_256(&mut pre_256);
-    //     let mut test_point_copy = test_point;
-    //     test_point_copy.mul_assign(Fr::zero());
-    //     assert_eq!(
-    //         test_point_copy.into_affine(),
-    //         affine_zero,
-    //         "G2 mul by 0 is not correct"
-    //     );
-    //     let mut affine_test_point_copy = affine_test_point;
-    //     affine_test_point_copy.mul_mixed_precomp_3(Fr::zero(), &pre_3);
-    //     assert_eq!(
-    //         affine_test_point_copy
-    //         affine_zero,
-    //         "G2 mul_precomp_3 by 0 is not correct"
-    //     );
-    //     affine_test_point_copy = affine_test_point;
-    //     affine_test_point_copy.mul_mixed_precomp_256(Fr::zero(), &pre_256);
-    //     assert_eq!(
-    //         test_point_copy.into_affine(),
-    //         affine_zero,
-    //         "G2 mul_precomp_256 by 0 is not correct"
-    //     );
-    //     test_point_copy = test_point;
-    //     test_point_copy.mul_assign(Fr::one());
-    //     assert_eq!(
-    //         test_point_copy.into_affine(),
-    //         affine_test_point,
-    //         "G2 mul by 1 is not correct"
-    //     );
-    //     test_point_copy = test_point;
-    //     test_point_copy.mul_mixed_precomp_3(Fr::one(), &pre_3);
-    //     assert_eq!(
-    //         test_point_copy.into_affine(),
-    //         affine_test_point,
-    //         "G2 mul_precomp_3 by 1 is not correct"
-    //     );
-    //     test_point_copy = test_point;
-    //     test_point_copy.mul_mixed_precomp_256(Fr::one(), &pre_256);
-    //     assert_eq!(
-    //         test_point_copy.into_affine(),
-    //         affine_test_point,
-    //         "G2 mul_precomp_256 by 1 is not correct"
-    //     );
-    // }
+    for _ in 0..ZERO_ONE_TESTS {
+        // test multiplication by 0 and by 1
+        let test_point = G2::random(&mut rng);
+        let affine_test_point = test_point.into_affine();
+        let affine_zero = G2::zero().into_affine();
+        affine_test_point.precomp_3(&mut pre_3);
+        affine_test_point.precomp_256(&mut pre_256);
+        let mut test_point_copy = test_point;
+        test_point_copy.mul_assign(Fr::zero());
+        assert_eq!(
+            test_point_copy.into_affine(),
+            affine_zero,
+            "G2 mul by 0 is not correct"
+        );
+        let mut affine_test_point_copy = affine_test_point;
+        affine_test_point_copy.mul_precomp_3(Fr::zero(), &pre_3);
+        assert_eq!(
+            test_point_copy.into_affine(),
+            affine_zero,
+            "G2 mul_precomp_3 by 0 is not correct"
+        );
+        affine_test_point_copy = affine_test_point;
+        affine_test_point_copy.mul_precomp_256(Fr::zero(), &pre_256);
+        assert_eq!(
+            test_point_copy.into_affine(),
+            affine_zero,
+            "G2 mul_precomp_256 by 0 is not correct"
+        );
+        test_point_copy = test_point;
+        test_point_copy.mul_assign(Fr::one());
+        assert_eq!(
+            test_point_copy.into_affine(),
+            affine_test_point,
+            "G2 mul by 1 is not correct"
+        );
+        affine_test_point_copy = affine_test_point;
+        affine_test_point_copy.mul_precomp_3(Fr::one(), &pre_3);
+        assert_eq!(
+            test_point_copy.into_affine(),
+            affine_test_point,
+            "G2 mul_precomp_3 by 1 is not correct"
+        );
+        affine_test_point_copy = affine_test_point;
+        affine_test_point_copy.mul_precomp_256(Fr::one(), &pre_256);
+        assert_eq!(
+            test_point_copy.into_affine(),
+            affine_test_point,
+            "G2 mul_precomp_256 by 1 is not correct"
+        );
+    }
     // test random multiplications
     for _ in 0..SAMPLES {
-        let test_point = G2::random(&mut rng).into_affine();
-        test_point.precomp_3(&mut pre_3);
-        test_point.precomp_256(&mut pre_256);
+        let test_point = G2::random(&mut rng);
+        let affine_test_point = test_point.into_affine();
+        affine_test_point.precomp_3(&mut pre_3);
+        affine_test_point.precomp_256(&mut pre_256);
         let s = Fr::random(&mut rng);
         // perform a basic square and multiply to compare against
         let mut correct_res = G2::zero();
         for i in BitIterator::new(s.into_repr()) {
             correct_res.double();
             if i {
-                correct_res.add_assign(&test_point.into_projective());
+                correct_res.add_assign(&test_point);
             }
         }
         let affine_res = correct_res.into_affine();
-        let mut test_point_proj = test_point.into_projective();
-        test_point_proj.mul_assign(s);
+        let mut test_point_copy = test_point;
+        test_point_copy.mul_assign(s);
         assert_eq!(
-            test_point_proj.into_affine(),
+            test_point_copy.into_affine(),
             affine_res,
             "G2 mul_precomp_256 is not correct"
         );
-        // test_point_proj = test_point.into_projective();
-        // test_point_proj.mul_mixed_precomp_3(s, &pre_3);
-        // assert_eq!(
-        //     test_point_proj.into_affine(),
-        //     affine_res,
-        //     "G2 mul_precomp_256 is not correct"
-        // );
-        // test_point_proj = test_point;
-        // test_point_proj.mul_mixed_precomp_256(s, &pre_256);
-        // assert_eq!(
-        //     test_point_proj.into_affine(),
-        //     affine_res,
-        //     "G2 mul_precomp_256 is not correct"
-        // );
+        let mut affine_test_point_copy = affine_test_point;
+        affine_test_point_copy.mul_precomp_3(s, &pre_3);
+        assert_eq!(
+            test_point_copy.into_affine(),
+            affine_res,
+            "G2 mul_precomp_256 is not correct"
+        );
+        affine_test_point_copy = affine_test_point;
+        affine_test_point_copy.mul_precomp_256(s, &pre_256);
+        assert_eq!(
+            test_point_copy.into_affine(),
+            affine_res,
+            "G2 mul_precomp_256 is not correct"
+        );
     }
 }
+
 #[test]
 fn test_g2_sum_of_products() {
     let mut rng = rand_xorshift::XorShiftRng::from_seed([
