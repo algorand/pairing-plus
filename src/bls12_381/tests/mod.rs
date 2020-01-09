@@ -1,5 +1,54 @@
 use super::*;
+use rand_core::SeedableRng;
 use *;
+
+#[test]
+fn test_pairing_product() {
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
+    for _ in 0..100 {
+        let p1 = G1::random(&mut rng);
+        let p2 = G1::random(&mut rng);
+        let q1 = G2::random(&mut rng);
+        let q2 = G2::random(&mut rng);
+        let mut t1 = Bls12::pairing(p1, q1);
+        let t2 = Bls12::pairing(p2, q2);
+        t1.mul_assign(&t2);
+
+        let t = Bls12::pairing_product(p1, q1, p2, q2);
+        assert_eq!(t1, t, "pairing product incorrect");
+    }
+}
+
+#[test]
+fn test_pairing_multi_product() {
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
+    let size = 10;
+    let p: Vec<G1Affine> = (0..size)
+        .map(|_| G1::random(&mut rng).into_affine())
+        .collect();
+    let q: Vec<G2Affine> = (0..size)
+        .map(|_| G2::random(&mut rng).into_affine())
+        .collect();
+    for n in 0..size {
+        let mut t = Fq12::one();
+        for i in 0..n {
+            let p1 = G1Affine::into_projective(&p[i]);
+            let q1 = G2Affine::into_projective(&q[i]);
+            t.mul_assign(&Bls12::pairing(p1, q1));
+        }
+        assert_eq!(
+            t,
+            Bls12::pairing_multi_product(&p[0..n], &q[0..n]),
+            "pairing multi product incorrect"
+        );
+    }
+}
 
 #[test]
 fn test_pairing_result_against_relic() {

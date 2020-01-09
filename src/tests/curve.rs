@@ -1,6 +1,6 @@
-use ff::Field;
+use crate::bls12_381::*;
+use ff::{BitIterator, Field, PrimeField};
 use rand_core::SeedableRng;
-
 use {CurveAffine, CurveProjective, EncodedPoint};
 
 pub fn curve_tests<G: CurveProjective>() {
@@ -69,7 +69,6 @@ pub fn curve_tests<G: CurveProjective>() {
 }
 
 fn random_wnaf_tests<G: CurveProjective>() {
-    use ff::PrimeField;
     use wnaf::*;
 
     let mut rng = rand_xorshift::XorShiftRng::from_seed([
@@ -442,5 +441,666 @@ fn random_encoding_tests<G: CurveAffine>() {
         let compressed = r.into_compressed();
         let de_compressed = compressed.into_affine().unwrap();
         assert_eq!(de_compressed, r);
+    }
+}
+
+#[test]
+fn test_g1_mul() {
+    const ZERO_ONE_TESTS: usize = 10;
+    const SAMPLES: usize = 100;
+
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
+    let mut pre_3 = [G1Affine::zero(); 3];
+    let mut pre_256 = [G1Affine::zero(); 256];
+
+    for _ in 0..ZERO_ONE_TESTS {
+        // test multiplication by 0 and by 1
+        let test_point = G1::random(&mut rng);
+        let affine_test_point = test_point.into_affine();
+        affine_test_point.precomp_3(&mut pre_3);
+        affine_test_point.precomp_256(&mut pre_256);
+
+        let mut test_point_copy = test_point;
+        test_point_copy.mul_assign(Fr::zero());
+        assert_eq!(test_point_copy, G1::zero(), "G1 mul by 0 is not correct");
+
+        let res0 = affine_test_point.mul(Fr::zero());
+        assert_eq!(res0, G1::zero(), "G1 affine mul by 0 is not correct");
+
+        let res03 = affine_test_point.mul_precomp_3(Fr::zero(), &pre_3);
+        assert_eq!(res03, G1::zero(), "G1 mul_precomp_3 by 0 is not correct");
+        let res0256 = affine_test_point.mul_precomp_256(Fr::zero(), &pre_256);
+        assert_eq!(
+            res0256,
+            G1::zero(),
+            "G1 mul_precomp_256 by 0 is not correct"
+        );
+
+        test_point_copy = test_point;
+        test_point_copy.mul_assign(Fr::one());
+        assert_eq!(
+            test_point_copy.into_affine(),
+            affine_test_point,
+            "G1 mul by 1 is not correct"
+        );
+
+        let res1 = affine_test_point.mul(Fr::one());
+        assert_eq!(res1, test_point, "G1 affine mul by 1 is not correct");
+
+        let res13 = affine_test_point.mul_precomp_3(Fr::one(), &pre_3);
+        assert_eq!(res13, test_point, "G1 mul_precomp_3 by 1 is not correct");
+
+        let res1256 = affine_test_point.mul_precomp_256(Fr::one(), &pre_256);
+        assert_eq!(
+            res1256, test_point,
+            "G1 mul_precomp_256 by 1 is not correct"
+        );
+    }
+
+    // test random multiplications
+    for _ in 0..SAMPLES {
+        let test_point = G1::random(&mut rng);
+        let affine_test_point = test_point.into_affine();
+
+        affine_test_point.precomp_3(&mut pre_3);
+        affine_test_point.precomp_256(&mut pre_256);
+
+        let s = Fr::random(&mut rng);
+
+        // perform a basic square and multiply to compare against
+        let mut correct_res = G1::zero();
+        for i in BitIterator::new(s.into_repr()) {
+            correct_res.double();
+            if i {
+                correct_res.add_assign(&test_point);
+            }
+        }
+
+        let mut test_point_copy = test_point;
+        test_point_copy.mul_assign(s);
+        assert_eq!(test_point_copy, correct_res, "G1 mul_assign is not correct");
+
+        let res = affine_test_point.mul(s);
+        assert_eq!(res, correct_res, "G1 affine mul is not correct");
+
+        let res3 = affine_test_point.mul_precomp_3(s, &pre_3);
+        assert_eq!(res3, correct_res, "G1 mul_precomp_3 is not correct");
+
+        let res256 = affine_test_point.mul_precomp_256(s, &pre_256);
+        assert_eq!(res256, correct_res, "G1 mul_precomp_256 is not correct");
+    }
+}
+
+#[test]
+fn test_pippinger_window() {
+    for i in 1..1000000 {
+        assert_eq!(
+            G1Affine::find_pippinger_window(i),
+            G1Affine::find_pippinger_window_via_estimate(i)
+        );
+    }
+}
+
+#[test]
+fn test_g1_sum_of_products() {
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
+
+    let max_points = 15;
+    let points: Vec<G1Affine> = (0..max_points)
+        .map(|_| G1::random(&mut rng).into_affine())
+        .collect();
+    let mut precomp = vec![G1Affine::zero(); 256 * max_points];
+    for i in 0..max_points {
+        points[i].precomp_256(&mut precomp[i * 256..(i + 1) * 256]);
+    }
+
+    for num_points in 0..max_points {
+        {
+            // test vector multiplication by 0
+            let scalars_fr_repr: Vec<FrRepr> =
+                (0..num_points).map(|_| Fr::zero().into_repr()).collect();
+            let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+
+            let desired_result = G1::zero();
+
+            for window in 1..10 {
+                let res_no_precomp =
+                    G1Affine::sum_of_products_pippinger(&points[0..num_points], &scalars, window);
+                assert_eq!(
+                    desired_result, res_no_precomp,
+                    "Failed at raising multiple points to random vector"
+                );
+            }
+
+            let res_precomp = G1Affine::sum_of_products_precomp_256(
+                &points[0..num_points],
+                &scalars,
+                &precomp[0..num_points * 256],
+            );
+            assert_eq!(
+                desired_result, res_precomp,
+                "Failed at raising multiple points to all-0 vector with precomputation"
+            );
+        }
+        {
+            // test vector multiplication by 1
+            let scalars_fr_repr: Vec<FrRepr> =
+                (0..num_points).map(|_| Fr::one().into_repr()).collect();
+            let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+
+            let mut desired_result = G1::zero();
+            for i in 0..num_points {
+                desired_result.add_assign_mixed(&points[i]);
+            }
+
+            for window in 1..10 {
+                let res_no_precomp =
+                    G1Affine::sum_of_products_pippinger(&points[0..num_points], &scalars, window);
+                assert_eq!(
+                    desired_result, res_no_precomp,
+                    "Failed at raising multiple points to random vector"
+                );
+            }
+
+            let res_precomp = G1Affine::sum_of_products_precomp_256(
+                &points[0..num_points],
+                &scalars,
+                &precomp[0..num_points * 256],
+            );
+            assert_eq!(
+                desired_result, res_precomp,
+                "Failed at raising multiple points to all-0 vector with precomputation"
+            );
+        }
+        {
+            // test vector multiplication by alternating 0/1
+            let mut scalars_fr_repr: Vec<FrRepr> = Vec::with_capacity(num_points);
+            for i in 0..num_points {
+                if i % 2 == 0 {
+                    scalars_fr_repr.push(Fr::zero().into_repr());
+                } else {
+                    scalars_fr_repr.push(Fr::one().into_repr());
+                }
+            }
+            let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+
+            let mut desired_result = G1::zero();
+            for i in 0..num_points {
+                if i % 2 == 1 {
+                    desired_result.add_assign_mixed(&points[i]);
+                }
+            }
+
+            for window in 1..10 {
+                let res_no_precomp =
+                    G1Affine::sum_of_products_pippinger(&points[0..num_points], &scalars, window);
+                assert_eq!(
+                    desired_result, res_no_precomp,
+                    "Failed at raising multiple points to random vector"
+                );
+            }
+
+            let res_precomp = G1Affine::sum_of_products_precomp_256(
+                &points[0..num_points],
+                &scalars,
+                &precomp[0..num_points * 256],
+            );
+            assert_eq!(
+                desired_result, res_precomp,
+                "Failed at raising multiple points to alternating 0/1 vector with precomputation"
+            );
+        }
+
+        {
+            // test vector multiplication by alternating 0/1/short/random
+            let mut scalars_fr: Vec<Fr> = Vec::with_capacity(num_points);
+            let mut short_scalar = Fr::one();
+            short_scalar.add_assign(&Fr::one()); // == 2
+            short_scalar.add_assign(&Fr::one()); // == 3
+            for _ in 0..6 {
+                // square the scalar 6 times to compute 3^{2^6} = 3^64, which takes up 102 bits
+                let s = short_scalar;
+                short_scalar.mul_assign(&s);
+            }
+
+            for i in 0..num_points {
+                if i % 4 == 0 {
+                    scalars_fr.push(Fr::zero());
+                } else if i % 4 == 1 {
+                    scalars_fr.push(Fr::one());
+                } else if i % 4 == 2 {
+                    scalars_fr.push(short_scalar);
+                } else if i % 4 == 3 {
+                    scalars_fr.push(Fr::random(&mut rng));
+                }
+            }
+
+            let mut desired_result = G1::zero();
+            for i in 0..num_points {
+                if i % 4 != 0 {
+                    let mut intermediate_result = points[i].into_projective();
+                    if i % 4 != 1 {
+                        intermediate_result.mul_assign(scalars_fr[i]);
+                    }
+                    desired_result.add_assign(&intermediate_result);
+                }
+            }
+
+            let scalars_fr_repr: Vec<FrRepr> = scalars_fr.iter().map(|s| s.into_repr()).collect();
+            let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+
+            for window in 1..10 {
+                let res_no_precomp =
+                    G1Affine::sum_of_products_pippinger(&points[0..num_points], &scalars, window);
+                assert_eq!(
+                    desired_result, res_no_precomp,
+                    "Failed at raising multiple points to random vector"
+                );
+            }
+
+            let res_precomp = G1Affine::sum_of_products_precomp_256(
+                &points[0..num_points],
+                &scalars,
+                &precomp[0..num_points * 256],
+            );
+            assert_eq!(
+                desired_result, res_precomp,
+                "Failed at raising multiple points to 0/1/short/random with precomputation"
+            );
+        }
+        {
+            // test vector multiplication by random
+            let mut scalars_fr: Vec<Fr> = Vec::with_capacity(num_points);
+
+            for _ in 0..num_points {
+                scalars_fr.push(Fr::random(&mut rng));
+            }
+
+            let mut desired_result = G1::zero();
+            for i in 0..num_points {
+                let mut intermediate_result = points[i].into_projective();
+                intermediate_result.mul_assign(scalars_fr[i]);
+                desired_result.add_assign(&intermediate_result);
+            }
+
+            let scalars_fr_repr: Vec<FrRepr> = scalars_fr.iter().map(|s| s.into_repr()).collect();
+            let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+            for window in 1..10 {
+                let res_no_precomp =
+                    G1Affine::sum_of_products_pippinger(&points[0..num_points], &scalars, window);
+                assert_eq!(
+                    desired_result, res_no_precomp,
+                    "Failed at raising multiple points to random vector"
+                );
+            }
+
+            let res_precomp = G1Affine::sum_of_products_precomp_256(
+                &points[0..num_points],
+                &scalars,
+                &precomp[0..num_points * 256],
+            );
+            assert_eq!(
+                desired_result, res_precomp,
+                "Failed at raising multiple points to random vector with precomputation"
+            );
+        }
+    }
+    //assert!(false);
+}
+
+// #[test]
+// fn test_g1_mul_sec() {
+//     const SAMPLES: usize = 100;
+//
+//     let mut rng = rand_xorshift::XorShiftRng::from_seed([
+//         0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+//         0xe5,
+//     ]);
+//
+//     // mul_assign_sec ensures constant time for a same base point
+//     // and various scalars
+//     let v: Vec<(G1, Fr)> = (0..SAMPLES)
+//         .map(|_| ((G1::random(&mut rng)), Fr::random(&mut rng)))
+//         .collect();
+//
+//     for i in 0..SAMPLES {
+//         let mut tmp = v[i].0.clone();
+//         tmp.mul_assign(v[i].1.clone());
+//         let mut t1 = v[i].0.clone();
+//         t1.mul_assign_sec(v[i].1.clone());
+//
+//         assert_eq!(
+//             t1.into_affine(),
+//             tmp.into_affine(),
+//             "mul_sec is not correct"
+//         );
+//     }
+// }
+// #[test]
+// fn test_g1_mul_shamir() {
+//     const SAMPLES: usize = 100;
+//
+//     let mut rng = rand_xorshift::XorShiftRng::from_seed([
+//         0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+//         0xe5,
+//     ]);
+//     // mul_assign_sec ensures constant time for a same base point
+//     // and various scalars
+//     let v: Vec<(G1, G1, Fr, Fr)> = (0..SAMPLES)
+//         .map(|_| {
+//             (
+//                 (G1::random(&mut rng)),
+//                 (G1::random(&mut rng)),
+//                 Fr::random(&mut rng),
+//                 Fr::random(&mut rng),
+//             )
+//         })
+//         .collect();
+//
+//     for i in 0..SAMPLES {
+//         let tmp = CurveProjective::mul_shamir(v[i].0, v[i].1, v[i].2, v[i].3);
+//         let mut t1 = v[i].0;
+//         let mut t2 = v[i].1;
+//         t1.mul_assign(v[i].2);
+//         t2.mul_assign(v[i].3);
+//         t1.add_assign(&t2);
+//         assert_eq!(
+//             t1.into_affine(),
+//             tmp.into_affine(),
+//             "mul_shamir is not correct"
+//         );
+//     }
+// }
+
+#[test]
+fn test_g2_mul() {
+    // const ZERO_ONE_TESTS: usize = 10;
+    const SAMPLES: usize = 100;
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
+
+    let mut pre_3 = [G2Affine::zero(); 3];
+    let mut pre_256 = [G2Affine::zero(); 256];
+    // for _ in 0..ZERO_ONE_TESTS {
+    //     // test multiplication by 0 and by 1
+    //     let test_point = G2::random(&mut rng);
+    //     let affine_test_point = test_point.into_affine();
+    //     let affine_zero = G2::zero().into_affine();
+    //     affine_test_point.precomp_3(&mut pre_3);
+    //     affine_test_point.precomp_256(&mut pre_256);
+    //     let mut test_point_copy = test_point;
+    //     test_point_copy.mul_assign(Fr::zero());
+    //     assert_eq!(
+    //         test_point_copy.into_affine(),
+    //         affine_zero,
+    //         "G2 mul by 0 is not correct"
+    //     );
+    //     let mut affine_test_point_copy = affine_test_point;
+    //     affine_test_point_copy.mul_mixed_precomp_3(Fr::zero(), &pre_3);
+    //     assert_eq!(
+    //         affine_test_point_copy
+    //         affine_zero,
+    //         "G2 mul_precomp_3 by 0 is not correct"
+    //     );
+    //     affine_test_point_copy = affine_test_point;
+    //     affine_test_point_copy.mul_mixed_precomp_256(Fr::zero(), &pre_256);
+    //     assert_eq!(
+    //         test_point_copy.into_affine(),
+    //         affine_zero,
+    //         "G2 mul_precomp_256 by 0 is not correct"
+    //     );
+    //     test_point_copy = test_point;
+    //     test_point_copy.mul_assign(Fr::one());
+    //     assert_eq!(
+    //         test_point_copy.into_affine(),
+    //         affine_test_point,
+    //         "G2 mul by 1 is not correct"
+    //     );
+    //     test_point_copy = test_point;
+    //     test_point_copy.mul_mixed_precomp_3(Fr::one(), &pre_3);
+    //     assert_eq!(
+    //         test_point_copy.into_affine(),
+    //         affine_test_point,
+    //         "G2 mul_precomp_3 by 1 is not correct"
+    //     );
+    //     test_point_copy = test_point;
+    //     test_point_copy.mul_mixed_precomp_256(Fr::one(), &pre_256);
+    //     assert_eq!(
+    //         test_point_copy.into_affine(),
+    //         affine_test_point,
+    //         "G2 mul_precomp_256 by 1 is not correct"
+    //     );
+    // }
+    // test random multiplications
+    for _ in 0..SAMPLES {
+        let test_point = G2::random(&mut rng).into_affine();
+        test_point.precomp_3(&mut pre_3);
+        test_point.precomp_256(&mut pre_256);
+        let s = Fr::random(&mut rng);
+        // perform a basic square and multiply to compare against
+        let mut correct_res = G2::zero();
+        for i in BitIterator::new(s.into_repr()) {
+            correct_res.double();
+            if i {
+                correct_res.add_assign(&test_point.into_projective());
+            }
+        }
+        let affine_res = correct_res.into_affine();
+        let mut test_point_proj = test_point.into_projective();
+        test_point_proj.mul_assign(s);
+        assert_eq!(
+            test_point_proj.into_affine(),
+            affine_res,
+            "G2 mul_precomp_256 is not correct"
+        );
+        // test_point_proj = test_point.into_projective();
+        // test_point_proj.mul_mixed_precomp_3(s, &pre_3);
+        // assert_eq!(
+        //     test_point_proj.into_affine(),
+        //     affine_res,
+        //     "G2 mul_precomp_256 is not correct"
+        // );
+        // test_point_proj = test_point;
+        // test_point_proj.mul_mixed_precomp_256(s, &pre_256);
+        // assert_eq!(
+        //     test_point_proj.into_affine(),
+        //     affine_res,
+        //     "G2 mul_precomp_256 is not correct"
+        // );
+    }
+}
+#[test]
+fn test_g2_sum_of_products() {
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
+    let max_points = 15;
+    let points: Vec<G2Affine> = (0..max_points)
+        .map(|_| G2::random(&mut rng).into_affine())
+        .collect();
+    let mut precomp = vec![G2Affine::zero(); 256 * max_points];
+    for i in 0..max_points {
+        points[i].precomp_256(&mut precomp[i * 256..(i + 1) * 256]);
+    }
+    for num_points in 0..max_points {
+        {
+            // test vector multiplication by 0
+            let scalars_fr_repr: Vec<FrRepr> =
+                (0..num_points).map(|_| Fr::zero().into_repr()).collect();
+            let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+
+            let desired_result = G2::zero().into_affine();
+            let res_no_precomp = G2Affine::sum_of_products(&points[0..num_points], &scalars);
+            assert_eq!(
+                desired_result,
+                res_no_precomp.into_affine(),
+                "Failed at raising multiple points to all-0 vector"
+            );
+            let res_precomp = G2Affine::sum_of_products_precomp_256(
+                &points[0..num_points],
+                &scalars,
+                &precomp[0..num_points * 256],
+            );
+            assert_eq!(
+                desired_result,
+                res_precomp.into_affine(),
+                "Failed at raising multiple points to all-0 vector with precomputation"
+            );
+        }
+        {
+            // test vector multiplication by 1
+            let scalars_fr_repr: Vec<FrRepr> =
+                (0..num_points).map(|_| Fr::one().into_repr()).collect();
+            let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+
+            let mut desired_result = G2::zero();
+            for i in 0..num_points {
+                desired_result.add_assign(&points[i].into_projective());
+            }
+            let res_no_precomp = G2Affine::sum_of_products(&points[0..num_points], &scalars);
+            assert_eq!(
+                desired_result.into_affine(),
+                res_no_precomp.into_affine(),
+                "Failed at raising multiple points to all-0 vector"
+            );
+            let res_precomp = G2Affine::sum_of_products_precomp_256(
+                &points[0..num_points],
+                &scalars,
+                &precomp[0..num_points * 256],
+            );
+            assert_eq!(
+                desired_result.into_affine(),
+                res_precomp.into_affine(),
+                "Failed at raising multiple points to all-0 vector with precomputation"
+            );
+        }
+        {
+            // test vector multiplication by alternating 0/1
+            let mut scalars_fr_repr: Vec<FrRepr> = Vec::with_capacity(num_points);
+            for i in 0..num_points {
+                if i % 2 == 0 {
+                    scalars_fr_repr.push(Fr::zero().into_repr());
+                } else {
+                    scalars_fr_repr.push(Fr::one().into_repr());
+                }
+            }
+            let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+
+            let mut desired_result = G2::zero();
+            for i in 0..num_points {
+                if i % 2 == 1 {
+                    desired_result.add_assign(&points[i].into_projective());
+                }
+            }
+            let res_no_precomp = G2Affine::sum_of_products(&points[0..num_points], &scalars);
+            assert_eq!(
+                desired_result.into_affine(),
+                res_no_precomp.into_affine(),
+                "Failed at raising multiple points to all-0 vector"
+            );
+            let res_precomp = G2Affine::sum_of_products_precomp_256(
+                &points[0..num_points],
+                &scalars,
+                &precomp[0..num_points * 256],
+            );
+            assert_eq!(
+                desired_result.into_affine(),
+                res_precomp.into_affine(),
+                "Failed at raising multiple points to all-0 vector with precomputation"
+            );
+        }
+        {
+            // test vector multiplication by alternating 0/1/short/random
+            let mut scalars_fr: Vec<Fr> = Vec::with_capacity(num_points);
+            let mut short_scalar = Fr::one();
+            short_scalar.add_assign(&Fr::one()); // == 2
+            short_scalar.add_assign(&Fr::one()); // == 3
+            for _ in 0..6 {
+                // square the scalar 6 times to compute 3^{2^6} = 3^64, which takes up 102 bits
+                let s = short_scalar;
+                short_scalar.mul_assign(&s);
+            }
+            for i in 0..num_points {
+                if i % 4 == 0 {
+                    scalars_fr.push(Fr::zero());
+                } else if i % 4 == 1 {
+                    scalars_fr.push(Fr::one());
+                } else if i % 4 == 2 {
+                    scalars_fr.push(short_scalar);
+                } else if i % 4 == 3 {
+                    scalars_fr.push(Fr::random(&mut rng));
+                }
+            }
+            let mut desired_result = G2::zero();
+            for i in 0..num_points {
+                if i % 4 != 0 {
+                    let mut intermediate_result = points[i].into_projective();
+                    if i % 4 != 1 {
+                        intermediate_result.mul_assign(scalars_fr[i]);
+                    }
+                    desired_result.add_assign(&intermediate_result);
+                }
+            }
+            let scalars_fr_repr: Vec<FrRepr> = scalars_fr.iter().map(|s| s.into_repr()).collect();
+            let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+
+            let res_no_precomp = G2Affine::sum_of_products(&points[0..num_points], &scalars);
+            assert_eq!(
+                desired_result.into_affine(),
+                res_no_precomp.into_affine(),
+                "Failed at raising multiple points to all-0 vector"
+            );
+            let res_precomp = G2Affine::sum_of_products_precomp_256(
+                &points[0..num_points],
+                &scalars,
+                &precomp[0..num_points * 256],
+            );
+            assert_eq!(
+                desired_result.into_affine(),
+                res_precomp.into_affine(),
+                "Failed at raising multiple points to all-0 vector with precomputation"
+            );
+        }
+        {
+            // test vector multiplication by random
+            let mut scalars_fr: Vec<Fr> = Vec::with_capacity(num_points);
+            for _ in 0..num_points {
+                scalars_fr.push(Fr::random(&mut rng));
+            }
+            let mut desired_result = G2::zero();
+            for i in 0..num_points {
+                let mut intermediate_result = points[i].into_projective();
+                intermediate_result.mul_assign(scalars_fr[i]);
+                desired_result.add_assign(&intermediate_result);
+            }
+            let scalars_fr_repr: Vec<FrRepr> = scalars_fr.iter().map(|s| s.into_repr()).collect();
+            let scalars: Vec<&[u64; 4]> = scalars_fr_repr.iter().map(|s| &s.0).collect();
+
+            let res_no_precomp = G2Affine::sum_of_products(&points[0..num_points], &scalars);
+            assert_eq!(
+                desired_result.into_affine(),
+                res_no_precomp.into_affine(),
+                "Failed at raising multiple points to all-0 vector"
+            );
+            let res_precomp = G2Affine::sum_of_products_precomp_256(
+                &points[0..num_points],
+                &scalars,
+                &precomp[0..num_points * 256],
+            );
+            assert_eq!(
+                desired_result.into_affine(),
+                res_precomp.into_affine(),
+                "Failed at raising multiple points to all-0 vector with precomputation"
+            );
+        }
     }
 }
