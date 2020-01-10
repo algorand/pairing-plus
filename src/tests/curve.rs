@@ -66,6 +66,29 @@ pub fn curve_tests<G: CurveProjective>() {
     // random_transformation_tests::<G>();
     random_wnaf_tests::<G>();
     random_encoding_tests::<G::Affine>();
+    random_batch_norm_tests::<G>();
+}
+
+fn random_batch_norm_tests<G: CurveProjective>() {
+    const SAMPLE: usize = 10;
+    let mut rng = rand_xorshift::XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
+
+    let mut base_proj: Vec<G> = vec![];
+    for _ in 0..SAMPLE {
+        let mut g = G::random(&mut rng);
+        let r = G::Scalar::random(&mut rng);
+        g.mul_assign(r);
+        base_proj.push(g);
+    }
+    let mut res = base_proj.clone();
+    G::batch_normalization(&mut res);
+    for i in 0..SAMPLE {
+        assert!(res[i].is_normalized());
+        assert_eq!(res[i].into_affine(), base_proj[i].into_affine());
+    }
 }
 
 fn random_wnaf_tests<G: CurveProjective>() {
