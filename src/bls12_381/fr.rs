@@ -5,7 +5,7 @@ use sha2::digest::generic_array::typenum::U48;
 use sha2::digest::generic_array::GenericArray;
 use std::io::{Cursor, Read};
 
-#[derive(PrimeField)]
+#[derive(PrimeField, Zeroize)]
 #[PrimeFieldModulus = "52435875175126190479447740508185965837690552500527637822603658699938581184513"]
 #[PrimeFieldGenerator = "7"]
 pub struct Fr(FrRepr);
