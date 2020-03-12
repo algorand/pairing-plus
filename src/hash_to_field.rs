@@ -57,6 +57,46 @@ impl<T: FromRO> Iterator for HashToField<T> {
     }
 }
 
+/// implement hash_to_field based on
+pub fn hash_to_field<T, X>(msg: &[u8], count: usize, dst: &[u8]) -> Vec<T>
+where
+    T: NewFromRO + Default,
+    X: ExpandMsg,
+{
+    let len_per_elm = <T as NewFromRO>::Length::to_usize();
+    let len_in_bytes = count * len_per_elm;
+    let pseudo_random_bytes = X::expand_message(msg, dst, len_in_bytes);
+
+    let mut ret = Vec::<T>::with_capacity(count);
+    for idx in 0..count {
+        let bytes_to_convert = &pseudo_random_bytes[idx * len_per_elm..(idx + 1) * len_per_elm];
+        let bytes_arr = GenericArray::<u8, <T as NewFromRO>::Length>::from_slice(bytes_to_convert);
+        ret.push(T::from_ro(bytes_arr));
+    }
+
+    ret
+}
+
+pub trait NewFromRO {
+    type Length: ArrayLength<u8>;
+
+    fn from_ro(okm: &GenericArray<u8, <Self as NewFromRO>::Length>) -> Self;
+}
+
+impl<T: BaseFromOKM> NewFromRO for T {
+    type Length = <T as BaseFromOKM>::BaseLength;
+
+    fn from_ro(okm: &GenericArray<u8, <Self as NewFromRO>::Length>) -> T {
+        T::from_okm(okm)
+    }
+}
+
+pub trait BaseFromOKM {
+    type BaseLength: ArrayLength<u8>;
+
+    fn from_okm(okm: &GenericArray<u8, <Self as BaseFromOKM>::BaseLength>) -> Self;
+}
+
 /// Trait for types implementing expand_message interface for hash_to_field
 pub trait ExpandMsg {
     fn expand_message(msg: &[u8], dst: &[u8], len_in_bytes: usize) -> Vec<u8>;
