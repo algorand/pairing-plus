@@ -4,10 +4,10 @@
 */
 
 use digest::generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
-use digest::{BlockInput, Digest, ExtendableOutput, Input, XofReader};
+use digest::{BlockInput, Digest, ExtendableOutput, Input};
 use std::marker::PhantomData;
 
-/// implement hash_to_field based on
+/// hash_to_field for type T using ExpandMsg variant X
 pub fn hash_to_field<T, X>(msg: &[u8], dst: &[u8], count: usize) -> Vec<T>
 where
     T: FromRO,
@@ -27,12 +27,14 @@ where
     ret
 }
 
+/// Generate a field element from a random string of bytes
 pub trait FromRO {
     type Length: ArrayLength<u8>;
 
     fn from_ro(okm: &GenericArray<u8, <Self as FromRO>::Length>) -> Self;
 }
 
+/// BaseFromRO is a FromRO impl for a field with extension degree 1.
 impl<T: BaseFromRO> FromRO for T {
     type Length = <T as BaseFromRO>::BaseLength;
 
@@ -41,6 +43,8 @@ impl<T: BaseFromRO> FromRO for T {
     }
 }
 
+/// Generate an element of a base field for a random string of bytes
+/// (used by FromRO for extension fields).
 pub trait BaseFromRO {
     type BaseLength: ArrayLength<u8>;
 
@@ -64,7 +68,6 @@ where
     HashT: Default + ExtendableOutput + Input,
 {
     fn expand_message(msg: &[u8], dst: &[u8], len_in_bytes: usize) -> Vec<u8> {
-        let mut buf = vec![0u8; len_in_bytes];
         HashT::default()
             .chain(msg)
             .chain([
@@ -73,9 +76,7 @@ where
                 dst.len() as u8,
             ])
             .chain(dst)
-            .xof_result()
-            .read(&mut buf);
-        buf
+            .vec_result(len_in_bytes)
     }
 }
 
