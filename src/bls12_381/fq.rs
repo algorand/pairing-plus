@@ -1,8 +1,7 @@
 use super::fq2::Fq2;
+use digest::generic_array::{typenum::U64, GenericArray};
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
 use hash_to_field::BaseFromRO;
-use sha2::digest::generic_array::typenum::U64;
-use sha2::digest::generic_array::GenericArray;
 use signum::{Sgn0Result, Signum0};
 use std::cmp::Ordering;
 use std::io::{Cursor, Read};
@@ -471,7 +470,7 @@ pub const unsafe fn transmute(r: FqRepr) -> Fq {
 }
 
 impl BaseFromRO for Fq {
-    type Length = U64;
+    type BaseLength = U64;
 
     // ZZ note: Convert an output keying material to an Fq element
     // the input generic array is gauranteed to have 64 bytes
@@ -2341,34 +2340,109 @@ fn test_fq_legendre() {
 }
 
 #[test]
-fn test_fq_hash_to_field() {
-    use hash_to_field::HashToField;
+fn test_fq_hash_to_field_xof_shake128() {
+    use hash_to_field::{hash_to_field, ExpandMsgXof};
+    use sha3::Shake128;
 
-    let mut hash_iter = HashToField::<Fq>::new("hello world", None);
-    let fq_val = hash_iter.next().unwrap();
+    let u = hash_to_field::<Fq, ExpandMsgXof<Shake128>>(b"hello world", b"asdfqwerzxcv", 5);
     let expect = FqRepr([
-        0xdfccf585f3c3abu64,
-        0x817786f85a6977d5u64,
-        0x4878057839c2eeb9u64,
-        0xdf824d0b3cacd45cu64,
-        0xac77eef7ea711095u64,
-        0x2457b5ea0140614u64,
+        0xfd18776b48cf1401u64,
+        0x8edc5c3b61702d08u64,
+        0xb8e9894b19cc196bu64,
+        0xd5ffa8c0fca43ec6u64,
+        0x3bbbb9f6b34663c7u64,
+        0x11c8f0f36972173fu64,
     ]);
-    assert_eq!(fq_val, Fq::from_repr(expect).unwrap());
-
-    let fq_val = hash_iter.with_ctr(0);
-    assert_eq!(fq_val, Fq::from_repr(expect).unwrap());
-
-    let fq_val = hash_iter.next().unwrap();
+    assert_eq!(u[0], Fq::from_repr(expect).unwrap());
     let expect = FqRepr([
-        0xe60a4d2be306281eu64,
-        0xf431b0bb0218acdu64,
-        0x2591ca592c870e9cu64,
-        0xd53fc832b7a3eae4u64,
-        0x9d4cbbb85780e0f4u64,
-        0x6ed9a29b5a2f831u64,
+        0xef3f9b8a4baec153u64,
+        0x4a731357bdfad889u64,
+        0xf9dfd6c7da30df38u64,
+        0x935ed115de7b26fdu64,
+        0xf9d565dfc69db96eu64,
+        0x165f801652644c69u64,
     ]);
-    assert_eq!(fq_val, Fq::from_repr(expect).unwrap());
+    assert_eq!(u[1], Fq::from_repr(expect).unwrap());
+    let expect = FqRepr([
+        0x90c62503451ebfbbu64,
+        0x31cbd57c309155eau64,
+        0xb5139a3122c57601u64,
+        0x487e37e644ff5619u64,
+        0x466d3e60da037f30u64,
+        0x12a9e21536c038bdu64,
+    ]);
+    assert_eq!(u[2], Fq::from_repr(expect).unwrap());
+    let expect = FqRepr([
+        0xdd50c75afa28549au64,
+        0x63f998ce73ab3f2cu64,
+        0x91dde60ce2b866e0u64,
+        0x142f5244f66f7843u64,
+        0xe1777fedadf76521u64,
+        0xceefaf710c49156u64,
+    ]);
+    assert_eq!(u[3], Fq::from_repr(expect).unwrap());
+    let expect = FqRepr([
+        0x3d0ade306a80ac3cu64,
+        0xa67656f34e372637u64,
+        0x5823132fda5da8b1u64,
+        0x233d3bcf8742dbdau64,
+        0x2be7d7dce1cb7832u64,
+        0x6aa4625fe15aedcu64,
+    ]);
+    assert_eq!(u[4], Fq::from_repr(expect).unwrap());
+}
+
+#[test]
+fn test_fq_hash_to_field_xmd_sha256() {
+    use hash_to_field::{hash_to_field, ExpandMsgXmd};
+    use sha2::Sha256;
+
+    let u = hash_to_field::<Fq, ExpandMsgXmd<Sha256>>(b"hello world", b"asdfqwerzxcv", 5);
+    let expect = FqRepr([
+        0xd3e7049a0d68fdd5u64,
+        0x6b7d713ff25de8d5u64,
+        0x521c23789786d11fu64,
+        0x59a11d38422a906u64,
+        0x2e875cbbc15586deu64,
+        0x95561c709c5bac2u64,
+    ]);
+    assert_eq!(u[0], Fq::from_repr(expect).unwrap());
+    let expect = FqRepr([
+        0x66f57d5c74ed4f4au64,
+        0xe3ab3ee234780361u64,
+        0xa8f9d99586347c01u64,
+        0xdbde0c3e0cb2e83fu64,
+        0xd6db38335e21152eu64,
+        0xb9aa72ea01ff932u64,
+    ]);
+    assert_eq!(u[1], Fq::from_repr(expect).unwrap());
+    let expect = FqRepr([
+        0x2e399fb4fe7a558au64,
+        0x637b9153dba1df73u64,
+        0x1835d6580c0d12a7u64,
+        0x736d8bbbecd1465bu64,
+        0x51b5dee0bdd335ddu64,
+        0xcd8f1cf08a2d1bcu64,
+    ]);
+    assert_eq!(u[2], Fq::from_repr(expect).unwrap());
+    let expect = FqRepr([
+        0xbeafe0c00936a9e2u64,
+        0xc660c9a32880914fu64,
+        0xbcdc95e89ce8b427u64,
+        0xfd291483392df9bu64,
+        0x8dabd5869c3fbac7u64,
+        0x75fe0cfc52e4fd9u64,
+    ]);
+    assert_eq!(u[3], Fq::from_repr(expect).unwrap());
+    let expect = FqRepr([
+        0x91f8410a518fc4du64,
+        0x97946a05fd862f7u64,
+        0xf10c7034b08d1ec3u64,
+        0x72309ed88b7d4bc2u64,
+        0xff5ccefb6345e749u64,
+        0xfc71cd2f533c8c2u64,
+    ]);
+    assert_eq!(u[4], Fq::from_repr(expect).unwrap());
 }
 
 #[test]

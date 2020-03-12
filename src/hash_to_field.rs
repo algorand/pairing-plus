@@ -3,98 +3,48 @@
  for use with BLS signatures.
 */
 
-use ff::Field;
-use hkdf::Hkdf;
-use sha2::digest::generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
-use sha2::digest::{BlockInput, ExtendableOutput, Input};
-use sha2::{Digest, Sha256};
+use digest::generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
+use digest::{BlockInput, Digest, ExtendableOutput, Input, XofReader};
 use std::marker::PhantomData;
 
-/// A struct that handles hashing a message to one or more values of T.
-#[derive(Debug)]
-pub struct HashToField<T> {
-    msg_hashed: GenericArray<u8, <Sha256 as Digest>::OutputSize>,
-    ctr: u8,
-    phantom: PhantomData<T>,
-}
-
-impl<T: FromRO> HashToField<T> {
-    /// Create a new struct given a message and ciphersuite.
-    pub fn new<B: AsRef<[u8]>>(msg: B, dst: Option<&[u8]>) -> HashToField<T> {
-        // Unfortunately, Hkdf requires a &[u8]; not obvious to me how to avoid copying.
-        // Would be nicer if Hkdf operated on an Iterator over u8 instead...
-        let mut msg_padded = Vec::<u8>::with_capacity(msg.as_ref().len() + 1);
-        msg_padded.extend_from_slice(msg.as_ref());
-        msg_padded.push(0u8);
-        HashToField::from_padded(&msg_padded[..], dst)
-    }
-
-    /// Create a new struct given a message already padded with a single 0x00 byte
-    pub fn from_padded<B: AsRef<[u8]>>(msg_padded: B, dst: Option<&[u8]>) -> HashToField<T> {
-        HashToField::<T> {
-            msg_hashed: Hkdf::<Sha256>::extract(dst, msg_padded.as_ref()).0,
-            ctr: 0,
-            phantom: PhantomData::<T>,
-        }
-    }
-
-    /// Compute the output of the random oracle specified by `ctr`.
-    pub fn with_ctr(&self, ctr: u8) -> T {
-        T::from_ro(&self.msg_hashed, ctr)
-    }
-}
-
-/// Iterator that outputs the sequence of field elements corresponding to increasing `ctr` values.
-impl<T: FromRO> Iterator for HashToField<T> {
-    type Item = T;
-    fn next(&mut self) -> Option<T> {
-        if self.ctr == 255 {
-            None
-        } else {
-            self.ctr += 1;
-            Some(T::from_ro(self.msg_hashed.as_slice(), self.ctr - 1))
-        }
-    }
-}
-
 /// implement hash_to_field based on
-pub fn hash_to_field<T, X>(msg: &[u8], count: usize, dst: &[u8]) -> Vec<T>
+pub fn hash_to_field<T, X>(msg: &[u8], dst: &[u8], count: usize) -> Vec<T>
 where
-    T: NewFromRO + Default,
+    T: FromRO,
     X: ExpandMsg,
 {
-    let len_per_elm = <T as NewFromRO>::Length::to_usize();
+    let len_per_elm = <T as FromRO>::Length::to_usize();
     let len_in_bytes = count * len_per_elm;
     let pseudo_random_bytes = X::expand_message(msg, dst, len_in_bytes);
 
     let mut ret = Vec::<T>::with_capacity(count);
     for idx in 0..count {
         let bytes_to_convert = &pseudo_random_bytes[idx * len_per_elm..(idx + 1) * len_per_elm];
-        let bytes_arr = GenericArray::<u8, <T as NewFromRO>::Length>::from_slice(bytes_to_convert);
+        let bytes_arr = GenericArray::<u8, <T as FromRO>::Length>::from_slice(bytes_to_convert);
         ret.push(T::from_ro(bytes_arr));
     }
 
     ret
 }
 
-pub trait NewFromRO {
+pub trait FromRO {
     type Length: ArrayLength<u8>;
 
-    fn from_ro(okm: &GenericArray<u8, <Self as NewFromRO>::Length>) -> Self;
+    fn from_ro(okm: &GenericArray<u8, <Self as FromRO>::Length>) -> Self;
 }
 
-impl<T: BaseFromOKM> NewFromRO for T {
-    type Length = <T as BaseFromOKM>::BaseLength;
+impl<T: BaseFromRO> FromRO for T {
+    type Length = <T as BaseFromRO>::BaseLength;
 
-    fn from_ro(okm: &GenericArray<u8, <Self as NewFromRO>::Length>) -> T {
+    fn from_ro(okm: &GenericArray<u8, <Self as FromRO>::Length>) -> T {
         T::from_okm(okm)
     }
 }
 
-pub trait BaseFromOKM {
+pub trait BaseFromRO {
     type BaseLength: ArrayLength<u8>;
 
-    fn from_okm(okm: &GenericArray<u8, <Self as BaseFromOKM>::BaseLength>) -> Self;
+    fn from_okm(okm: &GenericArray<u8, <Self as BaseFromRO>::BaseLength>) -> Self;
 }
 
 /// Trait for types implementing expand_message interface for hash_to_field
@@ -114,6 +64,7 @@ where
     HashT: Default + ExtendableOutput + Input,
 {
     fn expand_message(msg: &[u8], dst: &[u8], len_in_bytes: usize) -> Vec<u8> {
+        let mut buf = vec![0u8; len_in_bytes];
         HashT::default()
             .chain(msg)
             .chain([
@@ -122,7 +73,9 @@ where
                 dst.len() as u8,
             ])
             .chain(dst)
-            .vec_result(len_in_bytes)
+            .xof_result()
+            .read(&mut buf);
+        buf
     }
 }
 
@@ -185,38 +138,5 @@ where
 
         b_vals.truncate(len_in_bytes);
         b_vals
-    }
-}
-
-/// Trait implementing hashing to a field or extension.
-pub trait FromRO {
-    /// from_ro gives the result of hash_to_field(msg, ctr) when input = H(msg).
-    fn from_ro<B: AsRef<[u8]>>(input: B, ctr: u8) -> Self;
-}
-
-/// Generic implementation for non-extension fields having a BaseFromRO impl.
-impl<T: BaseFromRO> FromRO for T {
-    fn from_ro<B: AsRef<[u8]>>(input: B, ctr: u8) -> T {
-        T::base_from_ro(input.as_ref(), ctr, 1)
-    }
-}
-
-/// Implements the loop body of hash_to_base from hash-to-curve draft.
-pub trait BaseFromRO: Field {
-    /// The length of the HKDF output used to hash to a field element.
-    type Length: ArrayLength<u8>;
-
-    /// Convert piece of HKDF output to field element
-    fn from_okm(okm: &GenericArray<u8, <Self as BaseFromRO>::Length>) -> Self;
-
-    /// Returns the value from the inner loop of hash_to_field by
-    /// hashing twice, calling sha_to_base on each, and combining the result.
-    fn base_from_ro(msg_hashed: &[u8], ctr: u8, idx: u8) -> Self {
-        let mut result = GenericArray::<u8, <Self as BaseFromRO>::Length>::default();
-        let h = Hkdf::<Sha256>::from_prk(msg_hashed).unwrap();
-        // "H2C" || I2OSP(ctr, 1) || I2OSP(idx, 1)
-        let info = [72, 50, 67, ctr, idx];
-        h.expand(&info, &mut result).unwrap();
-        <Self as BaseFromRO>::from_okm(&result)
     }
 }

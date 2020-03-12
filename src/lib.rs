@@ -13,12 +13,14 @@
 // Force public structures to implement Debug
 #![deny(missing_debug_implementations)]
 
+extern crate digest;
 extern crate ff;
-extern crate hkdf;
 extern crate rand_core;
 extern crate rand_xorshift;
+#[cfg(test)]
 extern crate sha2;
-
+#[cfg(test)]
+extern crate sha3;
 #[macro_use]
 extern crate zeroize;
 
