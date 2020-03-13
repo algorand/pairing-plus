@@ -3,7 +3,7 @@ name = "pairing-plus"
 
 # Remember to change version string in README.md.
 
-version = "0.17.1"
+version = "0.18.0"
 authors = [
     # authors of the original pairing library
     "Sean Bowe <ewillbefull@gmail.com>",
