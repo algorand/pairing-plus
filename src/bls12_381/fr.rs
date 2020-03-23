@@ -1,8 +1,6 @@
+use digest::generic_array::{typenum::U48, GenericArray};
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
 use hash_to_field::BaseFromRO;
-
-use sha2::digest::generic_array::typenum::U48;
-use sha2::digest::generic_array::GenericArray;
 use std::io::{Cursor, Read};
 
 #[derive(PrimeField, Zeroize)]
@@ -23,7 +21,7 @@ pub const unsafe fn transmute(r: FrRepr) -> Fr {
 }
 
 impl BaseFromRO for Fr {
-    type Length = U48;
+    type BaseLength = U48;
 
     fn from_okm(okm: &GenericArray<u8, U48>) -> Fr {
         const F_2_192: Fr = Fr(FrRepr([
