@@ -34,8 +34,8 @@ repository = "https://github.com/algorand/pairing-plus"
 [dependencies]
 rand = "0.4"
 byteorder = "1"
-ff-zeroize = { version = "0.6.3", features = ["derive"]}
-#ff-zeroize = { version = "0.6.3", git = "https://github.com/algorand/ff", features = ["derive"]}
+#ff-zeroize = { version = "0.6.3", features = ["derive"]}
+ff-zeroize = { version = "0.6.3", git = "https://github.com/algorand/ff", features = ["derive"]}
 digest = "0.8"
 zeroize = { version  = "1.1", features = ["zeroize_derive"]}
 rand_core = "0.5"
