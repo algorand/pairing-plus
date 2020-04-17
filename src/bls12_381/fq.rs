@@ -2346,48 +2346,48 @@ fn test_fq_hash_to_field_xof_shake128() {
 
     let u = hash_to_field::<Fq, ExpandMsgXof<Shake128>>(b"hello world", b"asdfqwerzxcv", 5);
     let expect = FqRepr([
-        0xfd18776b48cf1401u64,
-        0x8edc5c3b61702d08u64,
-        0xb8e9894b19cc196bu64,
-        0xd5ffa8c0fca43ec6u64,
-        0x3bbbb9f6b34663c7u64,
-        0x11c8f0f36972173fu64,
+        0x24606c02a2832651u64,
+        0x938bdda212c48cebu64,
+        0x1efda56062ec419eu64,
+        0x56875b0494cf23c3u64,
+        0x949e3a98626b3315u64,
+        0xc26e7d7774840efu64,
     ]);
     assert_eq!(u[0], Fq::from_repr(expect).unwrap());
     let expect = FqRepr([
-        0xef3f9b8a4baec153u64,
-        0x4a731357bdfad889u64,
-        0xf9dfd6c7da30df38u64,
-        0x935ed115de7b26fdu64,
-        0xf9d565dfc69db96eu64,
-        0x165f801652644c69u64,
+        0x9ad7d8d863f5bfd3u64,
+        0x1a7fed20387de776u64,
+        0x6940573ad5f2a648u64,
+        0x836dc98edb77a5fau64,
+        0x83a168be2975dc4cu64,
+        0x6aa86f37d87b8cbu64,
     ]);
     assert_eq!(u[1], Fq::from_repr(expect).unwrap());
     let expect = FqRepr([
-        0x90c62503451ebfbbu64,
-        0x31cbd57c309155eau64,
-        0xb5139a3122c57601u64,
-        0x487e37e644ff5619u64,
-        0x466d3e60da037f30u64,
-        0x12a9e21536c038bdu64,
+        0x15adbbe5d2882d3eu64,
+        0xa3c020ddabea153u64,
+        0xd5a7221a07f9c8bfu64,
+        0xc8129a2c66578e42u64,
+        0x4602d1382e5bb3f3u64,
+        0x131f6d4aad6c289du64,
     ]);
     assert_eq!(u[2], Fq::from_repr(expect).unwrap());
     let expect = FqRepr([
-        0xdd50c75afa28549au64,
-        0x63f998ce73ab3f2cu64,
-        0x91dde60ce2b866e0u64,
-        0x142f5244f66f7843u64,
-        0xe1777fedadf76521u64,
-        0xceefaf710c49156u64,
+        0xb474338a39faf63au64,
+        0xae4f84a983c65a3bu64,
+        0x79bdddd1f69341u64,
+        0x837431a260f39db6u64,
+        0x5648bea8387eacb8u64,
+        0x10cc1407134a8b52u64,
     ]);
     assert_eq!(u[3], Fq::from_repr(expect).unwrap());
     let expect = FqRepr([
-        0x3d0ade306a80ac3cu64,
-        0xa67656f34e372637u64,
-        0x5823132fda5da8b1u64,
-        0x233d3bcf8742dbdau64,
-        0x2be7d7dce1cb7832u64,
-        0x6aa4625fe15aedcu64,
+        0xde0bb37d7fd2c03u64,
+        0x938b1e576b3bdbf5u64,
+        0xf26d472ca0462516u64,
+        0x32e742ce787399au64,
+        0x3cbe0849357f259u64,
+        0x182cd9a1a944fce4u64,
     ]);
     assert_eq!(u[4], Fq::from_repr(expect).unwrap());
 }
@@ -2399,48 +2399,48 @@ fn test_fq_hash_to_field_xmd_sha256() {
 
     let u = hash_to_field::<Fq, ExpandMsgXmd<Sha256>>(b"hello world", b"asdfqwerzxcv", 5);
     let expect = FqRepr([
-        0xd3e7049a0d68fdd5u64,
-        0x6b7d713ff25de8d5u64,
-        0x521c23789786d11fu64,
-        0x59a11d38422a906u64,
-        0x2e875cbbc15586deu64,
-        0x95561c709c5bac2u64,
+        0x8f07d74549bb8afau64,
+        0x31e6bf8606ac3fb0u64,
+        0xb9bd8770f984262fu64,
+        0x3a164f8b239f6e05u64,
+        0xc1232049588c34aeu64,
+        0x19a22f099079589au64,
     ]);
     assert_eq!(u[0], Fq::from_repr(expect).unwrap());
     let expect = FqRepr([
-        0x66f57d5c74ed4f4au64,
-        0xe3ab3ee234780361u64,
-        0xa8f9d99586347c01u64,
-        0xdbde0c3e0cb2e83fu64,
-        0xd6db38335e21152eu64,
-        0xb9aa72ea01ff932u64,
+        0xc14526c4fe3bbab1u64,
+        0x6c3c7216400b8f66u64,
+        0xf0cd062901da4caau64,
+        0xf979e14776f9d2u64,
+        0xb1fd23bf5a331884u64,
+        0xffc3b7768d268d5u64,
     ]);
     assert_eq!(u[1], Fq::from_repr(expect).unwrap());
     let expect = FqRepr([
-        0x2e399fb4fe7a558au64,
-        0x637b9153dba1df73u64,
-        0x1835d6580c0d12a7u64,
-        0x736d8bbbecd1465bu64,
-        0x51b5dee0bdd335ddu64,
-        0xcd8f1cf08a2d1bcu64,
+        0xbb3fc44aad40676du64,
+        0xbb56dbb2eb91dbb3u64,
+        0x54c705505e6bf0cau64,
+        0x8654b8b21138e0bcu64,
+        0x8717f9d046d925d6u64,
+        0xb6c6899739c2d59u64,
     ]);
     assert_eq!(u[2], Fq::from_repr(expect).unwrap());
     let expect = FqRepr([
-        0xbeafe0c00936a9e2u64,
-        0xc660c9a32880914fu64,
-        0xbcdc95e89ce8b427u64,
-        0xfd291483392df9bu64,
-        0x8dabd5869c3fbac7u64,
-        0x75fe0cfc52e4fd9u64,
+        0xd2747ff3500179aau64,
+        0xa6625f23f9e6da71u64,
+        0xdb1fdf290dd7b1adu64,
+        0x3a55cba1ee4bc942u64,
+        0xbcb608643d7ca236u64,
+        0x19de74df84b63e54u64,
     ]);
     assert_eq!(u[3], Fq::from_repr(expect).unwrap());
     let expect = FqRepr([
-        0x91f8410a518fc4du64,
-        0x97946a05fd862f7u64,
-        0xf10c7034b08d1ec3u64,
-        0x72309ed88b7d4bc2u64,
-        0xff5ccefb6345e749u64,
-        0xfc71cd2f533c8c2u64,
+        0x2c941e7ac5de2986u64,
+        0x55abffcf150d8759u64,
+        0x32bc08f24fe6d1a9u64,
+        0x28010e76f58a9f71u64,
+        0x278f14ec0fbf0472u64,
+        0xdc230491783efb9u64,
     ]);
     assert_eq!(u[4], Fq::from_repr(expect).unwrap());
 }
