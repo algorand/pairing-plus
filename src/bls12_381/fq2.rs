@@ -995,20 +995,20 @@ fn test_fq2_hash_to_field_xof_shake128() {
 
     let u = hash_to_field::<Fq2, ExpandMsgXof<Shake128>>(b"hello world", b"asdfqwerzxcv", 5);
     let c0 = FqRepr([
-        0xcc9186241d29f218u64,
-        0x1c5bde537d5d62d2u64,
-        0xead835ab3858d439u64,
-        0x3acfcbd3280d16adu64,
-        0x22dffb6900bf4db8u64,
-        0x16e64880a0d2ae2eu64,
+        0x83b44bd21d9176f9u64,
+        0x500e57bed444b495u64,
+        0x99e7981c634e8dau64,
+        0x534d01b15f9dfc5bu64,
+        0xc28fdd7ba924fc24u64,
+        0x149b57b053aba2f1u64,
     ]);
     let c1 = FqRepr([
-        0xffc1d8959e1fbda4u64,
-        0x15f76c384e299aa4u64,
-        0x95283d9126f1bfafu64,
-        0xc4474dca72ba2ea2u64,
-        0x2ff740be47a00d12u64,
-        0x26a028e0e5c7ec4u64,
+        0x52a9e519f8d670u64,
+        0x80836391c697e0f3u64,
+        0xdef4327ec50c9e2fu64,
+        0xfe1bd6918af282a6u64,
+        0xdca9b63feb10ef5au64,
+        0x2fe35c636602fc3u64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(c0).unwrap(),
@@ -1016,20 +1016,20 @@ fn test_fq2_hash_to_field_xof_shake128() {
     };
     assert_eq!(u[0], expect);
     let c0 = FqRepr([
-        0xd7b6366ebb64bf09u64,
-        0x2f19a158fa8c3af7u64,
-        0x25d39882741fb3fcu64,
-        0xb220422e0e7f9f64u64,
-        0x15a18546cc8d0671u64,
-        0xcf3127e75b93f56u64,
+        0xc67cf203a4d5a146u64,
+        0x71aa5c4048396b4u64,
+        0x161a0f70a89fe76du64,
+        0x480fc40ff5eb8cbau64,
+        0xd137a2af45f88a31u64,
+        0x18feaaf129abfb5cu64,
     ]);
     let c1 = FqRepr([
-        0x3a9e8edf8c13d1a2u64,
-        0xefd6d153fbc9e5aeu64,
-        0x2110cb46149e05f3u64,
-        0xd150bacd7c4bb73bu64,
-        0x8fd5964ed718d948u64,
-        0x195db42d0acd4c9cu64,
+        0x5d269239a15f0beeu64,
+        0x16515524243a806du64,
+        0xaaf873bc4664cdf2u64,
+        0xf31ca30fdde1a7dau64,
+        0xbbc54a41017a7cd6u64,
+        0x4774c213e3a6a7du64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(c0).unwrap(),
@@ -1037,20 +1037,20 @@ fn test_fq2_hash_to_field_xof_shake128() {
     };
     assert_eq!(u[1], expect);
     let c0 = FqRepr([
-        0xf7eda7ae615d4751u64,
-        0xfdc80a1e1fa45e28u64,
-        0xae6ede13f91e88afu64,
-        0xd53258c647e1cf45u64,
-        0x5c7865959951362au64,
-        0x6a71f50733650a3u64,
+        0xab6e3121ad020c5cu64,
+        0x914a2813c62a0174u64,
+        0x191f045dda39ef40u64,
+        0x703fb6dd5708c2b7u64,
+        0xf3b7e2d9c65aeb48u64,
+        0x9a18b8b5a11e2beu64,
     ]);
     let c1 = FqRepr([
-        0x2dbe88e7e449698u64,
-        0xf5c10f3d656df91du64,
-        0xeb278ac26084cfc2u64,
-        0xe2d64873822caea5u64,
-        0x7e72b2ea4ca500a3u64,
-        0xcb75ade4047c615u64,
+        0x99e3b69a05559fd3u64,
+        0x5d634f8ea80270b1u64,
+        0xcddc741e008d6f48u64,
+        0xdc7cef61f00c12b1u64,
+        0xc882bc3f8fa43794u64,
+        0xdfe8ec63832446cu64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(c0).unwrap(),
@@ -1058,20 +1058,20 @@ fn test_fq2_hash_to_field_xof_shake128() {
     };
     assert_eq!(u[2], expect);
     let c0 = FqRepr([
-        0x212963893850b3efu64,
-        0x67fcf66e241827c7u64,
-        0x96450f830a3bfa7u64,
-        0x228aefe4828f9fedu64,
-        0xd6c2ff61679feeaeu64,
-        0x9ce1e2e602c7091u64,
+        0xbac4c5dd6b1e6cffu64,
+        0x22a18330d743265eu64,
+        0xd6e76b24b45ce456u64,
+        0x5ddbe250869b02d9u64,
+        0x70ba43cb49fa664cu64,
+        0x11d12bfd064a9c07u64,
     ]);
     let c1 = FqRepr([
-        0xc975e6116b0d70f7u64,
-        0xf0040ddfc7242b61u64,
-        0x767fb62fdfad7c62u64,
-        0xd6c89b13d56d1a0eu64,
-        0xcd13c174e8e8e0a8u64,
-        0x18b1328571d14a3fu64,
+        0x46ab0b9ca2a026a8u64,
+        0xe7c542debb3e8863u64,
+        0x5beb58e25a0fba93u64,
+        0xaac9366a1e124881u64,
+        0xa17db74df34c6629u64,
+        0x17d114628ff83e09u64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(c0).unwrap(),
@@ -1079,20 +1079,20 @@ fn test_fq2_hash_to_field_xof_shake128() {
     };
     assert_eq!(u[3], expect);
     let c0 = FqRepr([
-        0xf51365b02cac979bu64,
-        0x95f63b0173bad339u64,
-        0xa0b4c61bdb40ead5u64,
-        0x69134e3b32e9550au64,
-        0x7920ed5dace7061eu64,
-        0x1686d0bb0b08c326u64,
+        0x4a02b77af5981d89u64,
+        0x4691dce449e5475du64,
+        0xf77a0e8e3982aaa6u64,
+        0x2845134c4ca09dfbu64,
+        0x28eb49d2df16aca4u64,
+        0x117cfe69c07adc28u64,
     ]);
     let c1 = FqRepr([
-        0xc6d03f25ea042075u64,
-        0x3a562aa6ec077b18u64,
-        0xc7a5f5e57a726880u64,
-        0xc62dc29af5587974u64,
-        0xbd7718bb8b700c6du64,
-        0x1585e426f0cf0fe5u64,
+        0x3f20eb109b30d170u64,
+        0xf9db62febb5f6430u64,
+        0xa8f532675eabfe7au64,
+        0x553b99a8f101d00bu64,
+        0x6707e210f918ccfbu64,
+        0x17b968ebb357f7efu64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(c0).unwrap(),
@@ -1110,20 +1110,20 @@ fn test_fq2_hash_to_field_xmd_sha256() {
 
     let u = hash_to_field::<Fq2, ExpandMsgXmd<Sha256>>(b"hello world", b"asdfqwerzxcv", 5);
     let c0 = FqRepr([
-        0x30854f240ecb9ea9u64,
-        0x98c7d36765c25b36u64,
-        0x4631f7e0fcf1a3e2u64,
-        0x4468c92363baace4u64,
-        0x2f7f7599933b275du64,
-        0x1103c046a186fbcau64,
+        0x8013b8de1c730ccdu64,
+        0xd19df445418e9f11u64,
+        0xfae296c27ed04aceu64,
+        0x1615a7c2e5dc8be4u64,
+        0x69bc8b813ad8a2eeu64,
+        0x621a916a3dd4ce7u64,
     ]);
     let c1 = FqRepr([
-        0xafd1082431709f16u64,
-        0x211c1e602f117f4u64,
-        0x10be3007bda0cb91u64,
-        0x15335d40b6efb207u64,
-        0xbf36def94c6ba2e0u64,
-        0xef7f55430bc20d1u64,
+        0x2f21543bb7e13c15u64,
+        0x79a2713c2a7471fbu64,
+        0xccf4be18d3320ad2u64,
+        0x63ff7b3318ee22a6u64,
+        0x3a966c650ea0de7au64,
+        0x6e92928bd785218u64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(c0).unwrap(),
@@ -1131,20 +1131,20 @@ fn test_fq2_hash_to_field_xmd_sha256() {
     };
     assert_eq!(u[0], expect);
     let c0 = FqRepr([
-        0x59858fc5d6afac97u64,
-        0xc8777bc23f910bd8u64,
-        0x72a366cf274629a2u64,
-        0x1abd6eef2c1837ffu64,
-        0xd9b5e61e6d7c3c65u64,
-        0x5e7b0f1ffab3408u64,
+        0x4af5da7a38284cb9u64,
+        0x49bdeb3e2d8c55a1u64,
+        0x3cd8d0502207ae3du64,
+        0x78b015530955cd51u64,
+        0x1fdfd411fa9df1acu64,
+        0x12b47d2dbfb8b7adu64,
     ]);
     let c1 = FqRepr([
-        0x67856becabff040du64,
-        0x22e73f9f7a6c229eu64,
-        0x45490409c38b4c34u64,
-        0x246fe2aed21bf5f2u64,
-        0x5d94167950248592u64,
-        0x39b7b32f71684e4u64,
+        0xf0610ab9d30ace85u64,
+        0x3cba524826095c26u64,
+        0x2cca88714bd91543u64,
+        0xb7809e759c9d0b96u64,
+        0xb14c45e3c57e384u64,
+        0x97bd219ee74f234u64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(c0).unwrap(),
@@ -1152,20 +1152,20 @@ fn test_fq2_hash_to_field_xmd_sha256() {
     };
     assert_eq!(u[1], expect);
     let c0 = FqRepr([
-        0x52513c77de5e99fcu64,
-        0xcd7b0ddd63ddf4ccu64,
-        0xbd5b566687a517b9u64,
-        0xfbeba74bb409b16cu64,
-        0x1603f68ce8121dc7u64,
-        0x1836f8b510c373f8u64,
+        0x1c9e390ec0ccfbd7u64,
+        0xf9df7e6f2907332au64,
+        0x135b4bcdbfc9b7bbu64,
+        0x3aa60e647cc96fc8u64,
+        0xa4c312e21e72f56cu64,
+        0x145307a104618b9cu64,
     ]);
     let c1 = FqRepr([
-        0x14de242ebfb26468u64,
-        0x4309160e9c38c96fu64,
-        0x8175bde39c97b660u64,
-        0x81d7e8e4c3c81209u64,
-        0x2380ebc2d1a68072u64,
-        0x2f940b86c60d880u64,
+        0x71e6f415f440a8ffu64,
+        0x2e9636615390a691u64,
+        0x3777508fadfae164u64,
+        0x5bacbcfb0ee19ce3u64,
+        0x203c81bd6ed27200u64,
+        0xbc7bf3ad0854416u64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(c0).unwrap(),
@@ -1173,20 +1173,20 @@ fn test_fq2_hash_to_field_xmd_sha256() {
     };
     assert_eq!(u[2], expect);
     let c0 = FqRepr([
-        0x1f91568251cee73du64,
-        0x96988bd027104ae6u64,
-        0x5e1e92aa976ef504u64,
-        0x2f5d984dc7a1333u64,
-        0xc7a88768d9ee084fu64,
-        0xa512fe937586555u64,
+        0x4085662818b318fcu64,
+        0xee1d6563dfc486b7u64,
+        0x3f9294a50d8c8015u64,
+        0xd4cbb000d6289d89u64,
+        0x4fa081a472f02ddbu64,
+        0x13f591c4a737afc2u64,
     ]);
     let c1 = FqRepr([
-        0x71d37d733c13518au64,
-        0xe9c04422a6e87576u64,
-        0x49c238b693b9c1e4u64,
-        0x50d68c0455bb1efau64,
-        0x42f9aa143ca90213u64,
-        0x184bdf4f7c29d95fu64,
+        0xb109a8ddbda9cdf7u64,
+        0x4b37831e7daab6f2u64,
+        0xec6dd9fe4bafa1f0u64,
+        0x43d5ac76277b7584u64,
+        0x17f548d1cd113567u64,
+        0x12a35bed47708d4eu64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(c0).unwrap(),
@@ -1194,20 +1194,20 @@ fn test_fq2_hash_to_field_xmd_sha256() {
     };
     assert_eq!(u[3], expect);
     let c0 = FqRepr([
-        0x64c1d98632043cdeu64,
-        0x384435c3e7e3376au64,
-        0x2d1660332e48f208u64,
-        0xa0ea9e1b6bc12401u64,
-        0x29f74648aa69b26au64,
-        0x26172df0ec4d7f1u64,
+        0xa9c3b37df4203321u64,
+        0x63a17215811a2de1u64,
+        0xec72143f15671003u64,
+        0x9f1e7c13ce8af1b9u64,
+        0x1c164a2698a93988u64,
+        0x160a417e29e70d97u64,
     ]);
     let c1 = FqRepr([
-        0x80a7bc6ad913e206u64,
-        0xc0a7075fc3702c8cu64,
-        0x38d6881a2beb7440u64,
-        0xf4bc33e1fe0eb2c2u64,
-        0xe3fdb35d9a3621feu64,
-        0x1542ff2b2713e6efu64,
+        0x3cd586733e0bab94u64,
+        0xa335c8696e6af945u64,
+        0xf9ab253161bc54e3u64,
+        0xa53863e80553ccb8u64,
+        0x43dca822001a0642u64,
+        0x10b0a85bd661e512u64,
     ]);
     let expect = Fq2 {
         c0: Fq::from_repr(c0).unwrap(),

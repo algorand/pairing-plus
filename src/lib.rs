@@ -14,7 +14,7 @@
 #![deny(missing_debug_implementations)]
 
 extern crate digest;
-extern crate ff;
+extern crate ff_zeroize as ff;
 extern crate rand_core;
 extern crate rand_xorshift;
 #[cfg(test)]
