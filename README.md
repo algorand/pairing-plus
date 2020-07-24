@@ -1,13 +1,13 @@
 # pairing
 
 [![Crates.io](https://img.shields.io/crates/v/pairing-plus.svg)](https://crates.io/crates/pairing-plus)
-[![Build Status](https://travis-ci.com/algorand/pairing-plus.svg?branch=release-0.17.0)](https://travis-ci.com/algorand/pairing-plus)
+[![Build Status](https://travis-ci.com/algorand/pairing-plus.svg)](https://travis-ci.com/algorand/pairing-plus)
 
 This is a Rust crate for using pairing-friendly elliptic curves. Currently, only the [BLS12-381](https://z.cash/blog/new-snark-curve.html) construction is implemented.
 
-## [Documentation](https://docs.rs/pairing/)
+## [Documentation](https://docs.rs/pairing-plus/)
 
-Bring the `pairing` crate into your project just as you normally would.
+Bring the `pairing-plus` crate into your project just as you normally would.
 
 ## Security Warnings
 
