@@ -20,8 +20,8 @@ macro_rules! curve_impl {
         /// # Safety
         pub const unsafe fn transmute_affine(x: $basefield, y: $basefield, i: bool) -> $affine {
             $affine {
-                x: x,
-                y: y,
+                x,
+                y,
                 infinity: i,
             }
         }
@@ -64,7 +64,7 @@ macro_rules! curve_impl {
             y: $basefield,
             z: $basefield,
         ) -> $projective {
-            $projective { x: x, y: y, z: z }
+            $projective { x, y, z }
         }
 
         impl ::std::fmt::Display for $projective {
@@ -144,7 +144,7 @@ macro_rules! curve_impl {
                     negy.negate();
 
                     $affine {
-                        x: x,
+                        x,
                         y: if (y < negy) ^ greatest { y } else { negy },
                         infinity: false,
                     }
@@ -1069,8 +1069,8 @@ macro_rules! curve_impl {
                     y.mul_assign(&zinv_powered);
 
                     $affine {
-                        x: x,
-                        y: y,
+                        x,
+                        y,
                         infinity: false,
                     }
                 }
