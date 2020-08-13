@@ -236,10 +236,10 @@ impl FromRO for Fq2 {
 impl Signum0 for Fq2 {
     fn sgn0(&self) -> Sgn0Result {
         let Fq2 { c0, c1 } = self;
-        if c1.is_zero() {
-            c0.sgn0()
-        } else {
+        if c0.is_zero() {
             c1.sgn0()
+        } else {
+            c0.sgn0()
         }
     }
 }
@@ -1221,14 +1221,14 @@ fn test_fq2_sgn0() {
     use super::fq::P_M1_OVER2;
 
     assert_eq!(Fq2::zero().sgn0(), Sgn0Result::NonNegative);
-    assert_eq!(Fq2::one().sgn0(), Sgn0Result::NonNegative);
+    assert_eq!(Fq2::one().sgn0(), Sgn0Result::Negative);
     assert_eq!(
         Fq2 {
             c0: P_M1_OVER2,
             c1: Fq::zero()
         }
         .sgn0(),
-        Sgn0Result::NonNegative
+        Sgn0Result::Negative
     );
     assert_eq!(
         Fq2 {
@@ -1236,7 +1236,23 @@ fn test_fq2_sgn0() {
             c1: Fq::one()
         }
         .sgn0(),
-        Sgn0Result::NonNegative
+        Sgn0Result::Negative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: Fq::zero(),
+            c1: P_M1_OVER2,
+        }
+        .sgn0(),
+        Sgn0Result::Negative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: Fq::one(),
+            c1: P_M1_OVER2,
+        }
+        .sgn0(),
+        Sgn0Result::Negative
     );
 
     let p_p1_over2 = {
@@ -1250,7 +1266,7 @@ fn test_fq2_sgn0() {
             c1: Fq::zero()
         }
         .sgn0(),
-        Sgn0Result::Negative
+        Sgn0Result::NonNegative
     );
     assert_eq!(
         Fq2 {
@@ -1259,6 +1275,22 @@ fn test_fq2_sgn0() {
         }
         .sgn0(),
         Sgn0Result::NonNegative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: Fq::zero(),
+            c1: p_p1_over2,
+        }
+        .sgn0(),
+        Sgn0Result::NonNegative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: Fq::one(),
+            c1: p_p1_over2,
+        }
+        .sgn0(),
+        Sgn0Result::Negative
     );
 
     let m1 = {
@@ -1280,7 +1312,7 @@ fn test_fq2_sgn0() {
             c1: m1
         }
         .sgn0(),
-        Sgn0Result::Negative
+        Sgn0Result::NonNegative
     );
     assert_eq!(
         Fq2 {
@@ -1288,7 +1320,7 @@ fn test_fq2_sgn0() {
             c1: m1
         }
         .sgn0(),
-        Sgn0Result::Negative
+        Sgn0Result::NonNegative
     );
     assert_eq!(
         Fq2 {
@@ -1305,5 +1337,46 @@ fn test_fq2_sgn0() {
         }
         .sgn0(),
         Sgn0Result::NonNegative
+    );
+
+    assert_eq!(
+        Fq2 {
+            c0: m1,
+            c1: P_M1_OVER2,
+        }
+        .sgn0(),
+        Sgn0Result::NonNegative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: m1,
+            c1: p_p1_over2,
+        }
+        .sgn0(),
+        Sgn0Result::NonNegative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: m1,
+            c1: Fq::zero(),
+        }
+        .sgn0(),
+        Sgn0Result::NonNegative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: p_p1_over2,
+            c1: P_M1_OVER2,
+        }
+        .sgn0(),
+        Sgn0Result::NonNegative
+    );
+    assert_eq!(
+        Fq2 {
+            c0: P_M1_OVER2,
+            c1: p_p1_over2,
+        }
+        .sgn0(),
+        Sgn0Result::Negative
     );
 }

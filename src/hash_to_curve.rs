@@ -11,7 +11,7 @@ type CoordT<PtT> = <PtT as CurveProjective>::Base;
 /// Random oracle and injective maps to curve
 pub trait HashToCurve<X>
 where
-    X: ExpandMsg
+    X: ExpandMsg,
 {
     /// Random oracle
     fn hash_to_curve<Mt: AsRef<[u8]>, Dt: AsRef<[u8]>>(msg: Mt, dst: Dt) -> Self;
