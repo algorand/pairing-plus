@@ -193,12 +193,12 @@ fn test_osswu_g1() {
     ]))
     .unwrap();
     let yo = Fq::from_repr(FqRepr([
-        0xdc8a4684944f05adu64,
-        0x413c96b605fa42c3u64,
-        0x9a8be21d1e63b20eu64,
-        0xa86a30f86322e838u64,
-        0x77ac5472b64d30abu64,
-        0x53119aa51ffec68u64,
+        0xdd74b97b6bb0a4feu64,
+        0xdd6f6948ab59bd3bu64,
+        0xcca4f083d84d4415u64,
+        0xbc0d1a8c90622a86u64,
+        0xd36f53438cfe7c2bu64,
+        0x14cff83fe77ffa31u64,
     ]))
     .unwrap();
     let zo = Fq::from_repr(FqRepr([
@@ -236,12 +236,12 @@ fn test_osswu_g1() {
     ]))
     .unwrap();
     let yo = Fq::from_repr(FqRepr([
-        0xdc73edc70e39fe42u64,
-        0x62ecf6761ff9930fu64,
-        0x18187783faab9a4cu64,
-        0xaf8e80ddfe379c09u64,
-        0xfc8ef86e038520aau64,
-        0xc5fca1550de691du64,
+        0xdd8b1238f1c5ac69u64,
+        0xbbbf0988915a6cefu64,
+        0x4f185b1cfc055bd7u64,
+        0xb4e8caa6f54d76b6u64,
+        0x4e8caf483fc68c2cu64,
+        0xda147d4e8a17d7cu64,
     ]))
     .unwrap();
     let zo = Fq::from_repr(FqRepr([
@@ -279,12 +279,12 @@ fn test_osswu_g1() {
     ]))
     .unwrap();
     let yo = Fq::from_repr(FqRepr([
-        0x8e4021829edb5acau64,
-        0x69f8104daa66ea3eu64,
-        0x8e0604fc190b8ad0u64,
-        0x661e41dc536ff246u64,
-        0x1838aaa49432898fu64,
-        0x899f70d9a4252d5u64,
+        0x2bbede7d61244fe1u64,
+        0xb4b3efb106ed15c1u64,
+        0xd92acda4dda56b53u64,
+        0xfe5909a8a0152078u64,
+        0x32e2fd11af192347u64,
+        0x11671adc9f3d93c5u64,
     ]))
     .unwrap();
     let zo = Fq::from_repr(FqRepr([
@@ -377,21 +377,21 @@ fn test_osswu_g2() {
     .unwrap();
     let xo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0xe24baa0a898b47e0u64,
-        0x92afb1b88e09c84cu64,
-        0xf16d677192b7b78au64,
-        0xab1dd12189c47c0eu64,
-        0xc30f74ce786d38e9u64,
-        0xcc49de633f05c98u64,
+        0xd7b355f5767462cbu64,
+        0x8bfc4e46234a37b2u64,
+        0x75c36b2f63f93e99u64,
+        0xb9597a6369c096b0u64,
+        0x880c32e7cade73edu64,
+        0xd3c7404058f8a01u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0x936dda4aedcab1e1u64,
-        0x8261a18f1038bdbu64,
-        0xc08dea79dde085du64,
-        0x9002d76a3ed1ffd2u64,
-        0x185ab763985ff885u64,
-        0xbab7cc25639665u64,
+        0x269125b51234f8cau64,
+        0x1685e5e5c0507424u64,
+        0x5b27f3f958d2edc7u64,
+        0xd474741ab4b312edu64,
+        0x32c0f052aaebb451u64,
+        0x19465a1e141c5035u64,
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };
@@ -552,21 +552,21 @@ fn test_osswu_g2() {
     .unwrap();
     let xo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0x6c3bf81fbed884beu64,
-        0xc9913eda07951808u64,
-        0x74fe400d891f0d2fu64,
-        0x66459536249908u64,
-        0xc6dd9a1dd87e2749u64,
-        0x15ab62367cef7a16u64,
+        0x4dc307e0412725edu64,
+        0x551ac124a9bee7f7u64,
+        0xf23292936d91e8f4u64,
+        0x641105efbd6079b6u64,
+        0x843e0d986acd858eu64,
+        0x455afb3bc906c83u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0xf0f9b256ffd9ffd0u64,
-        0xc481edd39780ca8fu64,
-        0x5ea12e0601bcb0adu64,
-        0x92ffe49990fd9032u64,
-        0xacc33c14b83593a7u64,
-        0x5048b4e608e7595u64,
+        0xc9054da90025aadbu64,
+        0x5a2a122b19d3356fu64,
+        0x88fa49af4f44576u64,
+        0xd17766eb6287828du64,
+        0x9e586ba18b16192fu64,
+        0x14fc869bd8f17104u64,
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };
@@ -635,21 +635,21 @@ fn test_osswu_g2() {
     .unwrap();
     let xo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0x979dcacafe864046u64,
-        0x58d5a8feda1b9c68u64,
-        0x2dc7fe64d491eb67u64,
-        0x1e4eda823cf7dd15u64,
-        0x307aa36319482608u64,
-        0x2251c003acfa5u64,
+        0x2261353501796a65u64,
+        0xc5d656ffd7386397u64,
+        0x3968d43c221f0abcu64,
+        0x46287102b68d35aau64,
+        0x1aa104532a0386cfu64,
+        0x19feecce394516f5u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0x71eae2c9a83ace48u64,
-        0x94e7e90db7f89c6eu64,
-        0xeb1f1e2094f14b12u64,
-        0x4c44debec0dd26f4u64,
-        0x78fd720e9efd3821u64,
-        0x145c52e57606ffa5u64,
+        0x48141d3657c4dc63u64,
+        0x89c416f0f95b6391u64,
+        0x7c11b48061bfab11u64,
+        0x18326cc632a7ebcau64,
+        0xd21e35a7a44e74b6u64,
+        0x5a4bf04c378e6f4u64,
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };
@@ -718,21 +718,21 @@ fn test_osswu_g2() {
     .unwrap();
     let xo = Fq2 { c0, c1 };
     let c0 = Fq::from_repr(FqRepr([
-        0x4b0f0747efbfaa2bu64,
-        0xf5501541912d865bu64,
-        0x977c499198af07aau64,
-        0xd446b9a7fad8f3b9u64,
-        0x4badb10ce5e47e33u64,
-        0x907aa22e7410129u64,
+        0x6eeff8b810400080u64,
+        0x295beabd202679a4u64,
+        0xcfb4890f5e01ee79u64,
+        0x903091dcf8ac1f05u64,
+        0xff6df6a95d672ea3u64,
+        0x10f967c7523ee570u64,
     ]))
     .unwrap();
     let c1 = Fq::from_repr(FqRepr([
-        0xdd46de8193ef06f6u64,
-        0x4cce40b2f67a7123u64,
-        0xd843215fe615c9b4u64,
-        0x8d839820983c4b41u64,
-        0x16042cc81ac4edddu64,
-        0x7eff2aeb396734au64,
+        0xdcb8217e6c10a3b5u64,
+        0xd1ddbf4bbad98edbu64,
+        0x8eedb141109b2c6fu64,
+        0xd6f3b3645b48c77du64,
+        0x35177aee2886bef9u64,
+        0x12111f3b85e97350u64,
     ]))
     .unwrap();
     let yo = Fq2 { c0, c1 };

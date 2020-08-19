@@ -3,7 +3,6 @@ use digest::generic_array::{typenum::U64, GenericArray};
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
 use hash_to_field::BaseFromRO;
 use signum::{Sgn0Result, Signum0};
-use std::cmp::Ordering;
 use std::io::{Cursor, Read};
 
 // B coefficient of BLS12-381 curve, 4.
@@ -503,17 +502,7 @@ impl BaseFromRO for Fq {
 impl Signum0 for Fq {
     // returns the sign of a center lifted element over the integer ring
     fn sgn0(&self) -> Sgn0Result {
-        // (group_order - 1)/2
-        const PM1DIV2: FqRepr = FqRepr([
-            0xdcff7fffffffd555u64,
-            0x0f55ffff58a9ffffu64,
-            0xb39869507b587b12u64,
-            0xb23ba5c279c2895fu64,
-            0x258dd3db21a5d66bu64,
-            0x0d0088f51cbff34du64,
-        ]);
-
-        if self.into_repr().cmp(&PM1DIV2) == Ordering::Greater {
+        if self.into_repr().0[0] & 1 == 1 {
             Sgn0Result::Negative
         } else {
             Sgn0Result::NonNegative
@@ -2448,15 +2437,15 @@ fn test_fq_hash_to_field_xmd_sha256() {
 #[test]
 fn test_fq_sgn0() {
     assert_eq!(Fq::zero().sgn0(), Sgn0Result::NonNegative);
-    assert_eq!(Fq::one().sgn0(), Sgn0Result::NonNegative);
-    assert_eq!(P_M1_OVER2.sgn0(), Sgn0Result::NonNegative);
+    assert_eq!(Fq::one().sgn0(), Sgn0Result::Negative);
+    assert_eq!(P_M1_OVER2.sgn0(), Sgn0Result::Negative);
 
     let p_p1_over2 = {
         let mut tmp = P_M1_OVER2;
         tmp.add_assign(&Fq::one());
         tmp
     };
-    assert_eq!(p_p1_over2.sgn0(), Sgn0Result::Negative);
+    assert_eq!(p_p1_over2.sgn0(), Sgn0Result::NonNegative);
 
     let neg_p_p1_over2 = {
         let mut tmp = p_p1_over2;
@@ -2470,7 +2459,7 @@ fn test_fq_sgn0() {
         tmp.negate();
         tmp
     };
-    assert_eq!(m1.sgn0(), Sgn0Result::Negative);
+    assert_eq!(m1.sgn0(), Sgn0Result::NonNegative);
 
     let m0 = {
         let mut tmp = Fq::zero();
