@@ -3,10 +3,14 @@ Tests for isogenies.
 */
 
 use super::IsogenyMap;
-use bls12_381::transmute::{g1_projective, g2_projective};
-use bls12_381::{Fq, Fq2, FqRepr};
+use crate::{
+    CurveProjective,
+    bls12_381::{
+        Fq, Fq2, FqRepr,
+        transmute::{g1_projective, g2_projective}
+    },
+};
 use ff::{Field, PrimeField};
-use CurveProjective;
 
 #[test]
 fn test_iso11() {

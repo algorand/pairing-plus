@@ -1087,8 +1087,8 @@ pub use self::g2::*;
 
 #[test]
 fn test_group_defaults() {
-    use CurveAffine;
-    use CurveProjective;
+    use crate::{CurveAffine, CurveProjective};
+
     assert_eq!(G1::default(), G1::zero());
     assert_eq!(G2::default(), G2::zero());
     assert_eq!(G1Affine::default(), G1Affine::zero());

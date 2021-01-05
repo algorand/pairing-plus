@@ -13,14 +13,6 @@
 // Force public structures to implement Debug
 #![deny(missing_debug_implementations)]
 
-extern crate digest;
-extern crate ff_zeroize as ff;
-extern crate rand_core;
-extern crate rand_xorshift;
-#[cfg(test)]
-extern crate sha2;
-#[cfg(test)]
-extern crate sha3;
 #[macro_use]
 extern crate zeroize;
 
@@ -92,7 +84,7 @@ pub trait Engine: ScalarEngine {
         >;
 
     /// Perform final exponentiation of the result of a miller loop.
-    fn final_exponentiation(&Self::Fqk) -> Option<Self::Fqk>;
+    fn final_exponentiation(_: &Self::Fqk) -> Option<Self::Fqk>;
 
     /// Performs a complete pairing operation `(p, q)`.
     fn pairing<G1, G2>(p: G1, q: G2) -> Self::Fqk
@@ -419,7 +411,7 @@ impl fmt::Display for GroupDecodingError {
             GroupDecodingError::CoordinateDecodingError(description, ref err) => {
                 write!(f, "{} decoding error: {}", description, err)
             }
-            _ => write!(f, "{}", self.to_string()),
+            _ => write!(f, "{:?}", self),
         }
     }
 }

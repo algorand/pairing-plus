@@ -11,8 +11,10 @@ Cofactor clearing for G1 and G2.
 //          f6a359894c0adebbf6b4e8020005aaa95551,$ for G2
 // this will be faster than multiplying by the co-factor h
 
-use bls12_381::{G1, G2};
-use CurveProjective;
+use crate::{
+    bls12_381::{G1, G2},
+    CurveProjective
+};
 
 /* *** addchain for 15132376222941642752 *** */
 /* Bos-Coster (win=2) : 69 links, 2 variables */
@@ -471,11 +473,11 @@ impl ClearH for G2 {
 #[cfg(test)]
 mod tests {
     use super::ClearH;
-    use bls12_381::{Fq, Fq2, FqRepr, FrRepr, G1, G2};
+    use crate::bls12_381::{Fq, Fq2, FqRepr, FrRepr, G1, G2};
     use ff::PrimeField;
     //    use rand::{thread_rng, Rand};
     use rand_core::SeedableRng;
-    use CurveProjective;
+    use crate::CurveProjective;
     #[test]
     fn test_clear_h() {
         let mut rng = rand_xorshift::XorShiftRng::from_seed([

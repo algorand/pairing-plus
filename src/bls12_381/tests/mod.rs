@@ -1,6 +1,6 @@
 use super::*;
 use rand_core::SeedableRng;
-use *;
+use crate::*;
 
 #[test]
 fn test_pairing_product() {

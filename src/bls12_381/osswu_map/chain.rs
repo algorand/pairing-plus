@@ -4,7 +4,7 @@ Addition chains for computing square roots.
 * chain_p2m9div16: input x, output x^((p**2 - 9) // 16).
 */
 
-use bls12_381::{Fq, Fq2};
+use crate::bls12_381::{Fq, Fq2};
 use ff::Field;
 
 #[allow(clippy::cognitive_complexity)]
@@ -890,7 +890,7 @@ pub fn chain_p2m9div16(tmpvar1: &mut Fq2, tmpvar0: &Fq2) {
 #[cfg(test)]
 mod tests {
     use super::{chain_p2m9div16, chain_pm3div4};
-    use bls12_381::{Fq, Fq2};
+    use crate::bls12_381::{Fq, Fq2};
     use ff::Field;
     use rand_core::SeedableRng;
     #[test]

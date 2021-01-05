@@ -3,7 +3,7 @@ Constants for G1 isogeny.
 */
 
 use super::{eval_iso, IsogenyMap};
-use bls12_381::{Fq, FqRepr, G1};
+use crate::bls12_381::{Fq, FqRepr, G1};
 
 /// Coefficients of the 11-isogeny x map's numerator
 const XNUM: [Fq; 12] = [
