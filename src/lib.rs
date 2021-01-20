@@ -37,32 +37,40 @@ use std::fmt;
 /// of prime order `r`, and are equipped with a bilinear pairing function.
 pub trait Engine: ScalarEngine {
     /// The projective representation of an element in G1.
-    type G1: CurveProjective<Engine = Self, Base = Self::Fq, Scalar = Self::Fr, Affine = Self::G1Affine>
-        + From<Self::G1Affine>;
+    type G1: CurveProjective<
+        Engine = Self,
+        Base = Self::Fq,
+        Scalar = Self::Fr,
+        Affine = Self::G1Affine,
+    > + From<Self::G1Affine>;
 
     /// The affine representation of an element in G1.
     type G1Affine: CurveAffine<
-            Engine = Self,
-            Base = Self::Fq,
-            Scalar = Self::Fr,
-            Projective = Self::G1,
-            Pair = Self::G2Affine,
-            PairingResult = Self::Fqk,
-        > + From<Self::G1>;
+        Engine = Self,
+        Base = Self::Fq,
+        Scalar = Self::Fr,
+        Projective = Self::G1,
+        Pair = Self::G2Affine,
+        PairingResult = Self::Fqk,
+    > + From<Self::G1>;
 
     /// The projective representation of an element in G2.
-    type G2: CurveProjective<Engine = Self, Base = Self::Fqe, Scalar = Self::Fr, Affine = Self::G2Affine>
-        + From<Self::G2Affine>;
+    type G2: CurveProjective<
+        Engine = Self,
+        Base = Self::Fqe,
+        Scalar = Self::Fr,
+        Affine = Self::G2Affine,
+    > + From<Self::G2Affine>;
 
     /// The affine representation of an element in G2.
     type G2Affine: CurveAffine<
-            Engine = Self,
-            Base = Self::Fqe,
-            Scalar = Self::Fr,
-            Projective = Self::G2,
-            Pair = Self::G1Affine,
-            PairingResult = Self::Fqk,
-        > + From<Self::G2>;
+        Engine = Self,
+        Base = Self::Fqe,
+        Scalar = Self::Fr,
+        Projective = Self::G2,
+        Pair = Self::G1Affine,
+        PairingResult = Self::Fqk,
+    > + From<Self::G2>;
 
     /// The base field that hosts G1.
     type Fq: PrimeField + SqrtField;

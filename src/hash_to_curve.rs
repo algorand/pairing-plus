@@ -5,7 +5,7 @@
 use crate::{
     bls12_381::{ClearH, IsogenyMap, OSSWUMap},
     hash_to_field::{hash_to_field, ExpandMsg, FromRO},
-    CurveProjective
+    CurveProjective,
 };
 
 type CoordT<PtT> = <PtT as CurveProjective>::Base;
@@ -31,11 +31,13 @@ where
     fn hash_to_curve<Mt: AsRef<[u8]>, Dt: AsRef<[u8]>>(msg: Mt, dst: Dt) -> PtT {
         let mut p = {
             let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 2);
-            let mut tmp = PtT::osswu_map(&u[0]);
-            tmp.add_assign(&PtT::osswu_map(&u[1]));
-            tmp
+            let mut q0 = PtT::osswu_map(&u[0]);
+            q0.isogeny_map();
+            let mut q1 = PtT::osswu_map(&u[1]);
+            q1.isogeny_map();
+            q0.add_assign(&q1);
+            q0
         };
-        p.isogeny_map();
         p.clear_h();
         p
     }

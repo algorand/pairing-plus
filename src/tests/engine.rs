@@ -1,5 +1,5 @@
-use rand_core::SeedableRng;
 use crate::{CurveAffine, CurveProjective, Engine, Field, PrimeField};
+use rand_core::SeedableRng;
 
 pub fn engine_tests<E: Engine>() {
     let mut rng = rand_xorshift::XorShiftRng::from_seed([

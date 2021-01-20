@@ -7,8 +7,8 @@ mod g2;
 #[cfg(test)]
 mod tests;
 
-use ff::Field;
 use crate::CurveProjective;
+use ff::Field;
 
 /// Alias for the coordinate type corresponding to a CurveProjective type
 type CoordT<PtT> = <PtT as CurveProjective>::Base;

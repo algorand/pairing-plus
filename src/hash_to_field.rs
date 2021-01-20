@@ -73,7 +73,8 @@ where
             .chain([(len_in_bytes >> 8) as u8, len_in_bytes as u8])
             .chain(dst)
             .chain([dst.len() as u8])
-            .finalize_boxed(len_in_bytes).to_vec()
+            .finalize_boxed(len_in_bytes)
+            .to_vec()
     }
 }
 

@@ -13,7 +13,7 @@ Cofactor clearing for G1 and G2.
 
 use crate::{
     bls12_381::{G1, G2},
-    CurveProjective
+    CurveProjective,
 };
 
 /* *** addchain for 15132376222941642752 *** */
@@ -476,8 +476,8 @@ mod tests {
     use crate::bls12_381::{Fq, Fq2, FqRepr, FrRepr, G1, G2};
     use ff::PrimeField;
     //    use rand::{thread_rng, Rand};
-    use rand_core::SeedableRng;
     use crate::CurveProjective;
+    use rand_core::SeedableRng;
     #[test]
     fn test_clear_h() {
         let mut rng = rand_xorshift::XorShiftRng::from_seed([

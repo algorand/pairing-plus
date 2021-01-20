@@ -1,8 +1,8 @@
-use crate::{
-    CurveAffine, CurveProjective, EncodedPoint, Engine, GroupDecodingError, SubgroupCheck,
-    bls12_381::{Bls12, Fq, Fq12, FqRepr, Fr, FrRepr}
-};
 use super::g2::G2Affine;
+use crate::{
+    bls12_381::{Bls12, Fq, Fq12, FqRepr, Fr, FrRepr},
+    CurveAffine, CurveProjective, EncodedPoint, Engine, GroupDecodingError, SubgroupCheck,
+};
 use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
 use std::fmt;
 curve_impl!(
@@ -312,11 +312,11 @@ mod subgroup_check {
     use super::G1Affine;
     #[cfg(test)]
     use super::G1;
-    #[cfg(test)]
-    use rand_core::SeedableRng;
     use crate::SubgroupCheck;
     #[cfg(test)]
     use crate::{CurveAffine, CurveProjective};
+    #[cfg(test)]
+    use rand_core::SeedableRng;
 
     impl SubgroupCheck for G1Affine {
         fn in_subgroup(&self) -> bool {

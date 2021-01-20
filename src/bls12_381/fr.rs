@@ -1,6 +1,6 @@
+use crate::hash_to_field::BaseFromRO;
 use digest::generic_array::{typenum::U48, GenericArray};
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
-use crate::hash_to_field::BaseFromRO;
 use std::io::{Cursor, Read};
 
 #[derive(PrimeField, Zeroize)]

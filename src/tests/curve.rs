@@ -1,7 +1,4 @@
-use crate::{
-    bls12_381::*,
-    CurveAffine, CurveProjective, EncodedPoint,
-};
+use crate::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
 use ff::{BitIterator, Field, PrimeField};
 use rand_core::SeedableRng;
 

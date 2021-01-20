@@ -5,8 +5,8 @@ Constants for OSSWU map for G1
 use super::chain::chain_pm3div4;
 use super::{osswu_help, OSSWUMap};
 use crate::bls12_381::{Fq, FqRepr, G1};
-use ff::Field;
 use crate::signum::Signum0;
+use ff::Field;
 
 pub(super) const ELLP_A: Fq = Fq(FqRepr([
     0x2f65aa0e9af5aa51u64,

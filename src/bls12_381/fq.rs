@@ -1,10 +1,10 @@
 use super::fq2::Fq2;
-use digest::generic_array::{typenum::U64, GenericArray};
-use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
 use crate::{
     hash_to_field::BaseFromRO,
     signum::{Sgn0Result, Signum0},
 };
+use digest::generic_array::{typenum::U64, GenericArray};
+use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
 use std::io::{Cursor, Read};
 
 // B coefficient of BLS12-381 curve, 4.

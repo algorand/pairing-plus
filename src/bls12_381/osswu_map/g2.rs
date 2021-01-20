@@ -5,8 +5,8 @@ Constants for OSSWU map for G2
 use super::chain::chain_p2m9div16;
 use super::{osswu_help, OSSWUMap};
 use crate::bls12_381::{Fq, Fq2, FqRepr, G2};
-use ff::Field;
 use crate::signum::Signum0;
+use ff::Field;
 
 pub(super) const ELLP_A: Fq2 = Fq2 {
     c0: Fq(FqRepr([

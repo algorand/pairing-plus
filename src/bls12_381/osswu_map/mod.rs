@@ -9,8 +9,8 @@ mod g2;
 #[cfg(test)]
 mod tests;
 
-use ff::Field;
 use crate::CurveProjective;
+use ff::Field;
 
 /// Trait for mapping from base field element to curve point
 pub trait OSSWUMap: CurveProjective {

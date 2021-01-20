@@ -4,11 +4,11 @@ Tests for isogenies.
 
 use super::IsogenyMap;
 use crate::{
-    CurveProjective,
     bls12_381::{
+        transmute::{g1_projective, g2_projective},
         Fq, Fq2, FqRepr,
-        transmute::{g1_projective, g2_projective}
     },
+    CurveProjective,
 };
 use ff::{Field, PrimeField};
 

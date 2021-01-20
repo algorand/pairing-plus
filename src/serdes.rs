@@ -1,7 +1,4 @@
-use crate::{
-    bls12_381::*,
-    CurveAffine, CurveProjective, EncodedPoint,
-};
+use crate::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
 use ff::{PrimeField, PrimeFieldRepr};
 use std::io::{Error, ErrorKind, Read, Result, Write};
 type Compressed = bool;
