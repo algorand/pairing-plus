@@ -1,8 +1,10 @@
-use super::super::{Bls12, Fq, Fq12, FqRepr, Fr, FrRepr};
 use super::g2::G2Affine;
+use crate::{
+    bls12_381::{Bls12, Fq, Fq12, FqRepr, Fr, FrRepr},
+    CurveAffine, CurveProjective, EncodedPoint, Engine, GroupDecodingError, SubgroupCheck,
+};
 use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
 use std::fmt;
-use {CurveAffine, CurveProjective, EncodedPoint, Engine, GroupDecodingError, SubgroupCheck};
 curve_impl!(
     "G1",
     G1,
@@ -310,11 +312,11 @@ mod subgroup_check {
     use super::G1Affine;
     #[cfg(test)]
     use super::G1;
+    use crate::SubgroupCheck;
+    #[cfg(test)]
+    use crate::{CurveAffine, CurveProjective};
     #[cfg(test)]
     use rand_core::SeedableRng;
-    use SubgroupCheck;
-    #[cfg(test)]
-    use {CurveAffine, CurveProjective};
 
     impl SubgroupCheck for G1Affine {
         fn in_subgroup(&self) -> bool {
@@ -324,7 +326,7 @@ mod subgroup_check {
 
     #[test]
     fn test_g1_subgroup_check() {
-        use bls12_381::ClearH;
+        use crate::bls12_381::ClearH;
         let mut rng = rand_xorshift::XorShiftRng::from_seed([
             0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
             0xbc, 0xe5,
@@ -695,5 +697,5 @@ fn test_g1_same_y() {
 
 #[test]
 fn g1_curve_tests() {
-    ::tests::curve::curve_tests::<G1>();
+    crate::tests::curve::curve_tests::<G1>();
 }

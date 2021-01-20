@@ -1,9 +1,6 @@
-use bls12_381::{self, *};
+use crate::{bls12_381::*, CurveAffine, CurveProjective, EncodedPoint};
 use ff::{PrimeField, PrimeFieldRepr};
 use std::io::{Error, ErrorKind, Read, Result, Write};
-use CurveAffine;
-use CurveProjective;
-use EncodedPoint;
 type Compressed = bool;
 
 /// Serialization support for group elements.
@@ -181,10 +178,10 @@ impl SerDes for G1 {
         // convert element into an (un)compressed byte string
         let buf = {
             if compressed {
-                let tmp = bls12_381::G1Compressed::from_affine(t);
+                let tmp = G1Compressed::from_affine(t);
                 tmp.as_ref().to_vec()
             } else {
-                let tmp = bls12_381::G1Uncompressed::from_affine(t);
+                let tmp = G1Uncompressed::from_affine(t);
                 tmp.as_ref().to_vec()
             }
         };
@@ -243,10 +240,10 @@ impl SerDes for G2 {
         // convert element into an (un)compressed byte string
         let buf = {
             if compressed {
-                let tmp = bls12_381::G2Compressed::from_affine(t);
+                let tmp = G2Compressed::from_affine(t);
                 tmp.as_ref().to_vec()
             } else {
-                let tmp = bls12_381::G2Uncompressed::from_affine(t);
+                let tmp = G2Uncompressed::from_affine(t);
                 tmp.as_ref().to_vec()
             }
         };
@@ -304,10 +301,10 @@ impl SerDes for G1Affine {
         // convert element into an (un)compressed byte string
         let buf = {
             if compressed {
-                let tmp = bls12_381::G1Compressed::from_affine(*self);
+                let tmp = G1Compressed::from_affine(*self);
                 tmp.as_ref().to_vec()
             } else {
-                let tmp = bls12_381::G1Uncompressed::from_affine(*self);
+                let tmp = G1Uncompressed::from_affine(*self);
                 tmp.as_ref().to_vec()
             }
         };
@@ -365,10 +362,10 @@ impl SerDes for G2Affine {
         // convert element into an (un)compressed byte string
         let buf = {
             if compressed {
-                let tmp = bls12_381::G2Compressed::from_affine(*self);
+                let tmp = G2Compressed::from_affine(*self);
                 tmp.as_ref().to_vec()
             } else {
-                let tmp = bls12_381::G2Uncompressed::from_affine(*self);
+                let tmp = G2Uncompressed::from_affine(*self);
                 tmp.as_ref().to_vec()
             }
         };

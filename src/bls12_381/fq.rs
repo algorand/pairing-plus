@@ -1,8 +1,10 @@
 use super::fq2::Fq2;
+use crate::{
+    hash_to_field::BaseFromRO,
+    signum::{Sgn0Result, Signum0},
+};
 use digest::generic_array::{typenum::U64, GenericArray};
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
-use hash_to_field::BaseFromRO;
-use signum::{Sgn0Result, Signum0};
 use std::io::{Cursor, Read};
 
 // B coefficient of BLS12-381 curve, 4.
@@ -2269,10 +2271,10 @@ fn test_fq_root_of_unity() {
 
 #[test]
 fn fq_field_tests() {
-    ::tests::field::random_field_tests::<Fq>();
-    ::tests::field::random_sqrt_tests::<Fq>();
-    ::tests::field::random_frobenius_tests::<Fq, _>(Fq::char(), 13);
-    ::tests::field::from_str_tests::<Fq>();
+    crate::tests::field::random_field_tests::<Fq>();
+    crate::tests::field::random_sqrt_tests::<Fq>();
+    crate::tests::field::random_frobenius_tests::<Fq, _>(Fq::char(), 13);
+    crate::tests::field::from_str_tests::<Fq>();
 }
 
 #[test]
@@ -2288,7 +2290,7 @@ fn test_fq_ordering() {
 
 #[test]
 fn fq_repr_tests() {
-    ::tests::repr::random_repr_tests::<Fq, FqRepr>();
+    crate::tests::repr::random_repr_tests::<Fq, FqRepr>();
 }
 
 #[test]
@@ -2330,7 +2332,7 @@ fn test_fq_legendre() {
 
 #[test]
 fn test_fq_hash_to_field_xof_shake128() {
-    use hash_to_field::{hash_to_field, ExpandMsgXof};
+    use crate::hash_to_field::{hash_to_field, ExpandMsgXof};
     use sha3::Shake128;
 
     let u = hash_to_field::<Fq, ExpandMsgXof<Shake128>>(b"hello world", b"asdfqwerzxcv", 5);
@@ -2383,7 +2385,7 @@ fn test_fq_hash_to_field_xof_shake128() {
 
 #[test]
 fn test_fq_hash_to_field_xmd_sha256() {
-    use hash_to_field::{hash_to_field, ExpandMsgXmd};
+    use crate::hash_to_field::{hash_to_field, ExpandMsgXmd};
     use sha2::Sha256;
 
     let u = hash_to_field::<Fq, ExpandMsgXmd<Sha256>>(b"hello world", b"asdfqwerzxcv", 5);

@@ -1,11 +1,13 @@
 use super::fq::{Fq, FROBENIUS_COEFF_FQ2_C1, NEGATIVE_ONE};
+use crate::{
+    hash_to_field::{BaseFromRO, FromRO},
+    signum::{Sgn0Result, Signum0},
+};
 use digest::generic_array::{
     typenum::{U128, U64},
     GenericArray,
 };
 use ff::{Field, SqrtField};
-use hash_to_field::{BaseFromRO, FromRO};
-use signum::{Sgn0Result, Signum0};
 use std::cmp::Ordering;
 
 /// An element of Fq2, represented by c0 + c1 * u.
@@ -981,16 +983,16 @@ fn test_fq2_mul_nonresidue() {
 fn fq2_field_tests() {
     use ff::PrimeField;
 
-    ::tests::field::random_field_tests::<Fq2>();
-    ::tests::field::random_sqrt_tests::<Fq2>();
-    ::tests::field::random_frobenius_tests::<Fq2, _>(super::fq::Fq::char(), 13);
+    crate::tests::field::random_field_tests::<Fq2>();
+    crate::tests::field::random_sqrt_tests::<Fq2>();
+    crate::tests::field::random_frobenius_tests::<Fq2, _>(super::fq::Fq::char(), 13);
 }
 
 #[test]
 fn test_fq2_hash_to_field_xof_shake128() {
     use super::fq::FqRepr;
+    use crate::hash_to_field::{hash_to_field, ExpandMsgXof};
     use ff::PrimeField;
-    use hash_to_field::{hash_to_field, ExpandMsgXof};
     use sha3::Shake128;
 
     let u = hash_to_field::<Fq2, ExpandMsgXof<Shake128>>(b"hello world", b"asdfqwerzxcv", 5);
@@ -1104,8 +1106,8 @@ fn test_fq2_hash_to_field_xof_shake128() {
 #[test]
 fn test_fq2_hash_to_field_xmd_sha256() {
     use super::fq::FqRepr;
+    use crate::hash_to_field::{hash_to_field, ExpandMsgXmd};
     use ff::PrimeField;
-    use hash_to_field::{hash_to_field, ExpandMsgXmd};
     use sha2::Sha256;
 
     let u = hash_to_field::<Fq2, ExpandMsgXmd<Sha256>>(b"hello world", b"asdfqwerzxcv", 5);

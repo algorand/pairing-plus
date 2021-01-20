@@ -1,8 +1,10 @@
 use super::super::{Bls12, Fq, Fq12, Fq2, FqRepr, Fr, FrRepr};
 use super::g1::G1Affine;
+use crate::{
+    CurveAffine, CurveProjective, EncodedPoint, Engine, GroupDecodingError, SubgroupCheck,
+};
 use ff::{BitIterator, Field, PrimeField, PrimeFieldRepr, SqrtField};
 use std::fmt;
-use {CurveAffine, CurveProjective, EncodedPoint, Engine, GroupDecodingError, SubgroupCheck};
 
 curve_impl!(
     "G2",
@@ -347,10 +349,10 @@ pub struct G2Prepared {
 mod subgroup_check {
     use super::G2Affine;
     #[cfg(test)]
-    use rand_core::SeedableRng;
+    use crate::CurveAffine;
+    use crate::SubgroupCheck;
     #[cfg(test)]
-    use CurveAffine;
-    use SubgroupCheck;
+    use rand_core::SeedableRng;
 
     impl SubgroupCheck for G2Affine {
         fn in_subgroup(&self) -> bool {
@@ -360,8 +362,10 @@ mod subgroup_check {
 
     #[test]
     fn test_g2_subgroup_check() {
-        use bls12_381::{ClearH, G2};
-        use CurveProjective;
+        use crate::{
+            bls12_381::{ClearH, G2},
+            CurveProjective,
+        };
         let mut rng = rand_xorshift::XorShiftRng::from_seed([
             0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
             0xbc, 0xe5,
@@ -813,5 +817,5 @@ fn test_g2_doubling_correctness() {
 
 #[test]
 fn g2_curve_tests() {
-    ::tests::curve::curve_tests::<G2>();
+    crate::tests::curve::curve_tests::<G2>();
 }

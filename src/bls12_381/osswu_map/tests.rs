@@ -3,7 +3,7 @@ Tests for osswu map
 */
 
 use super::OSSWUMap;
-use bls12_381::{Fq, Fq2, FqRepr, G1, G2};
+use crate::bls12_381::{Fq, Fq2, FqRepr, G1, G2};
 use ff::{Field, PrimeField};
 use rand_core::SeedableRng;
 //use rand::{thread_rng, Rand};

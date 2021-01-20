@@ -1,6 +1,6 @@
+use crate::hash_to_field::BaseFromRO;
 use digest::generic_array::{typenum::U48, GenericArray};
 use ff::{Field, PrimeField, PrimeFieldDecodingError, PrimeFieldRepr};
-use hash_to_field::BaseFromRO;
 use std::io::{Cursor, Read};
 
 #[derive(PrimeField, Zeroize)]
@@ -1035,13 +1035,13 @@ fn test_fr_root_of_unity() {
 
 #[test]
 fn fr_field_tests() {
-    ::tests::field::random_field_tests::<Fr>();
-    ::tests::field::random_sqrt_tests::<Fr>();
-    ::tests::field::random_frobenius_tests::<Fr, _>(Fr::char(), 13);
-    ::tests::field::from_str_tests::<Fr>();
+    crate::tests::field::random_field_tests::<Fr>();
+    crate::tests::field::random_sqrt_tests::<Fr>();
+    crate::tests::field::random_frobenius_tests::<Fr, _>(Fr::char(), 13);
+    crate::tests::field::from_str_tests::<Fr>();
 }
 
 #[test]
 fn fr_repr_tests() {
-    ::tests::repr::random_repr_tests::<Fr, FrRepr>();
+    crate::tests::repr::random_repr_tests::<Fr, FrRepr>();
 }

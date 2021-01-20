@@ -19,11 +19,7 @@ macro_rules! curve_impl {
 
         /// # Safety
         pub const unsafe fn transmute_affine(x: $basefield, y: $basefield, i: bool) -> $affine {
-            $affine {
-                x,
-                y,
-                infinity: i,
-            }
+            $affine { x, y, infinity: i }
         }
 
         // set the default values for the group elements to 0s
@@ -1087,8 +1083,8 @@ pub use self::g2::*;
 
 #[test]
 fn test_group_defaults() {
-    use CurveAffine;
-    use CurveProjective;
+    use crate::{CurveAffine, CurveProjective};
+
     assert_eq!(G1::default(), G1::zero());
     assert_eq!(G2::default(), G2::zero());
     assert_eq!(G1Affine::default(), G1Affine::zero());
