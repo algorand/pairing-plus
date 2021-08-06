@@ -30,6 +30,7 @@ pub mod tests;
 pub mod bls12_381;
 pub mod hash_to_curve;
 pub mod hash_to_field;
+pub mod map_to_curve;
 pub mod serdes;
 pub mod signum;
 
