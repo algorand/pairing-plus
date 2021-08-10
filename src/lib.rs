@@ -93,7 +93,7 @@ pub trait Engine: ScalarEngine {
         >;
 
     /// Perform final exponentiation of the result of a miller loop.
-    fn final_exponentiation(&Self::Fqk) -> Option<Self::Fqk>;
+    fn final_exponentiation(_: &Self::Fqk) -> Option<Self::Fqk>;
 
     /// Performs a complete pairing operation `(p, q)`.
     fn pairing<G1, G2>(p: G1, q: G2) -> Self::Fqk
@@ -208,7 +208,7 @@ pub trait CurveProjective:
     fn mul_assign<S: Into<<Self::Scalar as PrimeField>::Repr>>(&mut self, other: S);
 
     /// Converts this element into its affine representation.
-    fn into_affine(&self) -> Self::Affine;
+    fn into_affine(self) -> Self::Affine;
 
     /// Recommends a wNAF window table size given a scalar. Always returns a number
     /// between 2 and 22, inclusive.
@@ -274,18 +274,18 @@ pub trait CurveAffine:
     fn pairing_with(&self, other: &Self::Pair) -> Self::PairingResult;
 
     /// Converts this element into its affine representation.
-    fn into_projective(&self) -> Self::Projective;
+    fn into_projective(self) -> Self::Projective;
 
     /// Converts this element into its compressed encoding, so long as it's not
     /// the point at infinity.
-    fn into_compressed(&self) -> Self::Compressed {
-        <Self::Compressed as EncodedPoint>::from_affine(*self)
+    fn into_compressed(self) -> Self::Compressed {
+        <Self::Compressed as EncodedPoint>::from_affine(self)
     }
 
     /// Converts this element into its uncompressed encoding, so long as it's not
     /// the point at infinity.
-    fn into_uncompressed(&self) -> Self::Uncompressed {
-        <Self::Uncompressed as EncodedPoint>::from_affine(*self)
+    fn into_uncompressed(self) -> Self::Uncompressed {
+        <Self::Uncompressed as EncodedPoint>::from_affine(self)
     }
 
     /// Borrow references to the X and Y coordinates of this point.
@@ -363,7 +363,7 @@ pub trait EncodedPoint:
 
     /// Converts an `EncodedPoint` into a `CurveAffine` element,
     /// if the encoding represents a valid element.
-    fn into_affine(&self) -> Result<Self::Affine, GroupDecodingError>;
+    fn into_affine(self) -> Result<Self::Affine, GroupDecodingError>;
 
     /// Converts an `EncodedPoint` into a `CurveAffine` element,
     /// without guaranteeing that the encoding represents a valid
@@ -372,7 +372,7 @@ pub trait EncodedPoint:
     ///
     /// If the encoding is invalid, this can break API invariants,
     /// so caution is strongly encouraged.
-    fn into_affine_unchecked(&self) -> Result<Self::Affine, GroupDecodingError>;
+    fn into_affine_unchecked(self) -> Result<Self::Affine, GroupDecodingError>;
 
     /// Creates an `EncodedPoint` from an affine point, as long as the
     /// point is not the point at infinity.
@@ -420,7 +420,7 @@ impl fmt::Display for GroupDecodingError {
             GroupDecodingError::CoordinateDecodingError(description, ref err) => {
                 write!(f, "{} decoding error: {}", description, err)
             }
-            _ => write!(f, "{}", self.to_string()),
+            _ => write!(f, "{:?}", self),
         }
     }
 }

@@ -38,8 +38,7 @@ where
         // p.clear_h();
         // p
         let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 2);
-        let p = <PtT as MapToCurve::<PtT>>::map_two_field_elements_to_curve(&u[0], &u[1]);
-        p
+        <PtT as MapToCurve::<PtT>>::map_two_field_elements_to_curve(&u[0], &u[1])
     }
 
     fn encode_to_curve<Mt: AsRef<[u8]>, Dt: AsRef<[u8]>>(msg: Mt, dst: Dt) -> PtT {
@@ -51,7 +50,6 @@ where
         // p.clear_h();
         // p
         let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 1);
-        let p = <PtT as MapToCurve::<PtT>>::map_one_field_element_to_curve(&u[0]);
-        p
+        <PtT as MapToCurve::<PtT>>::map_one_field_element_to_curve(&u[0])
     }
 }

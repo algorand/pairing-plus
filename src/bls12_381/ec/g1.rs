@@ -45,7 +45,7 @@ impl EncodedPoint for G1Uncompressed {
     fn size() -> usize {
         96
     }
-    fn into_affine(&self) -> Result<G1Affine, GroupDecodingError> {
+    fn into_affine(self) -> Result<G1Affine, GroupDecodingError> {
         let affine = self.into_affine_unchecked()?;
 
         if !affine.is_on_curve() {
@@ -56,7 +56,7 @@ impl EncodedPoint for G1Uncompressed {
             Ok(affine)
         }
     }
-    fn into_affine_unchecked(&self) -> Result<G1Affine, GroupDecodingError> {
+    fn into_affine_unchecked(self) -> Result<G1Affine, GroupDecodingError> {
         // Create a copy of this representation.
         let mut copy = self.0;
 
@@ -153,7 +153,7 @@ impl EncodedPoint for G1Compressed {
     fn size() -> usize {
         48
     }
-    fn into_affine(&self) -> Result<G1Affine, GroupDecodingError> {
+    fn into_affine(self) -> Result<G1Affine, GroupDecodingError> {
         let affine = self.into_affine_unchecked()?;
 
         // NB: Decompression guarantees that it is on the curve already.
@@ -164,7 +164,7 @@ impl EncodedPoint for G1Compressed {
             Ok(affine)
         }
     }
-    fn into_affine_unchecked(&self) -> Result<G1Affine, GroupDecodingError> {
+    fn into_affine_unchecked(self) -> Result<G1Affine, GroupDecodingError> {
         // Create a copy of this representation.
         let mut copy = self.0;
 
