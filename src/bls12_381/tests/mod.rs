@@ -38,8 +38,8 @@ fn test_pairing_multi_product() {
     for n in 0..size {
         let mut t = Fq12::one();
         for i in 0..n {
-            let p1 = G1Affine::into_projective(&p[i]);
-            let q1 = G2Affine::into_projective(&q[i]);
+            let p1 = G1Affine::into_projective(p[i]);
+            let q1 = G2Affine::into_projective(q[i]);
             t.mul_assign(&Bls12::pairing(p1, q1));
         }
         assert_eq!(
