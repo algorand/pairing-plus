@@ -5,6 +5,7 @@
 
 use bls12_381::{ClearH, IsogenyMap, OSSWUMap};
 use CurveProjective;
+use SubgroupCheck;
 
 pub trait MapToCurve<PtT>
 where
@@ -17,11 +18,13 @@ where
 impl<PtT> MapToCurve<PtT> for PtT
 where
     PtT: ClearH + IsogenyMap + OSSWUMap,
+    <PtT as CurveProjective>::Affine: SubgroupCheck,
 {
 	fn map_to_curve(p1: &PtT::Base) -> PtT {
         let mut p = PtT::osswu_map(p1);
         p.isogeny_map();
         p.clear_h();
+        debug_assert!(p.into_affine().in_subgroup());
         p
 	}
 
@@ -33,6 +36,7 @@ where
         };
         p.isogeny_map();
         p.clear_h();
+        debug_assert!(p.into_affine().in_subgroup());
         p
 	}
 }

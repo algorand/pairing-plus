@@ -6,6 +6,7 @@ use bls12_381::{ClearH, IsogenyMap, OSSWUMap};
 use hash_to_field::{hash_to_field, ExpandMsg, FromRO};
 use map_to_curve::MapToCurve;
 use CurveProjective;
+use SubgroupCheck;
 
 type CoordT<PtT> = <PtT as CurveProjective>::Base;
 
@@ -24,6 +25,7 @@ where
 impl<PtT, X> HashToCurve<X> for PtT
 where
     PtT: ClearH + IsogenyMap + OSSWUMap,
+    <PtT as CurveProjective>::Affine: SubgroupCheck,
     CoordT<PtT>: FromRO,
     X: ExpandMsg,
 {
