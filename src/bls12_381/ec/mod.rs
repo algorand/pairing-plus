@@ -219,8 +219,8 @@ macro_rules! curve_impl {
                 self.perform_pairing(other)
             }
 
-            fn into_projective(self) -> $projective {
-                (self).into()
+            fn into_projective(&self) -> $projective {
+                (*self).into()
             }
 
             fn as_tuple(&self) -> (&$basefield, &$basefield) {
@@ -1001,8 +1001,8 @@ macro_rules! curve_impl {
                 *self = res;
             }
 
-            fn into_affine(self) -> $affine {
-                (self).into()
+            fn into_affine(&self) -> $affine {
+                (*self).into()
             }
 
             fn recommended_wnaf_for_scalar(scalar: <Self::Scalar as PrimeField>::Repr) -> usize {

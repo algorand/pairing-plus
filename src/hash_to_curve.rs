@@ -28,28 +28,12 @@ where
     X: ExpandMsg,
 {
     fn hash_to_curve<Mt: AsRef<[u8]>, Dt: AsRef<[u8]>>(msg: Mt, dst: Dt) -> PtT {
-        // let mut p = {
-        //     let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 2);
-        //     let mut tmp = PtT::osswu_map(&u[0]);
-        //     tmp.add_assign(&PtT::osswu_map(&u[1]));
-        //     tmp
-        // };
-        // p.isogeny_map();
-        // p.clear_h();
-        // p
         let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 2);
-        <PtT as MapToCurve::<PtT>>::map_two_field_elements_to_curve(&u[0], &u[1])
+        <PtT as MapToCurve::<PtT>>::map2_to_curve(&u[0], &u[1])
     }
 
     fn encode_to_curve<Mt: AsRef<[u8]>, Dt: AsRef<[u8]>>(msg: Mt, dst: Dt) -> PtT {
-        // let mut p = {
-        //     let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 1);
-        //     PtT::osswu_map(&u[0])
-        // };
-        // p.isogeny_map();
-        // p.clear_h();
-        // p
         let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 1);
-        <PtT as MapToCurve::<PtT>>::map_one_field_element_to_curve(&u[0])
+        <PtT as MapToCurve::<PtT>>::map_to_curve(&u[0])
     }
 }
