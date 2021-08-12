@@ -31,11 +31,11 @@ where
 {
     fn hash_to_curve<Mt: AsRef<[u8]>, Dt: AsRef<[u8]>>(msg: Mt, dst: Dt) -> PtT {
         let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 2);
-        <PtT as MapToCurve::<PtT>>::map2_to_curve(&u[0], &u[1])
+        <PtT as MapToCurve<PtT>>::map2_to_curve(&u[0], &u[1])
     }
 
     fn encode_to_curve<Mt: AsRef<[u8]>, Dt: AsRef<[u8]>>(msg: Mt, dst: Dt) -> PtT {
         let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 1);
-        <PtT as MapToCurve::<PtT>>::map_to_curve(&u[0])
+        <PtT as MapToCurve<PtT>>::map_to_curve(&u[0])
     }
 }

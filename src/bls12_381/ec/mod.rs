@@ -19,11 +19,7 @@ macro_rules! curve_impl {
 
         /// # Safety
         pub const unsafe fn transmute_affine(x: $basefield, y: $basefield, i: bool) -> $affine {
-            $affine {
-                x,
-                y,
-                infinity: i,
-            }
+            $affine { x, y, infinity: i }
         }
 
         // set the default values for the group elements to 0s
