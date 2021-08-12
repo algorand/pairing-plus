@@ -4,7 +4,9 @@
 
 use bls12_381::{ClearH, IsogenyMap, OSSWUMap};
 use hash_to_field::{hash_to_field, ExpandMsg, FromRO};
+use map_to_curve::MapToCurve;
 use CurveProjective;
+use SubgroupCheck;
 
 type CoordT<PtT> = <PtT as CurveProjective>::Base;
 
@@ -23,28 +25,17 @@ where
 impl<PtT, X> HashToCurve<X> for PtT
 where
     PtT: ClearH + IsogenyMap + OSSWUMap,
+    <PtT as CurveProjective>::Affine: SubgroupCheck,
     CoordT<PtT>: FromRO,
     X: ExpandMsg,
 {
     fn hash_to_curve<Mt: AsRef<[u8]>, Dt: AsRef<[u8]>>(msg: Mt, dst: Dt) -> PtT {
-        let mut p = {
-            let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 2);
-            let mut tmp = PtT::osswu_map(&u[0]);
-            tmp.add_assign(&PtT::osswu_map(&u[1]));
-            tmp
-        };
-        p.isogeny_map();
-        p.clear_h();
-        p
+        let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 2);
+        <PtT as MapToCurve<PtT>>::map2_to_curve(&u[0], &u[1])
     }
 
     fn encode_to_curve<Mt: AsRef<[u8]>, Dt: AsRef<[u8]>>(msg: Mt, dst: Dt) -> PtT {
-        let mut p = {
-            let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 1);
-            PtT::osswu_map(&u[0])
-        };
-        p.isogeny_map();
-        p.clear_h();
-        p
+        let u = hash_to_field::<CoordT<PtT>, X>(msg.as_ref(), dst.as_ref(), 1);
+        <PtT as MapToCurve<PtT>>::map_to_curve(&u[0])
     }
 }

@@ -74,7 +74,7 @@ impl OSSWUMap for G1 {
                 let mut x1_num = x0_num; // g(x1) is square
                 x1_num.mul_assign(&xi_usq); // x1 = xi u^2 g(x0)
                 let mut y1 = usq; // y1 = sqrt(-xi**3) * u^3 g(x0) ^ ((p - 1) // 4)
-                y1.mul_assign(&u);
+                y1.mul_assign(u);
                 y1.mul_assign(&sqrt_candidate);
                 y1.mul_assign(&SQRT_M_XI_CUBED);
                 (x1_num, y1)
