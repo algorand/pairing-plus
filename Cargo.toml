@@ -3,7 +3,7 @@ name = "pairing-plus"
 
 # Remember to change version string in README.md.
 
-version = "0.20.1"
+version = "0.20.2"
 authors = [
     # authors of the original pairing library
     "Sean Bowe <ewillbefull@gmail.com>",
@@ -40,12 +40,12 @@ rand_core = "0.5"
 rand_xorshift = "0.2"
 
 [dependencies.digest]
-version = "0.8"
+version = "0.9"
 features = ["std"]
 
 [dev-dependencies]
-sha2 = "0.8"
-sha3 = "0.8"
+sha2 = "0.9.5"
+sha3 = "0.9.1"
 
 [features]
 default = []
