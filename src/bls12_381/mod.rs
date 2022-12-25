@@ -134,7 +134,7 @@ impl Engine for Bls12 {
                 r.mul_assign(&f2);
 
                 fn exp_by_x(f: &mut Fq12, x: u64) {
-                    *f = f.pow(&[x]);
+                    *f = f.pow([x]);
                     if BLS_X_IS_NEGATIVE {
                         f.conjugate();
                     }
