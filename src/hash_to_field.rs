@@ -4,7 +4,10 @@
 */
 
 use digest::generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
-use digest::{BlockInput, Digest, ExtendableOutput, Input};
+use digest::{
+    core_api::{Block, BlockSizeUser},
+    Digest, ExtendableOutput, Output, OutputSizeUser, Update,
+};
 use std::marker::PhantomData;
 
 /// hash_to_field for type T using ExpandMsg variant X
@@ -65,7 +68,7 @@ pub struct ExpandMsgXof<HashT> {
 /// ExpandMsgXof implements expand_message_xof for the ExpandMsg trait
 impl<HashT> ExpandMsg for ExpandMsgXof<HashT>
 where
-    HashT: Default + ExtendableOutput + Input,
+    HashT: Default + ExtendableOutput + Update,
 {
     fn expand_message(msg: &[u8], dst: &[u8], len_in_bytes: usize) -> Vec<u8> {
         HashT::default()
@@ -73,7 +76,8 @@ where
             .chain([(len_in_bytes >> 8) as u8, len_in_bytes as u8])
             .chain(dst)
             .chain([dst.len() as u8])
-            .vec_result(len_in_bytes)
+            .finalize_boxed(len_in_bytes)
+            .into()
     }
 }
 
@@ -86,48 +90,48 @@ pub struct ExpandMsgXmd<HashT> {
 /// ExpandMsgXmd implements expand_message_xmd for the ExpandMsg trait
 impl<HashT> ExpandMsg for ExpandMsgXmd<HashT>
 where
-    HashT: Digest + BlockInput,
+    HashT: Digest + BlockSizeUser,
 {
     fn expand_message(msg: &[u8], dst: &[u8], len_in_bytes: usize) -> Vec<u8> {
-        let b_in_bytes = <HashT as Digest>::OutputSize::to_usize();
+        let b_in_bytes = <HashT as OutputSizeUser>::OutputSize::to_usize();
         let ell = (len_in_bytes + b_in_bytes - 1) / b_in_bytes;
         if ell > 255 {
             panic!("ell was too big in expand_message_xmd");
         }
         let b_0 = HashT::new()
-            .chain(GenericArray::<u8, <HashT as BlockInput>::BlockSize>::default())
-            .chain(msg)
-            .chain([(len_in_bytes >> 8) as u8, len_in_bytes as u8, 0u8])
-            .chain(dst)
-            .chain([dst.len() as u8])
-            .result();
+            .chain_update(Block::<HashT>::default())
+            .chain_update(msg)
+            .chain_update([(len_in_bytes >> 8) as u8, len_in_bytes as u8, 0u8])
+            .chain_update(dst)
+            .chain_update([dst.len() as u8])
+            .finalize();
 
         let mut b_vals = Vec::<u8>::with_capacity(ell * b_in_bytes);
         // b_1
         b_vals.extend_from_slice(
             HashT::new()
-                .chain(&b_0[..])
-                .chain([1u8])
-                .chain(dst)
-                .chain([dst.len() as u8])
-                .result()
+                .chain_update(&b_0[..])
+                .chain_update([1u8])
+                .chain_update(dst)
+                .chain_update([dst.len() as u8])
+                .finalize()
                 .as_ref(),
         );
 
         for idx in 1..ell {
             // b_0 XOR b_(idx - 1)
-            let mut tmp = GenericArray::<u8, <HashT as Digest>::OutputSize>::default();
+            let mut tmp = Output::<HashT>::default();
             b_0.iter()
                 .zip(&b_vals[(idx - 1) * b_in_bytes..idx * b_in_bytes])
                 .enumerate()
                 .for_each(|(jdx, (b0val, bi1val))| tmp[jdx] = b0val ^ bi1val);
             b_vals.extend_from_slice(
                 HashT::new()
-                    .chain(tmp)
-                    .chain([(idx + 1) as u8])
-                    .chain(dst)
-                    .chain([dst.len() as u8])
-                    .result()
+                    .chain_update(tmp)
+                    .chain_update([(idx + 1) as u8])
+                    .chain_update(dst)
+                    .chain_update([dst.len() as u8])
+                    .finalize()
                     .as_ref(),
             );
         }

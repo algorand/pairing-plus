@@ -40,12 +40,12 @@ rand_core = "0.5"
 rand_xorshift = "0.2"
 
 [dependencies.digest]
-version = "0.8"
+version = "0.10"
 features = ["std"]
 
 [dev-dependencies]
-sha2 = "0.8"
-sha3 = "0.8"
+sha2 = "0.10"
+sha3 = "0.10"
 
 [features]
 default = []
